@@ -1,0 +1,19 @@
+language: ruby
+cache: bundler
+sudo: false
+
+before_script: |-
+  wget -O vault.zip -q https://dl.bintray.com/mitchellh/vault/vault_0.1.0_linux_amd64.zip
+  unzip vault.zip
+  mv vault ~/bin
+
+env:
+  global:
+    - PATH="$HOME/bin:$PATH"
+
+branches:
+  only:
+    - master
+
+rvm:
+  - 2.2

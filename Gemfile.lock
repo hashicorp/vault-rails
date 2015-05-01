@@ -5,11 +5,6 @@ PATH
       rails (~> 4.0)
       vault (~> 0.1)
 
-PATH
-  remote: ../vault-ruby
-  specs:
-    vault (0.1.1)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -117,6 +112,7 @@ GEM
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
+    vault (0.1.1)
 
 PLATFORMS
   ruby
@@ -126,5 +122,4 @@ DEPENDENCIES
   rake (~> 10.0)
   rspec (~> 3.2)
   sqlite3
-  vault!
   vault-rails!
