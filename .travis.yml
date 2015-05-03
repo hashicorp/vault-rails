@@ -2,14 +2,12 @@ language: ruby
 cache: bundler
 sudo: false
 
-before_script: |-
-  wget -O vault.zip -q https://dl.bintray.com/mitchellh/vault/vault_0.1.0_linux_amd64.zip
+before_install: |-
+  wget -O vault.zip -q https://dl.bintray.com/mitchellh/vault/vault_0.1.1_linux_amd64.zip
   unzip vault.zip
+  mkdir ~/bin
   mv vault ~/bin
-
-env:
-  global:
-    - PATH="$HOME/bin:$PATH"
+  export PATH="~/bin:$PATH"
 
 branches:
   only:
@@ -17,3 +15,8 @@ branches:
 
 rvm:
   - 2.2
+
+before_script:
+  - bundle exec rake app:db:create
+  - bundle exec rake app:db:schema:load
+  - bundle exec rake app:db:test:prepare
