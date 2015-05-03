@@ -15,3 +15,8 @@ branches:
 
 rvm:
   - 2.2
+
+before_script:
+  - bundle exec rake app:db:create
+  - bundle exec rake app:db:schema:load
+  - bundle exec rake app:db:test:prepare
