@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    vault-rails (0.1.0)
+    vault-rails (0.1.1)
       rails (~> 4.0)
       vault (~> 0.1)
 
