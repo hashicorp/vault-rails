@@ -40,6 +40,9 @@ module Vault
             encrypted = read_attribute(:#{encrypted_column})
             return nil if encrypted.nil?
 
+            self.class._vault_ensure_mounted!("#{path}")
+            self.class._vault_ensure_key!("#{path}", "#{key}")
+
             path = File.join("v1", "#{path}", "decrypt", "#{key}")
             response = Vault.put(path, JSON.fast_generate(
               ciphertext: encrypted,
@@ -51,6 +54,9 @@ module Vault
           end
 
           def #{column}=(value)
+            self.class._vault_ensure_mounted!("#{path}")
+            self.class._vault_ensure_key!("#{path}", "#{key}")
+
             path = File.join("v1", "#{path}", "encrypt", "#{key}")
             response = Vault.put(path, JSON.fast_generate(
               plaintext: Base64.encode64(value),
@@ -67,8 +73,6 @@ module Vault
           end
         EOH
 
-        _vault_ensure_mounted!(path)
-        _vault_ensure_key!(path, key)
         _vault_attributes.store(column.to_sym, true)
 
         self
@@ -85,10 +89,17 @@ module Vault
       #
       # @return [true]
       def _vault_ensure_mounted!(path)
+        @_vault_mounts ||= {}
+        return true if @_vault_mounts.key?(path)
+
         mounts = Vault.sys.mounts
-        return true if mounts[path.to_s.chomp("/").to_sym]
+        if mounts[path.to_s.chomp("/").to_sym]
+          @_vault_mounts[path] = true
+          return true
+        end
 
         Vault.sys.mount(path, :transit)
+        @_vault_mounts[path] = true
         return true
       end
 
@@ -96,13 +107,17 @@ module Vault
       #
       # @return [true]
       def _vault_ensure_key!(path, key)
+        @_vault_keys ||= {}
+
         key_path = File.join("v1", path, "keys", key)
+        return true if @_vault_keys.key?(key_path)
 
         begin
           Vault.get(key_path)
         rescue => e
           raise if e.code != 404
           Vault.post(key_path, nil)
+          @_vault_keys[key_path] = true
         end
 
         return true
