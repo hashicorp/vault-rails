@@ -19,7 +19,7 @@ Quick Start
     ```ruby
     require "vault/rails"
 
-    Vault::Rails.configure do |vault|
+    Vault.configure do |vault|
       vault.application = "my_app"
 
       # Default: ENV["VAULT_ADDR"]
