@@ -88,7 +88,7 @@ $ vault mount transit
 
 The Vault Rails plugin does not automatically create transit keys in Vault. This is intentional so that you can give the policy for the token associated with the Rails application read/write access to the encrypt/decrypt backends _only_, without giving the Rails application the ability to read encryption keys from Vault.
 
-If an attacker gained access to the Rails application server, they would be able to read all encryption keys in Vault, making decryption of sensitive easy.
+If an attacker gained access to the Rails application server, they would be able to read all encryption keys in Vault, making decryption of sensitive data in the database easy.
 
 Instead, you should create keys for each column you plan to encrypt using a different policy, out-of-band from the Rails application. For example:
 
