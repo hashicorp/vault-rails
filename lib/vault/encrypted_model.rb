@@ -28,9 +28,9 @@ module Vault
       # @option options [String] :key
       #   the name of the encryption key (default: +#{app}_#{table}_#{column}+)
       def vault_attribute(column, options = {})
-        encrypted_column = options[:encrypted_column] ||= "#{column}_encrypted"
-        path = options[:path] ||= "transit"
-        key = options[:key] ||= "#{Vault.application}_#{table_name}_#{column}"
+        encrypted_column = options[:encrypted_column] || "#{column}_encrypted"
+        path = options[:path] || "transit"
+        key = options[:key] || "#{Vault.application}_#{table_name}_#{column}"
 
         class_eval <<-EOH, __FILE__, __LINE__ + 1
           def #{column}
@@ -55,7 +55,11 @@ module Vault
           end
         EOH
 
-        _vault_attributes.store(column.to_sym, options.dup)
+        _vault_attributes.store(column.to_sym,
+          encrypted_column: encrypted_column,
+          path: path,
+          key: key,
+        )
 
         self
       end
