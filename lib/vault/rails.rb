@@ -59,7 +59,7 @@ module Vault
     def self.decrypt(path, key, ciphertext)
       route  = File.join(path, "decrypt", key)
       secret = Vault.logical.write(route, ciphertext: ciphertext)
-      return secret.data[:plaintext]
+      return Base64.strict_decode64(secret.data[:plaintext])
     end
   end
 end
