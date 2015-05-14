@@ -26,5 +26,40 @@ module Vault
   autoload :EncryptedModel, "vault/encrypted_model"
 
   module Rails
+    # Encrypt the given plaintext data using the provided mount and key.
+    #
+    # @param [String] path
+    #   the mount point
+    # @param [String] key
+    #   the key to encrypt at
+    # @param [String] plaintext
+    #   the plaintext to encrypt
+    #
+    # @return [String]
+    #   the encrypted cipher text
+    def self.encrypt(path, key, plaintext)
+      route  = File.join(path, "encrypt", key)
+      secret = Vault.logical.write(route,
+        plaintext: Base64.strict_encode64(plaintext),
+      )
+      return secret.data[:ciphertext]
+    end
+
+    # Decrypt the given ciphertext data using the provided mount and key.
+    #
+    # @param [String] path
+    #   the mount point
+    # @param [String] key
+    #   the key to decrypt at
+    # @param [String] ciphertext
+    #   the ciphertext to decrypt
+    #
+    # @return [String]
+    #   the decrypted plaintext text
+    def self.decrypt(path, key, ciphertext)
+      route  = File.join(path, "decrypt", key)
+      secret = Vault.logical.write(route, ciphertext: ciphertext)
+      return secret.data[:plaintext]
+    end
   end
 end
