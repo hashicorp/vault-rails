@@ -43,7 +43,7 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
         cipher.key = key_for(path, key)
-        return cipher.update(plaintext) + cipher.final
+        return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
       else
         return encrypt_original(path, key, plaintext)
       end
@@ -56,7 +56,7 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
         cipher.key = key_for(path, key)
-        return cipher.update(ciphertext) + cipher.final
+        return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
       else
         return decrypt_original(path, key, ciphertext)
       end
