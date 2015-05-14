@@ -118,6 +118,19 @@ This is because the database is unaware of the plain-text data (which is part of
 the security model).
 
 
+Testing
+-------
+The Vault Rails plugin includes a testing harness to avoid needing to spin up a
+real Vault server during tests:
+
+```ruby
+require "vault/rails/testing"
+Vault::Rails::Testing.enable!
+```
+
+This will stub all requests to encrypted attributes to use an in-memory store.
+
+
 Development
 -----------
 1. Clone the project on GitHub
