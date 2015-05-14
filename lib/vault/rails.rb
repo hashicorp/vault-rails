@@ -38,6 +38,8 @@ module Vault
     # @return [String]
     #   the encrypted cipher text
     def self.encrypt(path, key, plaintext)
+      return nil if plaintext.nil?
+
       route  = File.join(path, "encrypt", key)
       secret = Vault.logical.write(route,
         plaintext: Base64.strict_encode64(plaintext),
@@ -57,6 +59,8 @@ module Vault
     # @return [String]
     #   the decrypted plaintext text
     def self.decrypt(path, key, ciphertext)
+      return nil if ciphertext.nil?
+
       route  = File.join(path, "decrypt", key)
       secret = Vault.logical.write(route, ciphertext: ciphertext)
       return Base64.strict_decode64(secret.data[:plaintext])
