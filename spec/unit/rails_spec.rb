@@ -3,8 +3,8 @@ require "spec_helper"
 describe Vault do
   describe ".application" do
     it "returns the application" do
-      Vault.instance_variable_set(:@application, "test")
-      expect(Vault.application).to eq("test")
+      Vault.instance_variable_set(:@application, "dummy")
+      expect(Vault.application).to eq("dummy")
     end
 
     it "raises an error if unset" do
@@ -15,8 +15,8 @@ describe Vault do
 
   describe ".application=" do
     it "sets the value" do
-      Vault.application = "test"
-      expect(Vault.instance_variable_get(:@application)).to eq("test")
+      Vault.application = "dummy"
+      expect(Vault.instance_variable_get(:@application)).to eq("dummy")
     end
   end
 

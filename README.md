@@ -79,6 +79,32 @@ Quick Start
 Caveats
 -------
 
+### Mounting/Creating Keys in Vault
+The Vault Rails plugin does not automatically mount a backend. It is assumed the proper backend is mounted and accessible by the given token. You can mount a transit backend like this:
+
+```shell
+$ vault mount transit
+```
+
+The Vault Rails plugin does not automatically create transit keys in Vault. This is intentional so that you can give the policy for the token associated with the Rails application read/write access to the encrypt/decrypt backends _only_, without giving the Rails application the ability to read encryption keys from Vault.
+
+If an attacker gained access to the Rails application server, they would be able to read all encryption keys in Vault, making decryption of sensitive data in the database easy.
+
+Instead, you should create keys for each column you plan to encrypt using a different policy, out-of-band from the Rails application. For example:
+
+```shell
+$ vault write transit/keys/<key> create=1
+```
+
+Unless customized, the name of the key will always be:
+
+    <app>_<table>_<column>
+
+So for the example above, the key would be:
+
+    my_app_people_ssn
+
+
 ### Searching Encrypted Attributes
 Because each column is uniquely encrypted, it is not possible to search for a
 particular plain-text value. For example, if the `ssn` attribute is encrypted,
@@ -90,6 +116,19 @@ Person.where(ssn: "123-45-6789")
 
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
+
+
+Testing
+-------
+The Vault Rails plugin includes a testing harness to avoid needing to spin up a
+real Vault server during tests:
+
+```ruby
+require "vault/rails/testing"
+Vault::Rails::Testing.enable!
+```
+
+This will stub all requests to encrypted attributes to use an in-memory store.
 
 
 Development
