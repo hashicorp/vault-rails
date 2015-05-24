@@ -1,3 +1,5 @@
+require "active_support/concern"
+
 module Vault
   module EncryptedModel
     extend ActiveSupport::Concern
@@ -30,7 +32,7 @@ module Vault
       def vault_attribute(column, options = {})
         encrypted_column = options[:encrypted_column] || "#{column}_encrypted"
         path = options[:path] || "transit"
-        key = options[:key] || "#{Vault.application}_#{table_name}_#{column}"
+        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{column}"
 
         class_eval <<-EOH, __FILE__, __LINE__ + 1
           def #{column}

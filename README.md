@@ -19,13 +19,25 @@ Quick Start
     ```ruby
     require "vault/rails"
 
-    Vault.configure do |vault|
+    Vault::Rails.configure do |vault|
+      # Use Vault in transit mode for encrypting and decrypting data. If
+      # disabled, vault-rails will encrypt data in-memory using a similar
+      # algorithm to Vault. The in-memory store uses a predictable encryption
+      # which is great for development and test, but should _never_ be used in
+      # production.
+      vault.enabled = Rails.env.production?
+
+      # The name of the application. All encrypted keys in Vault will be
+      # prefixed with this application name. If you change the name of the
+      # application, you will need to migration the encrypted data to the new
+      # key namespace.
       vault.application = "my_app"
 
-      # Default: ENV["VAULT_ADDR"]
+      # The address of the Vault server. Default: ENV["VAULT_ADDR"].
       vault.address = "https://vault.corp"
 
-      # Default: ENV["VAULT_TOKEN"]
+      # The token to communicate with the Vault server.
+      # Default: ENV["VAULT_ADDR"].
       vault.token = "abcd1234"
     end
     ```
@@ -116,19 +128,6 @@ Person.where(ssn: "123-45-6789")
 
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
-
-
-Testing
--------
-The Vault Rails plugin includes a testing harness to avoid needing to spin up a
-real Vault server during tests:
-
-```ruby
-require "vault/rails/testing"
-Vault::Rails::Testing.enable!
-```
-
-This will stub all requests to encrypted attributes to use an in-memory store.
 
 
 Development

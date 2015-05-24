@@ -3,8 +3,8 @@ require "spec_helper"
 describe Vault::Rails do
   context "with default options" do
     before(:all) do
-      Vault.sys.mount("transit", :transit)
-      Vault.logical.write("transit/keys/dummy_people_ssn")
+      Vault::Rails.sys.mount("transit", :transit)
+      Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
     end
 
     it "encrypts attributes" do
@@ -30,8 +30,8 @@ describe Vault::Rails do
 
   context "with custom options" do
     before(:all) do
-      Vault.sys.mount("credit-secrets", :transit)
-      Vault.logical.write("credit-secrets/keys/people_credit_cards")
+      Vault::Rails.sys.mount("credit-secrets", :transit)
+      Vault::Rails.logical.write("credit-secrets/keys/people_credit_cards")
     end
 
     it "encrypts attributes" do
