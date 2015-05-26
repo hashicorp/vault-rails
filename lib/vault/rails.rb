@@ -81,6 +81,8 @@ module Vault
 
     # Perform in-memory encryption. This is useful for testing and development.
     def self.memory_encrypt(path, key, plaintext, client)
+      log_warning
+
       return nil if plaintext.nil?
 
       cipher = OpenSSL::Cipher::AES.new(128, :CBC)
@@ -91,6 +93,8 @@ module Vault
 
     # Perform in-memory decryption. This is useful for testing and development.
     def self.memory_decrypt(path, key, ciphertext, client)
+      log_warning
+
       return nil if ciphertext.nil?
 
       cipher = OpenSSL::Cipher::AES.new(128, :CBC)
@@ -125,6 +129,17 @@ module Vault
     # @return [String]
     def self.memory_key_for(path, key)
       return Base64.strict_encode64("#{path}/#{key}".ljust(32, "x"))
+    end
+
+    private
+
+    def self.log_warning
+      if defined?(::Rails) && ::Rails.logger != nil
+        ::Rails.logger.warn do
+          "[vault-rails] Using in-memory cipher - this is not secure " \
+          "and should not be used in production-like environments."
+        end
+      end
     end
   end
 end
