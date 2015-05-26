@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency "vault", "~> 0.1"
 
   s.add_development_dependency "bundler", "~> 1.9"
+  s.add_development_dependency "pry"
   s.add_development_dependency "rake",    "~> 10.0"
   s.add_development_dependency "rspec",   "~> 3.2"
   s.add_development_dependency "sqlite3"
