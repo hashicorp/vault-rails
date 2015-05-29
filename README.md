@@ -37,7 +37,7 @@ Quick Start
       vault.address = "https://vault.corp"
 
       # The token to communicate with the Vault server.
-      # Default: ENV["VAULT_ADDR"].
+      # Default: ENV["VAULT_TOKEN"].
       vault.token = "abcd1234"
     end
     ```
