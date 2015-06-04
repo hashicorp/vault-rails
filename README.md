@@ -72,21 +72,85 @@ Quick Start
     person.ssn_encrypted #=> "vault:v0:EE3EV8P5hyo9h..."
     ```
 
-    You can customize the `vault_attribute` method with the following options:
 
-    ```ruby
-    vault_attribute :credit_card,
-      encrypted_column: :cc_encrypted,
-      path: "credit-secrets",
-      key: "people_credit_cards"
-    ```
+Advanced Configuration
+----------------------
+The following section details some of the more advanced configuration options for vault-rails. As a general rule, you should try to use vault-rails without these options until absolutely necessary.
 
-    - `:encrypted_column` - the name of the encrypted column
-      (default: `attribute_encrypted`)
-    - `:key` - the name of the key
-      (default: `#{app}_#{table}_#{column}`)
-    - `:path` - the path to the transit backend to use
-      (default: `transit/`)
+#### Specifying the encrypted column
+By default, the name of the encrypted column is `#{column}_encrypted`. This is customizable by setting the `:encrypted_column` option when declaring the attribute:
+
+```ruby
+vault_attribute :credit_card,
+  encrypted_column: :cc_encrypted
+```
+
+- **Note** Changing this value for an existing application will make existing values no longer decryptable!
+- **Note** This value **cannot** be the same name as the vault attribute!
+
+#### Specifying a custom key
+By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` coption when declaring the attribute:
+
+```ruby
+vault_attribute :credit_card,
+  key: "pci-data"
+```
+
+- **Note** Changing this value for an existing application will make existing values no longer decryptable!
+
+#### Specifying a different Vault path
+By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:
+
+```ruby
+vault_attribute :credit_card,
+  path: "transport"
+```
+
+- **Note** Changing this value for an existing application will make existing values no longer decryptable!
+
+#### Automatic serializing
+By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
+
+```ruby
+vault_attribute :details
+  serialize: :json
+```
+
+- **Note** You can view the source for the exact serialization and deserialization options, but they are intentionally not customizable and cannot be used for a full object marshal/unmarshal.
+
+For customized solutions, you can also pass a module to the `:serializer` key. This module must have the following API:
+
+```ruby
+module MySerializer
+  # @param [String, nil] raw
+  # @return [String, nil]
+  def self.encode(raw); end
+
+  # @param [String, nil] raw
+  # @return [String, nil]
+  def self.decode(raw); end
+end
+```
+
+Your class must account for `nil` and "empty" values if necessary. Then specify the class as the serializer:
+
+```ruby
+vault_attribute :details,
+  serialize: MySerializer
+```
+
+- **Note** It is possible to encode and decode entire Ruby objects using a custom serializer. Please do not do that. You will have a bad time.
+
+#### Custom encoding/decoding
+If a custom serializer seems too heavy, you can declare an `:encode` and `:decode` proc when declaring the attribute. Both options must be given:
+
+```ruby
+vault_attribute :address,
+  encode: ->(raw) { raw.to_s.upcase },
+  decode: ->(raw) { raw.to_s }
+```
+
+- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrive existing values!
 
 Caveats
 -------

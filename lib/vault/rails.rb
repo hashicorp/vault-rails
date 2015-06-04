@@ -5,11 +5,20 @@ require "json"
 
 require_relative "encrypted_model"
 require_relative "rails/configurable"
+require_relative "rails/errors"
+require_relative "rails/serializer"
 require_relative "rails/version"
 
 module Vault
   module Rails
     extend Vault::Rails::Configurable
+
+    # The list of serializers.
+    #
+    # @return [Hash<Symbol, Module>]
+    SERIALIZERS = {
+      json: Vault::Rails::JSONSerializer,
+    }.freeze
 
     # API client object based off the configured options in
     # {Vault::Configurable}.
@@ -51,6 +60,9 @@ module Vault
     # @return [String]
     #   the encrypted cipher text
     def self.encrypt(path, key, plaintext, client = self.client)
+      path = path.to_s if !path.is_a?(String)
+      key  = key.to_s if !key.is_a?(String)
+
       if self.enabled?
         return self.vault_encrypt(path, key, plaintext, client)
       end
@@ -71,10 +83,30 @@ module Vault
     # @return [String]
     #   the decrypted plaintext text
     def self.decrypt(path, key, ciphertext, client = self.client)
+      path = path.to_s if !path.is_a?(String)
+      key  = key.to_s if !key.is_a?(String)
+
       if self.enabled?
         return self.vault_decrypt(path, key, ciphertext, client)
       end
       return self.memory_decrypt(path, key, ciphertext, client)
+    end
+
+    # Get the serializer that corresponds to the given key. If the key does not
+    # correspond to a known serializer, an exception will be raised.
+    #
+    # @param [#to_sym] key
+    #   the name of the serializer
+    #
+    # @return [~Serializer]
+    def self.serializer_for(key)
+      key = key.to_sym if !key.is_a?(Symbol)
+
+      if serializer = SERIALIZERS[key]
+        return serializer
+      else
+        raise Vault::Rails::UnknownSerializerError.new(key)
+      end
     end
 
     private

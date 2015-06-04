@@ -7,6 +7,9 @@ module RSpec
   class VaultServer
     include Singleton
 
+    TOKEN_PATH = File.expand_path("~/.vault-token").freeze
+    TOKEN_PATH_BKUP = "#{TOKEN_PATH}.bak".freeze
+
     def self.method_missing(m, *args, &block)
       self.instance.public_send(m, *args, &block)
     end
@@ -14,6 +17,15 @@ module RSpec
     attr_reader :token
 
     def initialize
+      # If there is already a vault-token, we need to move it so we do not
+      # clobber!
+      if File.exist?(TOKEN_PATH)
+        FileUtils.mv(TOKEN_PATH, TOKEN_PATH_BKUP)
+        at_exit do
+          FileUtils.mv(TOKEN_PATH_BKUP, TOKEN_PATH)
+        end
+      end
+
       io = Tempfile.new("vault-server")
       pid = Process.spawn({}, "vault server -dev", out: io.to_i, err: io.to_i)
 
@@ -26,19 +38,7 @@ module RSpec
       end
 
       wait_for_ready do
-        output = ""
-
-        while
-          io.rewind
-          output = io.read
-          break if !output.empty?
-        end
-
-        if output.match(/Root Token: (.+)/)
-          @token = $1.strip
-        else
-          raise "Vault did not return a token!"
-        end
+        @token = File.read(TOKEN_PATH)
       end
     end
 
@@ -48,14 +48,7 @@ module RSpec
 
     def wait_for_ready(&block)
       Timeout.timeout(5) do
-        while
-          begin
-            open(address)
-          rescue SocketError, Errno::ECONNREFUSED, EOFError
-          rescue OpenURI::HTTPError => e
-            break if e.message =~ /404/
-          end
-
+        while !File.exist?(TOKEN_PATH)
           sleep(0.25)
         end
       end

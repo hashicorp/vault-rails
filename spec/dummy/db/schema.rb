@@ -17,8 +17,11 @@ ActiveRecord::Schema.define(version: 20150428220101) do
     t.string   "name"
     t.string   "ssn_encrypted"
     t.string   "cc_encrypted"
-    t.datetime "created_at",    null: false
-    t.datetime "updated_at",    null: false
+    t.string   "details_encrypted"
+    t.string   "business_card_encrypted"
+    t.string   "favorite_color_encrypted"
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
   end
 
 end
