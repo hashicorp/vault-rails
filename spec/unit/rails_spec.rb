@@ -14,6 +14,14 @@ describe Vault::Rails do
   end
 
   describe ".application=" do
+    before do
+      @_value = Vault::Rails.instance_variable_get(:@application)
+    end
+
+    after do
+      Vault::Rails.instance_variable_set(:@application, @_value)
+    end
+
     it "sets the value" do
       Vault::Rails.application = "dummy"
       expect(Vault::Rails.instance_variable_get(:@application)).to eq("dummy")
@@ -21,6 +29,14 @@ describe Vault::Rails do
   end
 
   describe ".enabled?" do
+    before do
+      @_value = Vault::Rails.instance_variable_get(:@enabled)
+    end
+
+    after do
+      Vault::Rails.instance_variable_set(:@enabled, @_value)
+    end
+
     it "defaults to false" do
       Vault::Rails.instance_variable_set(:@enabled, nil)
       expect(Vault::Rails.enabled?).to be(false)
