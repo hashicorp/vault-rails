@@ -1,9 +1,12 @@
 require "spec_helper"
 
 describe Vault::Rails do
+  before(:all) do
+    Vault::Rails.sys.mount("transit", :transit)
+  end
+
   context "with default options" do
     before(:all) do
-      Vault::Rails.sys.mount("transit", :transit)
       Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
     end
 
