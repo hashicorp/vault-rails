@@ -4,6 +4,9 @@ class CreatePeople < ActiveRecord::Migration
       t.string :name
       t.string :ssn_encrypted
       t.string :cc_encrypted
+      t.string :details_encrypted
+      t.string :business_card_encrypted
+      t.string :favorite_color_encrypted
 
       t.timestamps null: false
     end
