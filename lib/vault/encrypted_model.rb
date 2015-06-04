@@ -65,10 +65,8 @@ module Vault
           return value if !value.nil?
 
           ciphertext = read_attribute(encrypted_column)
-          return nil if ciphertext.nil?
-
-          plaintext = Vault::Rails.decrypt(path, key, ciphertext)
-          plaintext = serializer.decode(plaintext) if serializer
+          plaintext  = Vault::Rails.decrypt(path, key, ciphertext)
+          plaintext  = serializer.decode(plaintext) if serializer
 
           instance_variable_set(:"@#{column}", plaintext)
         end

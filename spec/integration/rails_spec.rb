@@ -63,6 +63,11 @@ describe Vault::Rails do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
     end
 
+    it "has a default value" do
+      person = Person.create!
+      expect(person.details).to eq({})
+    end
+
     it "encodes and decodes attributes" do
       person = Person.create!(details: { foo: "bar", "zip" => 1 })
       person = Person.find(person.id)
