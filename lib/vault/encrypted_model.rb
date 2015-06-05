@@ -78,6 +78,7 @@ module Vault
           ciphertext = Vault::Rails.encrypt(path, key, plaintext)
           write_attribute(encrypted_column, ciphertext)
 
+          plaintext = serializer.decode(plaintext) if serializer
           instance_variable_set(:"@#{column}", plaintext)
         end
 
