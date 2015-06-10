@@ -140,6 +140,7 @@ module Vault
           self.class._vault_attributes.each do |k, _|
             instance_variable_set(:"@#{k}", nil)
           end
+          result
         end
         alias_method :reload, :reload_with_vault_attributes
       end
