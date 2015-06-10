@@ -17,7 +17,7 @@ describe Vault::Rails do
 
     it "decrypts attributes" do
       person = Person.create!(ssn: "123-45-6789")
-      person = Person.find(person.id)
+      person.reload
 
       expect(person.ssn).to eq("123-45-6789")
     end
@@ -25,9 +25,16 @@ describe Vault::Rails do
     it "allows attributes to be unset" do
       person = Person.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: nil)
+      person.reload
 
-      person = Person.find(person.id)
       expect(person.ssn).to be(nil)
+    end
+
+    it "unsets instance variables on reload" do
+      person = Person.create!(ssn: "123-45-6789")
+      expect(person.instance_variable_get(:@ssn)).to be
+      person.reload
+      expect(person.instance_variable_get(:@ssn)).to be(nil)
     end
   end
 
@@ -44,7 +51,7 @@ describe Vault::Rails do
 
     it "decrypts attributes" do
       person = Person.create!(credit_card: "1234567890111213")
-      person = Person.find(person.id)
+      person.reload
 
       expect(person.credit_card).to eq("1234567890111213")
     end
@@ -52,8 +59,8 @@ describe Vault::Rails do
     it "allows attributes to be unset" do
       person = Person.create!(credit_card: "1234567890111213")
       person.update_attributes!(credit_card: nil)
+      person.reload
 
-      person = Person.find(person.id)
       expect(person.credit_card).to be(nil)
     end
   end
@@ -70,7 +77,7 @@ describe Vault::Rails do
 
     it "encodes and decodes attributes" do
       person = Person.create!(details: { foo: "bar", "zip" => 1 })
-      person = Person.find(person.id)
+      person.reload
 
       raw = Vault::Rails.decrypt("transit", "dummy_people_details", person.details_encrypted)
       expect(raw).to eq("{\"foo\":\"bar\",\"zip\":1}")
@@ -86,7 +93,7 @@ describe Vault::Rails do
 
     it "encodes and decodes attributes" do
       person = Person.create!(business_card: "data")
-      person = Person.find(person.id)
+      person.reload
 
       raw = Vault::Rails.decrypt("transit", "dummy_people_business_card", person.business_card_encrypted)
       expect(raw).to eq("01100100011000010111010001100001")
@@ -102,7 +109,7 @@ describe Vault::Rails do
 
     it "encodes and decodes attributes" do
       person = Person.create!(favorite_color: "blue")
-      person = Person.find(person.id)
+      person.reload
 
       raw = Vault::Rails.decrypt("transit", "dummy_people_favorite_color", person.favorite_color_encrypted)
       expect(raw).to eq("xxxbluexxx")
