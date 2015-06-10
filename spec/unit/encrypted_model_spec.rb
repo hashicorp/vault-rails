@@ -2,12 +2,8 @@ require "spec_helper"
 
 describe Vault::EncryptedModel do
   let(:klass) do
-    Class.new do
+    Class.new(ActiveRecord::Base) do
       include Vault::EncryptedModel
-
-      def self.table_name
-        "test"
-      end
     end
   end
 

@@ -125,5 +125,24 @@ module Vault
         end
       end
     end
+
+    included do
+      if defined?(ActiveRecord::Base)
+        # Overload ActiveRecord's `.reload` function to include resetting the
+        # instance variables for encrypted attributes. This is really only useful
+        # in tests, but one would assume that calling `.reload` on the model would
+        # reload all the things.
+        #
+        # @see ActiveRecord::Base#reload
+        alias_method :reload_without_vault_attributes, :reload
+        define_method(:reload_with_vault_attributes) do |*args, &block|
+          result = self.reload_without_vault_attributes(*args, &block)
+          self.class._vault_attributes.each do |k, _|
+            instance_variable_set(:"@#{k}", nil)
+          end
+        end
+        alias_method :reload, :reload_with_vault_attributes
+      end
+    end
   end
 end
