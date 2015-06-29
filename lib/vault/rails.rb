@@ -60,6 +60,10 @@ module Vault
     # @return [String]
     #   the encrypted cipher text
     def self.encrypt(path, key, plaintext, client = self.client)
+      if plaintext.blank?
+        return plaintext
+      end
+
       path = path.to_s if !path.is_a?(String)
       key  = key.to_s if !key.is_a?(String)
 
@@ -83,6 +87,10 @@ module Vault
     # @return [String]
     #   the decrypted plaintext text
     def self.decrypt(path, key, ciphertext, client = self.client)
+      if ciphertext.blank?
+        return ciphertext
+      end
+
       path = path.to_s if !path.is_a?(String)
       key  = key.to_s if !key.is_a?(String)
 
