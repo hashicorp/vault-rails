@@ -35,7 +35,7 @@ describe Vault::Rails do
       person.update_attributes!(ssn: "")
       person.reload
 
-      expect(person.ssn).to be(nil)
+      expect(person.ssn).to eq("")
     end
 
     it "unsets instance variables on reload" do
@@ -77,7 +77,7 @@ describe Vault::Rails do
       person.update_attributes!(credit_card: "")
       person.reload
 
-      expect(person.credit_card).to be(nil)
+      expect(person.credit_card).to eq("")
     end
   end
 

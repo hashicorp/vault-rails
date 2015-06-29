@@ -61,7 +61,7 @@ module Vault
     #   the encrypted cipher text
     def self.encrypt(path, key, plaintext, client = self.client)
       if plaintext.blank?
-        return nil
+        return plaintext
       end
 
       path = path.to_s if !path.is_a?(String)
@@ -88,7 +88,7 @@ module Vault
     #   the decrypted plaintext text
     def self.decrypt(path, key, ciphertext, client = self.client)
       if ciphertext.blank?
-        return nil
+        return ciphertext
       end
 
       path = path.to_s if !path.is_a?(String)
