@@ -169,7 +169,7 @@ module Vault
       if defined?(::Rails) && ::Rails.logger != nil
         ::Rails.logger.warn do
           "[vault-rails] Using in-memory cipher - this is not secure " \
-          "and should not be used in production-like environments."
+          "and should never be used in production-like environments!"
         end
       end
     end
