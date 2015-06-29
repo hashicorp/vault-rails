@@ -30,6 +30,14 @@ describe Vault::Rails do
       expect(person.ssn).to be(nil)
     end
 
+    it "allows attributes to be blank" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: "")
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
     it "unsets instance variables on reload" do
       person = Person.create!(ssn: "123-45-6789")
       expect(person.instance_variable_get(:@ssn)).to be
@@ -59,6 +67,14 @@ describe Vault::Rails do
     it "allows attributes to be unset" do
       person = Person.create!(credit_card: "1234567890111213")
       person.update_attributes!(credit_card: nil)
+      person.reload
+
+      expect(person.credit_card).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = Person.create!(credit_card: "1234567890111213")
+      person.update_attributes!(credit_card: "")
       person.reload
 
       expect(person.credit_card).to be(nil)
