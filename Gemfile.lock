@@ -131,3 +131,6 @@ DEPENDENCIES
   rspec (~> 3.2)
   sqlite3
   vault-rails!
+
+BUNDLED WITH
+   1.10.3
