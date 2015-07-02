@@ -38,7 +38,6 @@ module Vault
       def vault_attribute(column, options = {})
         encrypted_column = options[:encrypted_column] || "#{column}_encrypted"
         path = options[:path] || "transit"
-        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{column}"
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -64,6 +63,7 @@ module Vault
           value = instance_variable_get(:"@#{column}")
           return value if !value.nil?
 
+          key        = _get_vault_key_name(options[:key], column)
           ciphertext = read_attribute(encrypted_column)
           plaintext  = Vault::Rails.decrypt(path, key, ciphertext)
           plaintext  = serializer.decode(plaintext) if serializer
@@ -74,6 +74,7 @@ module Vault
         # Setter
         define_method("#{column}=") do |plaintext|
           plaintext = serializer.encode(plaintext) if serializer
+          key       = _get_vault_key_name(options[:key], column)
 
           ciphertext = Vault::Rails.encrypt(path, key, plaintext)
           write_attribute(encrypted_column, ciphertext)
@@ -90,8 +91,7 @@ module Vault
         # Make a note of this attribute so we can use it in the future (maybe).
         _vault_attributes.store(column.to_sym,
           encrypted_column: encrypted_column,
-          path: path,
-          key: key,
+          path: path
         )
 
         self
@@ -143,6 +143,17 @@ module Vault
           result
         end
         alias_method :reload, :reload_with_vault_attributes
+      end
+    end
+
+    private
+    def _get_vault_key_name(key, column)
+      if key.is_a? Proc
+        key.call(self)
+      elsif key.is_a? String
+        key
+      else
+        "#{Vault::Rails.application}_#{self.class.table_name}_#{column}"
       end
     end
   end
