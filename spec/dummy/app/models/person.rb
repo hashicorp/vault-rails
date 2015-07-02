@@ -19,4 +19,7 @@ class Person < ActiveRecord::Base
   vault_attribute :favorite_color,
     encode: ->(raw) { "xxx#{raw}xxx" },
     decode: ->(raw) { raw[3...-3] }
+
+  vault_attribute :pet_name,
+    key: ->(person) { "people_pet_name_#{person.id}" }
 end
