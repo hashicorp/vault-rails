@@ -81,6 +81,35 @@ describe Vault::Rails do
     end
   end
 
+  context "with run-time evaluation key" do
+    let!(:person) { Person.create! }
+
+    before(:each) do
+      Vault::Rails.logical.write("transit/keys/people_pet_name_#{person.id}")
+    end
+
+    it "encrypts attributes" do
+      person.update_attributes!(pet_name: "hashipet")
+
+      expect(person.pet_name).to be
+    end
+
+    it "decrypts attributes" do
+      person.update_attributes!(pet_name: "hashipet")
+      person.reload
+
+      expect(person.pet_name).to eq("hashipet")
+    end
+
+    it "allows attributes to be unset" do
+      person.update_attributes!(pet_name: "hashipet")
+      person.update_attributes!(pet_name: nil)
+      person.reload
+
+      expect(person.pet_name).to be(nil)
+    end
+  end
+
   context "with the :json serializer"  do
     before(:all) do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
