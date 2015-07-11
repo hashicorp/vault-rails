@@ -162,11 +162,31 @@ The Vault Rails plugin does not automatically mount a backend. It is assumed the
 $ vault mount transit
 ```
 
-The Vault Rails plugin does not automatically create transit keys in Vault. This is intentional so that you can give the policy for the token associated with the Rails application read/write access to the encrypt/decrypt backends _only_, without giving the Rails application the ability to read encryption keys from Vault.
+If you are running Vault 0.2.0 or later, the Vault Rails plugin will automatically create keys in the transit backend if it has permission. Here is an example policy to grant permissions:
 
-If an attacker gained access to the Rails application server, they would be able to read all encryption keys in Vault, making decryption of sensitive data in the database easy.
+```javascript
+# Allow renewal of leases for secrets
+path "sys/renew/*" {
+  policy = "write"
+}
 
-Instead, you should create keys for each column you plan to encrypt using a different policy, out-of-band from the Rails application. For example:
+# Allow renewal of token leases
+path "auth/token/renew/*" {
+  policy = "write"
+}
+
+path "transit/encrypt/myapp_*" {
+  policy = "write"
+}
+
+path "transit/decrypt/myapp_*" {
+  policy = "write"
+}
+```
+
+Note that you will need to have an out-of-band process to renew your Vault token.
+
+For lower versions of Vault, the Vault Rails plugin does not automatically create transit keys in Vault. Instead, you should create keys for each column you plan to encrypt using a different policy, out-of-band from the Rails application. For example:
 
 ```shell
 $ vault write transit/keys/<key> create=1
