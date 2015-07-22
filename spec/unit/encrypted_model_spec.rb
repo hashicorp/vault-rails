@@ -19,5 +19,27 @@ describe Vault::EncryptedModel do
         klass.vault_attribute(:foo, serializer: :json, decode: ->(r) { r })
       }.to raise_error(Vault::Rails::ValidationFailedError)
     end
+
+    it "defines a getter" do
+      klass.vault_attribute(:foo)
+      expect(klass.instance_methods).to include(:foo)
+    end
+
+    it "defines a setter" do
+      klass.vault_attribute(:foo)
+      expect(klass.instance_methods).to include(:foo=)
+    end
+
+    it "defines a checker" do
+      klass.vault_attribute(:foo)
+      expect(klass.instance_methods).to include(:foo?)
+    end
+
+    it "defines dirty attribute methods" do
+      klass.vault_attribute(:foo)
+      expect(klass.instance_methods).to include(:foo_change)
+      expect(klass.instance_methods).to include(:foo_changed?)
+      expect(klass.instance_methods).to include(:foo_was)
+    end
   end
 end

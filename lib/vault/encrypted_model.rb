@@ -75,6 +75,14 @@ module Vault
         define_method("#{column}=") do |plaintext|
           plaintext = serializer.encode(plaintext) if serializer
 
+          # If we are setting the value to the same value, do nothing
+          current = instance_variable_get(:"@#{column}")
+          if current == plaintext
+            return current
+          end
+
+          attribute_will_change!(column.to_s)
+
           ciphertext = Vault::Rails.encrypt(path, key, plaintext)
           write_attribute(encrypted_column, ciphertext)
 
@@ -85,6 +93,25 @@ module Vault
         # Checker
         define_method("#{column}?") do
           read_attribute(encrypted_column).present?
+        end
+
+        # Ditry method
+        define_method("#{column}_change") do
+          changes[column]
+        end
+
+        # Ditry method
+        define_method("#{column}_changed?") do
+          changed.include?(column.to_s)
+        end
+
+        # Ditry method
+        define_method("#{column}_was") do
+          if changes[column]
+            changes[column][0]
+          else
+            nil
+          end
         end
 
         # Make a note of this attribute so we can use it in the future (maybe).
