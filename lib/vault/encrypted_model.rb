@@ -110,7 +110,7 @@ module Vault
           if changes[column]
             changes[column][0]
           else
-            nil
+            public_send(column)
           end
         end
 
