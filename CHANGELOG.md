@@ -1,5 +1,9 @@
 # Vault Rails Changelog
 
+## v0.1.2.dev (Unreleased)
+
+- Add dirty tracking for Active Record models
+
 ## v0.1.2 (May 14, 2015)
 
 - Do not automatically mount or create keys (security issue, see README for
