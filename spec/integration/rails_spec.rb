@@ -22,6 +22,20 @@ describe Vault::Rails do
       expect(person.ssn).to eq("123-45-6789")
     end
 
+    it "tracks dirty attributes" do
+      person = Person.create!(ssn: "123-45-6789")
+
+      expect(person.ssn_changed?).to be(false)
+      expect(person.ssn_change).to be(nil)
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
+      expect(person.ssn_was).to eq("123-45-6789")
+    end
+
     it "allows attributes to be unset" do
       person = Person.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: nil)
@@ -64,6 +78,20 @@ describe Vault::Rails do
       expect(person.credit_card).to eq("1234567890111213")
     end
 
+    it "tracks dirty attributes" do
+      person = Person.create!(credit_card: "1234567890111213")
+
+      expect(person.credit_card_changed?).to be(false)
+      expect(person.credit_card_change).to eq(nil)
+      expect(person.credit_card_was).to eq("1234567890111213")
+
+      person.credit_card = "123456789010"
+
+      expect(person.credit_card_changed?).to be(true)
+      expect(person.credit_card_change).to eq(["1234567890111213", "123456789010"])
+      expect(person.credit_card_was).to eq("1234567890111213")
+    end
+
     it "allows attributes to be unset" do
       person = Person.create!(credit_card: "1234567890111213")
       person.update_attributes!(credit_card: nil)
@@ -91,8 +119,22 @@ describe Vault::Rails do
       expect(person.details).to eq({})
     end
 
+    it "tracks dirty attributes" do
+      person = Person.create!(details: { "foo" => "bar" })
+
+      expect(person.details_changed?).to be(false)
+      expect(person.details_change).to be(nil)
+      expect(person.details_was).to eq({ "foo" => "bar" })
+
+      person.details = { "zip" => "zap" }
+
+      expect(person.details_changed?).to be(true)
+      expect(person.details_change).to eq([{ "foo" => "bar" }, { "zip" => "zap" }])
+      expect(person.details_was).to eq({ "foo" => "bar" })
+    end
+
     it "encodes and decodes attributes" do
-      person = Person.create!(details: { foo: "bar", "zip" => 1 })
+      person = Person.create!(details: { "foo" => "bar", "zip" => 1 })
       person.reload
 
       raw = Vault::Rails.decrypt("transit", "dummy_people_details", person.details_encrypted)
