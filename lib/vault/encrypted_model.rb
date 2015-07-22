@@ -95,17 +95,17 @@ module Vault
           read_attribute(encrypted_column).present?
         end
 
-        # Ditry method
+        # Dirty method
         define_method("#{column}_change") do
           changes[column]
         end
 
-        # Ditry method
+        # Dirty method
         define_method("#{column}_changed?") do
           changed.include?(column.to_s)
         end
 
-        # Ditry method
+        # Dirty method
         define_method("#{column}_was") do
           if changes[column]
             changes[column][0]
