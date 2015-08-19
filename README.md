@@ -29,7 +29,7 @@ Quick Start
 
       # The name of the application. All encrypted keys in Vault will be
       # prefixed with this application name. If you change the name of the
-      # application, you will need to migration the encrypted data to the new
+      # application, you will need to migrate the encrypted data to the new
       # key namespace.
       vault.application = "my_app"
 
