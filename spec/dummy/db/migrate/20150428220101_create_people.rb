@@ -7,6 +7,7 @@ class CreatePeople < ActiveRecord::Migration
       t.string :details_encrypted
       t.string :business_card_encrypted
       t.string :favorite_color_encrypted
+      t.string :pet_name_encrypted
 
       t.timestamps null: false
     end
