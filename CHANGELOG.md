@@ -2,7 +2,31 @@
 
 ## v0.1.2.dev (Unreleased)
 
+BREAKING CHANGES
+- The API for configuration now lives under `Vault::Rails` instead of `Vault`.
+  Existing users will need to update their configuration as follows:
+
+  ```diff
+  - Vault.configure do |config|
+  + Vault::Rails.configure do |config|
+  ```
+- Remove testing mode and use an in-memory vault store in development and test
+  instead with the option to disable
+
+IMPROVEMENTS
+
+- Allow specifying custom serialization options
 - Add dirty tracking for Active Record models
+- Unset instance variables when `reload` is called for ActiveRecord models
+- Fix issues that would occur when using multiple threads
+
+BUG FIXES
+
+- Update documentation to better describe configuration options
+- Update documentation around advanced configuration options
+- Update documentation to include example Vault policies for the transit backend
+- Do not attempt to read back a secret after writing to the logical backend
+- Increase test coverage
 
 ## v0.1.2 (May 14, 2015)
 
