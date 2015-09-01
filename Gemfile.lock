@@ -119,7 +119,7 @@ GEM
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
-    vault (0.1.4)
+    vault (0.1.5)
 
 PLATFORMS
   ruby
