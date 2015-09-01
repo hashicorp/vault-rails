@@ -20,6 +20,11 @@ module Vault
       json: Vault::Rails::JSONSerializer,
     }.freeze
 
+    # The default encoding.
+    #
+    # @return [String]
+    DEFAULT_ENCODING = "utf-8".freeze
+
     # API client object based off the configured options in
     # {Vault::Configurable}.
     #
@@ -68,9 +73,12 @@ module Vault
       key  = key.to_s if !key.is_a?(String)
 
       if self.enabled?
-        return self.vault_encrypt(path, key, plaintext, client)
+        result = self.vault_encrypt(path, key, plaintext, client)
+      else
+        result = self.memory_encrypt(path, key, plaintext, client)
       end
-      return self.memory_encrypt(path, key, plaintext, client)
+
+      return self.force_encoding(result)
     end
 
     # Decrypt the given ciphertext data using the provided mount and key.
@@ -95,9 +103,12 @@ module Vault
       key  = key.to_s if !key.is_a?(String)
 
       if self.enabled?
-        return self.vault_decrypt(path, key, ciphertext, client)
+        result = self.vault_decrypt(path, key, ciphertext, client)
+      else
+        result = self.memory_decrypt(path, key, ciphertext, client)
       end
-      return self.memory_decrypt(path, key, ciphertext, client)
+
+      return self.force_encoding(result)
     end
 
     # Get the serializer that corresponds to the given key. If the key does not
@@ -169,6 +180,14 @@ module Vault
     # @return [String]
     def self.memory_key_for(path, key)
       return Base64.strict_encode64("#{path}/#{key}".ljust(32, "x"))
+    end
+
+    # Forces the encoding into the default Rails encoding and returns the
+    # newly encoded string.
+    # @return [String]
+    def self.force_encoding(str)
+      encoding = ::Rails.application.config.encoding || DEFAULT_ENCODING
+      str.force_encoding(encoding).encode(encoding)
     end
 
     private
