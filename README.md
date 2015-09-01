@@ -3,6 +3,7 @@ Vault Rails [![Build Status](https://secure.travis-ci.org/hashicorp/vault-rails.
 
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.
 
+**The documentation in this README corresponds to the master branch of the Vault Rails plugin. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the Vault Rails plugin for the proper documentation.**
 
 Quick Start
 -----------
