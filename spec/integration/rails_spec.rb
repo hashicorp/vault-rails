@@ -13,6 +13,7 @@ describe Vault::Rails do
     it "encrypts attributes" do
       person = Person.create!(ssn: "123-45-6789")
       expect(person.ssn_encrypted).to be
+      expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
     end
 
     it "decrypts attributes" do
@@ -20,6 +21,7 @@ describe Vault::Rails do
       person.reload
 
       expect(person.ssn).to eq("123-45-6789")
+      expect(person.ssn.encoding).to eq(Encoding::UTF_8)
     end
 
     it "tracks dirty attributes" do
@@ -69,6 +71,7 @@ describe Vault::Rails do
     it "encrypts attributes" do
       person = Person.create!(credit_card: "1234567890111213")
       expect(person.cc_encrypted).to be
+      expect(person.cc_encrypted.encoding).to eq(Encoding::UTF_8)
     end
 
     it "decrypts attributes" do
@@ -76,6 +79,7 @@ describe Vault::Rails do
       person.reload
 
       expect(person.credit_card).to eq("1234567890111213")
+      expect(person.credit_card.encoding).to eq(Encoding::UTF_8)
     end
 
     it "tracks dirty attributes" do
@@ -106,6 +110,57 @@ describe Vault::Rails do
       person.reload
 
       expect(person.credit_card).to eq("")
+    end
+  end
+
+  context "with non-ASCII characters" do
+    before(:all) do
+      Vault::Rails.sys.mount("non-ascii", :transit)
+      Vault::Rails.logical.write("non-ascii/keys/people_non_ascii")
+    end
+
+    it "encrypts attributes" do
+      person = Person.create!(non_ascii: "dás ümlaut")
+      expect(person.non_ascii_encrypted).to be
+      expect(person.non_ascii_encrypted.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "decrypts attributes" do
+      person = Person.create!(non_ascii: "dás ümlaut")
+      person.reload
+
+      expect(person.non_ascii).to eq("dás ümlaut")
+      expect(person.non_ascii.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "tracks dirty attributes" do
+      person = Person.create!(non_ascii: "dás ümlaut")
+
+      expect(person.non_ascii_changed?).to be(false)
+      expect(person.non_ascii_change).to eq(nil)
+      expect(person.non_ascii_was).to eq("dás ümlaut")
+
+      person.non_ascii = "él ñiñô"
+
+      expect(person.non_ascii_changed?).to be(true)
+      expect(person.non_ascii_change).to eq(["dás ümlaut", "él ñiñô"])
+      expect(person.non_ascii_was).to eq("dás ümlaut")
+    end
+
+    it "allows attributes to be unset" do
+      person = Person.create!(non_ascii: "dás ümlaut")
+      person.update_attributes!(non_ascii: nil)
+      person.reload
+
+      expect(person.non_ascii).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = Person.create!(non_ascii: "dás ümlaut")
+      person.update_attributes!(non_ascii: "")
+      person.reload
+
+      expect(person.non_ascii).to eq("")
     end
   end
 
