@@ -48,6 +48,16 @@ describe Vault::Rails do
       expect(person.ssn).to be(nil)
     end
 
+    it "allows attributes to be unset after reload" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.reload
+      person.ssn = nil
+      person.save!
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
     it "allows attributes to be blank" do
       person = Person.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: "")
