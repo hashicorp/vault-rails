@@ -48,11 +48,16 @@ describe Vault::Rails do
       expect(person.ssn).to be(nil)
     end
 
+    it "allows saving without validations" do
+      person = Person.new(ssn: "123-456-7890")
+      person.save(validate: false)
+      expect(person.ssn_encrypted).to match("vault:")
+    end
+
     it "allows attributes to be unset after reload" do
       person = Person.create!(ssn: "123-45-6789")
       person.reload
-      person.ssn = nil
-      person.save!
+      person.update_attributes!(ssn: nil)
       person.reload
 
       expect(person.ssn).to be(nil)
@@ -66,11 +71,21 @@ describe Vault::Rails do
       expect(person.ssn).to eq("")
     end
 
-    it "unsets instance variables on reload" do
+    it "reloads instance variables on reload" do
       person = Person.create!(ssn: "123-45-6789")
-      expect(person.instance_variable_get(:@ssn)).to be
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
       person.reload
-      expect(person.instance_variable_get(:@ssn)).to be(nil)
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+    end
+
+    it "does not try to encrypt unchanged attributes" do
+      person = Person.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:encrypt)
+      person.name = "Cinderella"
+      person.save!
     end
   end
 
