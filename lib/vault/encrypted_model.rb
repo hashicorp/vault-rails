@@ -239,6 +239,11 @@ module Vault
         # Generate the ciphertext and store it back as an attribute
         ciphertext = Vault::Rails.encrypt(path, key, plaintext)
 
+        # Write the attribute back, so that we don't have to reload the record
+        # to get the ciphertext
+        write_attribute(column, ciphertext)
+
+        # Return the updated column so we can save
         { column => ciphertext }
       end
 
