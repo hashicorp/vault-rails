@@ -196,7 +196,12 @@ describe Vault::Rails do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
     end
 
-    it "has a default value" do
+    it "has a default value for unpersisted records" do
+      person = Person.new
+      expect(person.details).to eq({})
+    end
+
+    it "has a default value for persisted records" do
       person = Person.create!
       expect(person.details).to eq({})
     end

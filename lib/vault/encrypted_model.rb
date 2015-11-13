@@ -142,11 +142,9 @@ module Vault
     end
 
     included do
-      # After a resource has been found (since `after_initialize` does not make
-      # sense because new resources will not have Vault data), immediately
-      # communicate with Vault and decrypt the attributes (if any).
-      # after_find :__vault_load_attributes!
-      after_find :__vault_load_attributes!
+      # After a resource has been initialized, immediately communicate with
+      # Vault and decrypt any attributes.
+      after_initialize :__vault_load_attributes!
 
       # Persist any changed attributes back to Vault before saving the record.
       before_save :__vault_persist_attributes!
@@ -174,6 +172,12 @@ module Vault
 
         # Load the ciphertext
         ciphertext = read_attribute(column)
+
+        # If the user provided a value for the attribute, do not try to load
+        # it from Vault
+        if instance_variable_get("@#{attribute}")
+          return
+        end
 
         # Load the plaintext value
         plaintext = Vault::Rails.decrypt(path, key, ciphertext)
@@ -230,6 +234,12 @@ module Vault
       # reload a record from the database.
       def reload(*)
         super.tap do
+          # Unset all the instance variables to force the new data to be pulled
+          # from Vault
+          self.class.__vault_attributes.each do |attribute, _|
+            self.instance_variable_set("@#{attribute}", nil)
+          end
+
           self.__vault_load_attributes!
         end
       end
