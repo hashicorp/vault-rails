@@ -146,12 +146,13 @@ module Vault
       # Vault and decrypt any attributes.
       after_initialize :__vault_load_attributes!
 
-      # Persist any changed attributes back to Vault before saving the record.
-      before_save :__vault_persist_attributes!
-
-      # After we save the record, reload the attributes from Vault to ensure
-      # we have the proper attribute set.
-      after_save :__vault_load_attributes!
+      # After we save the record, persist all the values to Vault and reload
+      # them attributes from Vault to ensure we have the proper attributes set.
+      # The reason we use `after_save` here is because a `before_save` could
+      # run too early in the callback process. If a user is changing Vault
+      # attributes in a callback, it is possible that our callback will run
+      # before theirs, resulting in attributes that are not persisted.
+      after_save :__vault_persist_attributes!
 
       # Decrypt all the attributes from Vault.
       # @return [true]
@@ -195,8 +196,19 @@ module Vault
       # on this model.
       # @return [true]
       def __vault_persist_attributes!
+        changes = {}
+
         self.class.__vault_attributes.each do |attribute, options|
-          self.__vault_persist_attribute!(attribute, options)
+          if c = self.__vault_persist_attribute!(attribute, options)
+            changes.merge!(c)
+          end
+        end
+
+        # If there are any changes to the model, update them all at once,
+        # skipping any callbacks and validation. This is okay, because we are
+        # already in a transaction due to the callback.
+        if !changes.empty?
+          self.update_columns(changes)
         end
 
         return true
@@ -226,7 +238,13 @@ module Vault
 
         # Generate the ciphertext and store it back as an attribute
         ciphertext = Vault::Rails.encrypt(path, key, plaintext)
+
+        # Write the attribute back, so that we don't have to reload the record
+        # to get the ciphertext
         write_attribute(column, ciphertext)
+
+        # Return the updated column so we can save
+        { column => ciphertext }
       end
 
       # Override the reload method to reload the Vault attributes. This will
