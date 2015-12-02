@@ -25,6 +25,10 @@ module Vault
     # @return [String]
     DEFAULT_ENCODING = "utf-8".freeze
 
+    # The warning string to print when running in development mode.
+    DEV_WARNING = "[vault-rails] Using in-memory cipher - this is not secure " \
+      "and should never be used in production-like environments!".freeze
+
     # API client object based off the configured options in
     # {Vault::Configurable}.
     #
@@ -72,13 +76,15 @@ module Vault
       path = path.to_s if !path.is_a?(String)
       key  = key.to_s if !key.is_a?(String)
 
-      if self.enabled?
-        result = self.vault_encrypt(path, key, plaintext, client)
-      else
-        result = self.memory_encrypt(path, key, plaintext, client)
-      end
+      with_retries do
+        if self.enabled?
+          result = self.vault_encrypt(path, key, plaintext, client)
+        else
+          result = self.memory_encrypt(path, key, plaintext, client)
+        end
 
-      return self.force_encoding(result)
+        return self.force_encoding(result)
+      end
     end
 
     # Decrypt the given ciphertext data using the provided mount and key.
@@ -102,13 +108,15 @@ module Vault
       path = path.to_s if !path.is_a?(String)
       key  = key.to_s if !key.is_a?(String)
 
-      if self.enabled?
-        result = self.vault_decrypt(path, key, ciphertext, client)
-      else
-        result = self.memory_decrypt(path, key, ciphertext, client)
-      end
+      with_retries do
+        if self.enabled?
+          result = self.vault_decrypt(path, key, ciphertext, client)
+        else
+          result = self.memory_decrypt(path, key, ciphertext, client)
+        end
 
-      return self.force_encoding(result)
+        return self.force_encoding(result)
+      end
     end
 
     # Get the serializer that corresponds to the given key. If the key does not
@@ -132,7 +140,7 @@ module Vault
 
     # Perform in-memory encryption. This is useful for testing and development.
     def self.memory_encrypt(path, key, plaintext, client)
-      log_warning
+      log_warning(DEV_WARNING)
 
       return nil if plaintext.nil?
 
@@ -144,7 +152,7 @@ module Vault
 
     # Perform in-memory decryption. This is useful for testing and development.
     def self.memory_decrypt(path, key, ciphertext, client)
-      log_warning
+      log_warning(DEV_WARNING)
 
       return nil if ciphertext.nil?
 
@@ -192,12 +200,27 @@ module Vault
 
     private
 
-    def self.log_warning
-      if defined?(::Rails) && ::Rails.logger != nil
-        ::Rails.logger.warn do
-          "[vault-rails] Using in-memory cipher - this is not secure " \
-          "and should never be used in production-like environments!"
+    def self.with_retries(client = self.client, &block)
+      exceptions = [Vault::HTTPConnectionError, Vault::HTTPServerError]
+      options = {
+        attempts: self.retry_attempts,
+        base:     self.retry_base,
+        max_wait: self.retry_max_wait,
+      }
+
+      client.with_retries(exceptions, options) do |i, e|
+        if !e.nil?
+          log_warning "[vault-rails] (#{i}) An error occurred when trying to "
+            "communicate with Vault: #{e.message}"
         end
+
+        yield
+      end
+    end
+
+    def self.log_warning(msg)
+      if defined?(::Rails) && ::Rails.logger != nil
+        ::Rails.logger.warn { msg }
       end
     end
   end
