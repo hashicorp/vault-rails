@@ -48,6 +48,51 @@ module Vault
       def enabled=(val)
         @enabled = !!val
       end
+
+      # Gets the number of retry attempts.
+      #
+      # @return [Fixnum]
+      def retry_attempts
+        @retry_attempts ||= 0
+      end
+
+      # Sets the number of retry attempts. Please see the Vault documentation
+      # for more information.
+      #
+      # @param [Fixnum] val
+      def retry_attempts=(val)
+        @retry_attempts = val
+      end
+
+      # Gets the number of retry attempts.
+      #
+      # @return [Fixnum]
+      def retry_base
+        @retry_base ||= Vault::Defaults::RETRY_BASE
+      end
+
+      # Sets the retry interval. Please see the Vault documentation for more
+      # information.
+      #
+      # @param [Fixnum] val
+      def retry_base=(val)
+        @retry_base = val
+      end
+
+      # Gets the retry maximum wait.
+      #
+      # @return [Fixnum]
+      def retry_max_wait
+        @retry_max_wait ||= Vault::Defaults::RETRY_MAX_WAIT
+      end
+
+      # Sets the naximum amount of time for a single retry. Please see the Vault
+      # documentation for more information.
+      #
+      # @param [Fixnum] val
+      def retry_max_wait=(val)
+        @retry_max_wait = val
+      end
     end
   end
 end
