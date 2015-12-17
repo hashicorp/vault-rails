@@ -139,7 +139,7 @@ module Vault
       cipher = OpenSSL::Cipher::AES.new(128, :CBC)
       cipher.encrypt
       cipher.key = memory_key_for(path, key)
-      return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
+      return "vault:v0:" + Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
     end
 
     # Perform in-memory decryption. This is useful for testing and development.
@@ -151,6 +151,7 @@ module Vault
       cipher = OpenSSL::Cipher::AES.new(128, :CBC)
       cipher.decrypt
       cipher.key = memory_key_for(path, key)
+      ciphertext = ciphertext.gsub("vault:v0:", "")
       return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
     end
 
