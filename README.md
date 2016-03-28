@@ -13,6 +13,12 @@ Quick Start
     gem "vault-rails", "~> 0.1", require: false
     ```
 
+    or for Rails 5:
+
+    ```ruby
+    gem "vault-rails", "~> 0.1", require: false, github: "hashicorp/vault-rails", branch: "rails5"
+    ```
+
     and then run the `bundle` command to install.
 
 1. Create an initializer:
@@ -226,3 +232,15 @@ Important Notes:
 - **All new features must include test coverage.** At a bare minimum, Unit tests are required. It is preferred if you include acceptance tests as well.
 - **The tests must be be idempotent.** The HTTP calls made during a test should be able to be run over and over.
 - **Tests are order independent.** The default RSpec configuration randomizes the test order, so this should not be a problem.
+
+Running tests:
+
+1. Ensure another Vault is not running locally on `http://127.0.0.1:8200`
+2. Migrate test database and run the specs:
+
+```shell
+cd spec/dummy
+bundle exec rake db:migrate RAILS_ENV=test
+cd -
+bundle exec rake spec
+```
