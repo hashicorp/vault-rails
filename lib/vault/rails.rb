@@ -210,7 +210,7 @@ module Vault
 
       client.with_retries(exceptions, options) do |i, e|
         if !e.nil?
-          log_warning "[vault-rails] (#{i}) An error occurred when trying to "
+          log_warning "[vault-rails] (#{i}) An error occurred when trying to " \
             "communicate with Vault: #{e.message}"
         end
 
