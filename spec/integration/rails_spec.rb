@@ -262,4 +262,12 @@ describe Vault::Rails do
       expect(person.favorite_color).to eq("blue")
     end
   end
+
+  context 'with errors' do
+    it 'raises the appropriate exception' do
+      expect {
+        Vault::Rails.encrypt('/bogus/path', 'bogus', 'bogus')
+      }.to raise_error(Vault::HTTPClientError)
+    end
+  end
 end

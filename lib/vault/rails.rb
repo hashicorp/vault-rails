@@ -208,7 +208,7 @@ module Vault
         max_wait: self.retry_max_wait,
       }
 
-      client.with_retries(exceptions, options) do |i, e|
+      client.with_retries(*exceptions, options) do |i, e|
         if !e.nil?
           log_warning "[vault-rails] (#{i}) An error occurred when trying to " \
             "communicate with Vault: #{e.message}"
