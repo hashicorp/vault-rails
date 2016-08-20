@@ -20,6 +20,10 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", "~> 4.0"
   s.add_dependency "vault", "~> 0.2"
 
+  if RUBY_VERSION.start_with? "1"
+    s.add_dependency "mime-types", "~> 2.0"
+  end
+
   s.add_development_dependency "bundler"
   s.add_development_dependency "pry"
   s.add_development_dependency "rake",    "~> 10.0"
