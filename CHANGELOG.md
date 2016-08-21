@@ -1,5 +1,10 @@
 # Vault Rails Changelog
 
+## v0.3.0.dev (Unreleased)
+
+BUG FIXES
+
+
 ## v0.3.0 (August 21, 2016)
 
 IMPROVEMENTS
