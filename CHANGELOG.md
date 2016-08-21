@@ -1,5 +1,16 @@
 # Vault Rails Changelog
 
+## v0.3.0 (August 21, 2016)
+
+IMPROVEMENTS
+
+- Add support for Rail 5 and better testing matrix
+
+BUG FIXES
+
+- Use a pre-configured client to ensure options are inherited from the
+  default client
+
 ## v0.2.0 (May 2, 2016)
 
 BREAKING CHANGES

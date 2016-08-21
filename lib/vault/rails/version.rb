@@ -1,5 +1,5 @@
 module Vault
   module Rails
-    VERSION = "0.2.0.dev"
+    VERSION = "0.3.0"
   end
 end
