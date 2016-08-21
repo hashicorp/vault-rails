@@ -8,6 +8,12 @@ env:
   - VAULT_VERSION=0.4.1
   - VAULT_VERSION=0.3.1
 
+gemfile:
+  - Gemfile
+  - gemfiles/rails_4.0.gemfile
+  - gemfiles/rails_4.1.gemfile
+  - gemfiles/rails_4.2.gemfile
+
 before_install:
   - wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
   - unzip vault.zip
@@ -20,9 +26,17 @@ branches:
     - master
 
 rvm:
-  - 2.0
   - 2.1
-  - 2.2
+  - 2.2.5
+  - 2.3.1
+
+matrix:
+  exclude:
+    # Rails 5 requires Ruby 2.2.2+
+    - rvm: 2.1
+      gemfile: Gemfile
+    - rvm: 2.1
+      gemfile: Gemfile
 
 before_script:
   - bundle exec rake app:db:create
