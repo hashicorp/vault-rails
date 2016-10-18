@@ -66,12 +66,12 @@ module Vault
 
         # Setter
         define_method("#{attribute}=") do |value|
-          # If the currently set value is not the same as the given value (or
-          # not set at all), update the instance variable and mark it as dirty.
-          if instance_variable_get("@#{attribute}") != value
-            attribute_will_change!("#{attribute}")
-            instance_variable_set("@#{attribute}", value)
-          end
+          # We always set it as changed without comparing with the current value
+          # because we allow our held values to be mutated, so we need to assume
+          # that if you call attr=, you want it send back regardless.
+
+          attribute_will_change!("#{attribute}")
+          instance_variable_set("@#{attribute}", value)
 
           # Return the value to be consistent with other AR methods.
           value
