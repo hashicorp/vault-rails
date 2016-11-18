@@ -61,11 +61,14 @@ module Vault
 
         # Getter
         define_method("#{attribute}") do
+          self.__vault_load_attributes! unless @__vault_loaded
           instance_variable_get("@#{attribute}")
         end
 
         # Setter
         define_method("#{attribute}=") do |value|
+          self.__vault_load_attributes! unless @__vault_loaded
+
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
           # that if you call attr=, you want it send back regardless.
@@ -79,6 +82,7 @@ module Vault
 
         # Checker
         define_method("#{attribute}?") do
+          self.__vault_load_attributes! unless @__vault_loaded
           instance_variable_get("@#{attribute}").present?
         end
 
@@ -139,12 +143,20 @@ module Vault
             "`:decode' without specifying `:encode' as well!"
         end
       end
+
+      def lazy_decrypt
+        @lazy_decrypt ||= false
+      end
+
+      def lazy_decrypt!
+        @lazy_decrypt = true
+      end
     end
 
     included do
       # After a resource has been initialized, immediately communicate with
-      # Vault and decrypt any attributes.
-      after_initialize :__vault_load_attributes!
+      # Vault and decrypt any attributes unless lazy_decrypt is set.
+      after_initialize :__vault_initialize_attributes!
 
       # After we save the record, persist all the values to Vault and reload
       # them attributes from Vault to ensure we have the proper attributes set.
@@ -156,10 +168,21 @@ module Vault
 
       # Decrypt all the attributes from Vault.
       # @return [true]
+      def __vault_initialize_attributes!
+        if self.class.lazy_decrypt
+          @__vault_loaded = false
+          return
+        end
+
+        __vault_load_attributes!
+      end
+
       def __vault_load_attributes!
         self.class.__vault_attributes.each do |attribute, options|
           self.__vault_load_attribute!(attribute, options)
         end
+
+        @__vault_loaded = true
 
         return true
       end
@@ -258,7 +281,7 @@ module Vault
             self.instance_variable_set("@#{attribute}", nil)
           end
 
-          self.__vault_load_attributes!
+          self.__vault_initialize_attributes!
         end
       end
     end
