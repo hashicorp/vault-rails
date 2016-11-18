@@ -144,18 +144,18 @@ module Vault
         end
       end
 
-      def lazy_decrypt
-        @lazy_decrypt ||= false
+      def vault_lazy_decrypt
+        @vault_lazy_decrypt ||= false
       end
 
-      def lazy_decrypt!
-        @lazy_decrypt = true
+      def vault_lazy_decrypt!
+        @vault_lazy_decrypt = true
       end
     end
 
     included do
       # After a resource has been initialized, immediately communicate with
-      # Vault and decrypt any attributes unless lazy_decrypt is set.
+      # Vault and decrypt any attributes unless vault_lazy_decrypt is set.
       after_initialize :__vault_initialize_attributes!
 
       # After we save the record, persist all the values to Vault and reload
@@ -169,7 +169,7 @@ module Vault
       # Decrypt all the attributes from Vault.
       # @return [true]
       def __vault_initialize_attributes!
-        if self.class.lazy_decrypt
+        if self.class.vault_lazy_decrypt
           @__vault_loaded = false
           return
         end

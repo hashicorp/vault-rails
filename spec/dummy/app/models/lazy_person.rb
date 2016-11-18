@@ -5,7 +5,7 @@ class LazyPerson < ActiveRecord::Base
 
   self.table_name = "people"
 
-  lazy_decrypt!
+  vault_lazy_decrypt!
 
   vault_attribute :ssn
 
