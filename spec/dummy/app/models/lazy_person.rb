@@ -1,7 +1,11 @@
 require "binary_serializer"
 
-class Person < ActiveRecord::Base
+class LazyPerson < ActiveRecord::Base
   include Vault::EncryptedModel
+
+  self.table_name = "people"
+
+  lazy_decrypt!
 
   vault_attribute :ssn
 
@@ -22,4 +26,3 @@ class Person < ActiveRecord::Base
 
   vault_attribute :non_ascii
 end
-
