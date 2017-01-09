@@ -21,4 +21,9 @@ RSpec.configure do |config|
   config.order = 'random'
 end
 
-require File.expand_path("../dummy/config/environment.rb", __FILE__)
+require 'rails'
+if Rails::VERSION::MAJOR == 3
+  require File.expand_path("../dummy32/config/environment.rb", __FILE__)
+else
+  require File.expand_path("../dummy/config/environment.rb", __FILE__)
+end

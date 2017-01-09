@@ -1,0 +1,1 @@
+../../../dummy/app/models/lazy_person.rb
