@@ -1,9 +1,10 @@
 # Vault Rails Changelog
 
-## v0.3.0.dev (Unreleased)
+## v0.3.1 (March 3, 2017)
 
-BUG FIXES
+IMPROVEMENTS
 
+- Add ability to lazy decrypt attributes [GH-41]
 
 ## v0.3.0 (August 21, 2016)
 
