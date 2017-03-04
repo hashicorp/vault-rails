@@ -1,0 +1,1 @@
+../../dummy/db/migrate/20150428220101_create_people.rb

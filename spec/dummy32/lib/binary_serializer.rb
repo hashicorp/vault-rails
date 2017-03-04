@@ -1,0 +1,1 @@
+../../dummy/lib/binary_serializer.rb

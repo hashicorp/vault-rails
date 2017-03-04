@@ -10,6 +10,7 @@ env:
 
 gemfile:
   - Gemfile
+  - gemfiles/rails_3.2.gemfile
   - gemfiles/rails_4.0.gemfile
   - gemfiles/rails_4.1.gemfile
   - gemfiles/rails_4.2.gemfile

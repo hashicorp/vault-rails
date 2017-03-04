@@ -231,7 +231,8 @@ module Vault
         # skipping any callbacks and validation. This is okay, because we are
         # already in a transaction due to the callback.
         if !changes.empty?
-          self.update_columns(changes)
+          # use this instead of self.update_columns for compatibility with Rails 3
+          self.class.where(self.class.primary_key => id).update_all(changes)
         end
 
         return true
