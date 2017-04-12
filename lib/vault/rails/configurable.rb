@@ -25,7 +25,7 @@ module Vault
 
       # Whether the connection to Vault is enabled. The default value is `false`,
       # which means vault-rails will perform in-memory encryption/decryption and
-      # not attempt to talk to a reail Vault server. This is useful for
+      # not attempt to talk to a real Vault server. This is useful for
       # development and testing.
       #
       # @return [true, false]
@@ -47,6 +47,32 @@ module Vault
       # @return [true, false]
       def enabled=(val)
         @enabled = !!val
+      end
+
+      # Whether warnings about in-memory ciphers are enabled. The default value
+      # is `true`, which means vault-rails will log a warning for every attempt
+      # to encrypt or decrypt using an in-memory cipher. This is useful for
+      # development and testing.
+      #
+      # @return [true, false]
+      def in_memory_warnings_enabled?
+        if !defined?(@in_memory_warnings_enabled) || @in_memory_warnings_enabled.nil?
+          return true
+        end
+        return @in_memory_warnings_enabled
+      end
+
+      # Sets whether warnings about in-memory ciphers are enabled. Users can set
+      # this in an initializer depending on their Rails environment.
+      #
+      # @example
+      #   Vault.configure do |vault|
+      #     vault.in_memory_warnings_enabled = !Rails.env.test?
+      #   end
+      #
+      # @return [true, false]
+      def in_memory_warnings_enabled=(val)
+        @in_memory_warnings_enabled = val
       end
 
       # Gets the number of retry attempts.
