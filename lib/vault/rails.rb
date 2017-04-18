@@ -144,7 +144,7 @@ module Vault
 
       # Perform in-memory encryption. This is useful for testing and development.
       def memory_encrypt(path, key, plaintext, client)
-        log_warning(DEV_WARNING)
+        log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if plaintext.nil?
 
@@ -156,7 +156,7 @@ module Vault
 
       # Perform in-memory decryption. This is useful for testing and development.
       def memory_decrypt(path, key, ciphertext, client)
-        log_warning(DEV_WARNING)
+        log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if ciphertext.nil?
 
