@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/hashicorp/vault-rails"
   s.summary     = "Official Vault plugin for Rails"
   s.description = s.summary
-  s.license     = "MPLv3"
+  s.license     = "MPL-2.0"
 
   s.files = Dir["{app,config,db,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["spec/**/*"]
