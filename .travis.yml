@@ -1,10 +1,12 @@
+dist: trusty
 language: ruby
 cache: bundler
 dist: trusty
 sudo: false
 
 env:
-  - VAULT_VERSION=0.6.0
+  - VAULT_VERSION=0.7.0
+  - VAULT_VERSION=0.6.5
   - VAULT_VERSION=0.5.3
   - VAULT_VERSION=0.4.1
   - VAULT_VERSION=0.3.1
@@ -22,6 +24,9 @@ before_install:
   - mv vault ~/bin
   - export PATH="~/bin:$PATH"
 
+install:
+  - bundle
+
 branches:
   only:
     - master
@@ -30,6 +35,7 @@ rvm:
   - 2.1
   - 2.2.5
   - 2.3.1
+  - 2.4.1
 
 matrix:
   exclude:
