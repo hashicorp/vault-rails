@@ -4,7 +4,7 @@
 
 IMPROVEMENTS
 
-- `vault-rails` is licensed under Mozilla Public License 2.0, and has been for over 2 years. This patch release updates the gemspec to use the correct SPDX ID string for reporting this license, but **no change to the licensing of this gem has occurred**.
+- `vault-rails` is licensed under Mozilla Public License 2.0, and has been for over 2 years. This patch release updates the gemspec to use the correct SPDX ID string for reporting this license, but **no change to the licensing of this gem has occurred**. [GH-48]
 
 ## v0.3.1 (March 3, 2017)
 
