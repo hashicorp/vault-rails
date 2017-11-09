@@ -1,5 +1,14 @@
 # Vault Rails Changelog
 
+## v0.4.0 (November 9, 2017)
+- Update supported Ruby and Rails versions [GH-50]
+  - Ruby
+    - Added 2.4.2
+    - Dropped 2.1
+    - Updated 2.2.x and 2.3.x families to 2.2.8 and 2.3.5 respectively
+  - Rails
+    - Restricted supported version to < 5.1
+
 ## v0.3.2 (May 8, 2017)
 
 IMPROVEMENTS
