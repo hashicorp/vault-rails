@@ -25,6 +25,8 @@ module Vault
       #
       # @option options [Symbol] :encrypted_column
       #   the name of the encrypted column (default: +#{column}_encrypted+)
+      # @option options [Bool] :convergent
+      #   should use convergent encryption? (default: +false+)
       # @option options [String] :path
       #   the path to the transit backend (default: +transit+)
       # @option options [String] :key
@@ -39,6 +41,7 @@ module Vault
         encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
         path = options[:path] || "transit"
         key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        convergent = options[:convergent] || false
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -111,6 +114,7 @@ module Vault
           path: path,
           serializer: serializer,
           encrypted_column: encrypted_column,
+          convergent: convergent
         }
 
         self
@@ -244,6 +248,7 @@ module Vault
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
+        convergent = options[:convergent]
 
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
@@ -260,7 +265,7 @@ module Vault
         end
 
         # Generate the ciphertext and store it back as an attribute
-        ciphertext = Vault::Rails.encrypt(path, key, plaintext)
+        ciphertext = Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
 
         # Write the attribute back, so that we don't have to reload the record
         # to get the ciphertext

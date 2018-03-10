@@ -356,11 +356,94 @@ describe Vault::Rails do
     end
   end
 
+  context "with convergent encryption enabled" do
+    before(:all) do
+      Vault::Rails.logical.write(
+        "transit/keys/dummy_people_first_pet",
+        convergent_encryption: true,
+        derived: true
+      )
+    end
+
+    it "always generates the same ciphertext given the same plaintext" do
+      first_person = Person.create!(first_pet: "Rover")
+      second_person = Person.create!(first_pet: "Rover")
+
+      first_person.reload
+      second_person.reload
+
+      expect(first_person.first_pet_encrypted).to eq(second_person.first_pet_encrypted)
+    end
+
+    it "only generates the same ciphertext given the same plaintext" do
+      first_person = Person.create!(first_pet: "Fido")
+      second_person = Person.create!(first_pet: "Spot")
+
+      first_person.reload
+      second_person.reload
+
+      expect(first_person.first_pet_encrypted).not_to eq(second_person.first_pet_encrypted)
+    end
+  end
+
   context 'with errors' do
     it 'raises the appropriate exception' do
       expect {
         Vault::Rails.encrypt('/bogus/path', 'bogus', 'bogus')
       }.to raise_error(Vault::HTTPClientError)
+    end
+  end
+
+  context "in-memory encryption" do
+    before(:each) do
+      # force in-memory encryption
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+    end
+
+    context "without convergent encryption enabled" do
+      it "encrypts attributes" do
+        person = Person.create!(ssn: "123-45-6789")
+        expect(person.ssn_encrypted).to be
+        expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
+      end
+
+      it "decrypts attributes" do
+        person = Person.create!(ssn: "123-45-6789")
+        person.reload
+
+        expect(person.ssn).to eq("123-45-6789")
+        expect(person.ssn.encoding).to eq(Encoding::UTF_8)
+      end
+    end
+
+    context "with convergent encryption enabled" do
+      before(:all) do
+        Vault::Rails.logical.write(
+          "transit/keys/dummy_people_first_pet",
+          convergent_encryption: true,
+          derived: true
+        )
+      end
+
+      it "always generates the same ciphertext given the same plaintext" do
+        first_person = Person.create!(first_pet: "Rover")
+        second_person = Person.create!(first_pet: "Rover")
+
+        first_person.reload
+        second_person.reload
+
+        expect(first_person.first_pet_encrypted).to eq(second_person.first_pet_encrypted)
+      end
+
+      it "only generates the same ciphertext given the same plaintext" do
+        first_person = Person.create!(first_pet: "Fido")
+        second_person = Person.create!(first_pet: "Spot")
+
+        first_person.reload
+        second_person.reload
+
+        expect(first_person.first_pet_encrypted).not_to eq(second_person.first_pet_encrypted)
+      end
     end
   end
 end

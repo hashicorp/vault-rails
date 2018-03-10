@@ -27,6 +27,11 @@ module Vault
     DEV_WARNING = "[vault-rails] Using in-memory cipher - this is not secure " \
       "and should never be used in production-like environments!".freeze
 
+    VAULT_CONVERGENT_ENCRYPTION_CONTEXT = Base64.strict_encode64(
+      ENV.fetch('VAULT_CONVERGENT_ENCRYPTION_CONTEXT', 'default-context')
+    ).freeze
+
+
     class << self
       # API client object based off the configured options in {Configurable}.
       #
@@ -69,10 +74,12 @@ module Vault
       #   the plaintext to encrypt
       # @param [Vault::Client] client
       #   the Vault client to use
+      # @param [Bool] convergent
+      #   should use convergent encryption?
       #
       # @return [String]
       #   the encrypted cipher text
-      def encrypt(path, key, plaintext, client = self.client)
+      def encrypt(path, key, plaintext, client = self.client, convergent = false)
         if plaintext.blank?
           return plaintext
         end
@@ -82,9 +89,9 @@ module Vault
 
         with_retries do
           if self.enabled?
-            result = self.vault_encrypt(path, key, plaintext, client)
+            result = self.vault_encrypt(path, key, plaintext, client, convergent)
           else
-            result = self.memory_encrypt(path, key, plaintext, client)
+            result = self.memory_encrypt(path, key, plaintext, client, convergent)
           end
 
           return self.force_encoding(result)
@@ -143,7 +150,7 @@ module Vault
       protected
 
       # Perform in-memory encryption. This is useful for testing and development.
-      def memory_encrypt(path, key, plaintext, client)
+      def memory_encrypt(path, key, plaintext, client, convergent = false)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if plaintext.nil?
@@ -151,6 +158,11 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
         cipher.key = memory_key_for(path, key)
+
+        if convergent
+          cipher.iv = VAULT_CONVERGENT_ENCRYPTION_CONTEXT
+        end
+
         return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
       end
 
@@ -163,18 +175,39 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
         cipher.key = memory_key_for(path, key)
-        return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+
+        begin
+          # attempt to decrypt without initialization vectory
+          # will fail if value was encrypted with convergent option
+          cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+        rescue OpenSSL::Cipher::CipherError
+          # decrypt with initialization vector
+          # will succeed if value was encrypted with convergent option
+          cipher.iv = VAULT_CONVERGENT_ENCRYPTION_CONTEXT
+          cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+        end
+
       end
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_encrypt(path, key, plaintext, client)
+      def vault_encrypt(path, key, plaintext, client, convergent = false)
         return nil if plaintext.nil?
 
         route  = File.join(path, "encrypt", key)
-        secret = client.logical.write(route,
+        opts = {
           plaintext: Base64.strict_encode64(plaintext),
-        )
+        }
+
+        if convergent
+          opts.merge!(
+            context: VAULT_CONVERGENT_ENCRYPTION_CONTEXT,
+            convergent_encryption: true,
+            derived: true
+          )
+        end
+
+        secret = client.logical.write(route, opts)
         return secret.data[:ciphertext]
       end
 
@@ -184,7 +217,11 @@ module Vault
         return nil if ciphertext.nil?
 
         route  = File.join(path, "decrypt", key)
-        secret = client.logical.write(route, ciphertext: ciphertext)
+        secret = client.logical.write(
+          route,
+          ciphertext: ciphertext,
+          context: VAULT_CONVERGENT_ENCRYPTION_CONTEXT
+        )
         return Base64.strict_decode64(secret.data[:plaintext])
       end
 
