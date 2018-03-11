@@ -151,7 +151,7 @@ vault_attribute :address,
   decode: ->(raw) { raw.to_s }
 ```
 
-- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrive existing values!
+- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrieve existing values!
 
 Caveats
 -------
