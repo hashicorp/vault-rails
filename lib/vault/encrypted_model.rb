@@ -116,6 +116,12 @@ module Vault
         self
       end
 
+      # Encrypt Vault attribures before saving them
+      def vault_persist_before_save!
+        skip_callback :save, :after, :__vault_persist_attributes!
+        before_save :__vault_encrypt_attributes!
+      end
+
       # The list of Vault attributes.
       #
       # @return [Hash]
@@ -219,13 +225,7 @@ module Vault
       # on this model.
       # @return [true]
       def __vault_persist_attributes!
-        changes = {}
-
-        self.class.__vault_attributes.each do |attribute, options|
-          if c = self.__vault_persist_attribute!(attribute, options)
-            changes.merge!(c)
-          end
-        end
+        changes = __vault_encrypt_attributes!
 
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
@@ -234,12 +234,24 @@ module Vault
           self.update_columns(changes)
         end
 
-        return true
+        true
+      end
+
+      def __vault_encrypt_attributes!
+        changes = {}
+
+        self.class.__vault_attributes.each do |attribute, options|
+          if c = self.__vault_encrypt_attribute!(attribute, options)
+            changes.merge!(c)
+          end
+        end
+
+        changes
       end
 
       # Encrypt a single attribute using Vault and persist back onto the
       # encrypted attribute value.
-      def __vault_persist_attribute!(attribute, options)
+      def __vault_encrypt_attribute!(attribute, options)
         key        = options[:key]
         path       = options[:path]
         serializer = options[:serializer]
