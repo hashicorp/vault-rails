@@ -356,11 +356,97 @@ describe Vault::Rails do
     end
   end
 
+  context 'when convergent encryption is used' do
+    before :each do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    it 'generates the same ciphertext for the same plaintext' do
+      email = 'user@example.com'
+
+      first_person = Person.create!(email: email)
+      second_person = Person.create!(email: email)
+
+      first_person.reload
+      second_person.reload
+
+      expect(first_person.email_encrypted).not_to be_blank
+      expect(second_person.email_encrypted).not_to be_blank
+
+      expect(first_person.email_encrypted).to eq second_person.email_encrypted
+    end
+
+    it 'generates different ciphertexts for different plaintexts' do
+      first_person  = Person.create!(email: 'john@example.com')
+      second_person = Person.create!(email: 'todd@example.com')
+
+      first_person.reload
+      second_person.reload
+
+      expect(first_person.email_encrypted).not_to eq(second_person.email_encrypted)
+    end
+  end
+
   context 'with errors' do
     it 'raises the appropriate exception' do
       expect {
         Vault::Rails.encrypt('/bogus/path', 'bogus', 'bogus')
       }.to raise_error(Vault::HTTPClientError)
+    end
+  end
+
+  context "in-memory encryption" do
+    before(:each) do
+      # Force in-memory encryption
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+    end
+
+    context 'when convergent encryption is not used' do
+      it 'generates different ciphertexts for the same plaintext' do
+        ssn = '123-45-6789'
+
+        first_person = Person.create!(ssn: ssn)
+        second_person = Person.create!(ssn: ssn)
+
+        first_person.reload
+        second_person.reload
+
+        expect(first_person.ssn).to eq ssn
+        expect(second_person.ssn).to eq ssn
+
+        expect(first_person.ssn_encrypted).not_to eq(second_person.ssn_encrypted)
+      end
+    end
+
+    context 'when convergent encryption is used' do
+      before :each do
+        allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+      end
+
+      it 'generates the same ciphertext when given the same plaintext' do
+        email = 'knifemaker@example.com'
+
+        first_person = Person.create!(email: email)
+        second_person = Person.create!(email: email)
+
+        first_person.reload
+        second_person.reload
+
+        expect(first_person.email_encrypted).not_to be_blank
+        expect(second_person.email_encrypted).not_to be_blank
+
+        expect(first_person.email_encrypted).to eq(second_person.email_encrypted)
+      end
+
+      it "generates different ciphertext for different plaintext" do
+        first_person = Person.create!(email: "medford@example.com")
+        second_person = Person.create!(email: "begg@example.com")
+
+        first_person.reload
+        second_person.reload
+
+        expect(first_person.email_encrypted).not_to eq(second_person.email_encrypted)
+      end
     end
   end
 end

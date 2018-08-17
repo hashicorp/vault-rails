@@ -25,6 +25,8 @@ module Vault
       #
       # @option options [Symbol] :encrypted_column
       #   the name of the encrypted column (default: +#{column}_encrypted+)
+      # @option options [Bool] :convergent
+      #   use convergent encryption (default: +false+)
       # @option options [String] :path
       #   the path to the transit backend (default: +transit+)
       # @option options [String] :key
@@ -39,6 +41,7 @@ module Vault
         encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
         path = options[:path] || "transit"
         key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        convergent = options.fetch(:convergent, false)
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -111,6 +114,7 @@ module Vault
           path: path,
           serializer: serializer,
           encrypted_column: encrypted_column,
+          convergent: convergent
         }
 
         self
@@ -199,6 +203,7 @@ module Vault
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
+        convergent = options[:convergent]
 
         # Load the ciphertext
         ciphertext = read_attribute(column)
@@ -210,7 +215,7 @@ module Vault
         end
 
         # Load the plaintext value
-        plaintext = Vault::Rails.decrypt(path, key, ciphertext)
+        plaintext = Vault::Rails.decrypt(path, key, ciphertext, Vault.client, convergent)
 
         # Deserialize the plaintext value, if a serializer exists
         if serializer
@@ -252,16 +257,15 @@ module Vault
       # Encrypt a single attribute using Vault and persist back onto the
       # encrypted attribute value.
       def __vault_encrypt_attribute!(attribute, options)
+        # Only persist changed attributes to minimize requests - this helps
+        # minimize the number of requests to Vault.
+        return unless changed.include?("#{attribute}")
+
         key        = options[:key]
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
-
-        # Only persist changed attributes to minimize requests - this helps
-        # minimize the number of requests to Vault.
-        if !changed.include?("#{attribute}")
-          return
-        end
+        convergent = options[:convergent]
 
         # Get the current value of the plaintext attribute
         plaintext = instance_variable_get("@#{attribute}")
@@ -272,7 +276,7 @@ module Vault
         end
 
         # Generate the ciphertext and store it back as an attribute
-        ciphertext = Vault::Rails.encrypt(path, key, plaintext)
+        ciphertext = Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
 
         # Write the attribute back, so that we don't have to reload the record
         # to get the ciphertext

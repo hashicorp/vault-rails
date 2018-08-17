@@ -75,22 +75,22 @@ module Vault
       #   the plaintext to encrypt
       # @param [Vault::Client] client
       #   the Vault client to use
+      # @param [Bool] convergent
+      #   use convergent encryption
       #
       # @return [String]
       #   the encrypted cipher text
-      def encrypt(path, key, plaintext, client = self.client)
-        if plaintext.blank?
-          return plaintext
-        end
+      def encrypt(path, key, plaintext, client = self.client, convergent = false)
+        return plaintext if plaintext.blank?
 
         path = path.to_s if !path.is_a?(String)
         key  = key.to_s if !key.is_a?(String)
 
         with_retries do
           if self.enabled?
-            result = self.vault_encrypt(path, key, plaintext, client)
+            result = self.vault_encrypt(path, key, plaintext, client, convergent)
           else
-            result = self.memory_encrypt(path, key, plaintext, client)
+            result = self.memory_encrypt(path, key, plaintext, client, convergent)
           end
 
           return self.force_encoding(result)
@@ -110,7 +110,7 @@ module Vault
       #
       # @return [String]
       #   the decrypted plaintext text
-      def decrypt(path, key, ciphertext, client = self.client)
+      def decrypt(path, key, ciphertext, client = self.client, convergent = false)
         if ciphertext.blank?
           return ciphertext
         end
@@ -120,9 +120,9 @@ module Vault
 
         with_retries do
           if self.enabled?
-            result = self.vault_decrypt(path, key, ciphertext, client)
+            result = self.vault_decrypt(path, key, ciphertext, client, convergent)
           else
-            result = self.memory_decrypt(path, key, ciphertext, client)
+            result = self.memory_decrypt(path, key, ciphertext, client, convergent)
           end
 
           return self.force_encoding(result)
@@ -149,7 +149,7 @@ module Vault
       protected
 
       # Perform in-memory encryption. This is useful for testing and development.
-      def memory_encrypt(path, key, plaintext, client)
+      def memory_encrypt(path, key, plaintext, _client, convergent)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if plaintext.nil?
@@ -157,11 +157,18 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
         cipher.key = memory_key_for(path, key)
-        return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
+
+        iv = if convergent
+               cipher.iv = Vault::Rails.convergent_encryption_context.first(16)
+             else
+               cipher.random_iv
+             end
+
+        Base64.strict_encode64(iv + cipher.update(plaintext) + cipher.final)
       end
 
       # Perform in-memory decryption. This is useful for testing and development.
-      def memory_decrypt(path, key, ciphertext, client)
+      def memory_decrypt(path, key, ciphertext, _client, convergent)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if ciphertext.nil?
@@ -169,29 +176,54 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
         cipher.key = memory_key_for(path, key)
-        return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+
+        ciphertext_bytes = Base64.strict_decode64(ciphertext)
+
+        cipher.iv = ciphertext_bytes.first(16)
+        ciphertext = ciphertext_bytes[16..-1]
+
+        cipher.update(ciphertext) + cipher.final
       end
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_encrypt(path, key, plaintext, client)
+      def vault_encrypt(path, key, plaintext, client, convergent)
         return nil if plaintext.nil?
 
-        route  = File.join(path, "encrypt", key)
-        secret = client.logical.write(route,
-          plaintext: Base64.strict_encode64(plaintext),
-        )
-        return secret.data[:ciphertext]
+        route = File.join(path, 'encrypt', key)
+        options = {
+          plaintext: Base64.strict_encode64(plaintext)
+        }
+
+        if convergent
+          options.merge!(
+            context: Base64.strict_encode64(Vault::Rails.convergent_encryption_context),
+            convergent_encryption: true,
+            derived: true
+          )
+        end
+
+        secret = client.logical.write(route, options)
+        secret.data[:ciphertext]
       end
 
       # Perform decryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_decrypt(path, key, ciphertext, client)
+      def vault_decrypt(path, key, ciphertext, client, convergent)
         return nil if ciphertext.nil?
 
-        route  = File.join(path, "decrypt", key)
-        secret = client.logical.write(route, ciphertext: ciphertext)
-        return Base64.strict_decode64(secret.data[:plaintext])
+        options = { ciphertext: ciphertext }
+
+        if convergent
+          options.merge!(
+            context: Base64.strict_encode64(Vault::Rails.convergent_encryption_context)
+          )
+        end
+
+        route  = File.join(path, 'decrypt', key)
+        secret = client.logical.write(route, options)
+
+        Base64.strict_decode64(secret.data[:plaintext])
       end
 
       # The symmetric key for the given params.

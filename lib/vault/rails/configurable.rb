@@ -119,6 +119,23 @@ module Vault
       def retry_max_wait=(val)
         @retry_max_wait = val
       end
+
+      # Gets the convergent encryption context for deriving
+      # an enctyption key when using convergent encryption
+      # Raises an exception when convergent option is set
+      # to true and context is not privided
+      def convergent_encryption_context
+        unless @convergent_encryption_context
+          raise StandardError, 'Missinng configuration oprion convergent_encryption_context!'
+        end
+
+        @convergent_encryption_context
+      end
+
+      # Sets the convergent encryption context for use with convergent encryption
+      def convergent_encryption_context=(context)
+        @convergent_encryption_context = context
+      end
     end
   end
 end

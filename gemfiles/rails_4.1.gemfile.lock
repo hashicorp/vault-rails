@@ -3,7 +3,7 @@ PATH
   specs:
     vault-rails (0.4.0)
       rails (>= 4.1, < 5.1)
-      vault (~> 0.5)
+      vault (~> 0.7)
 
 GEM
   remote: https://rubygems.org/
@@ -39,6 +39,7 @@ GEM
       rake
       thor (>= 0.14.0)
     arel (5.0.1.20140414130214)
+    aws-sigv4 (1.0.3)
     builder (3.2.3)
     coderay (1.1.1)
     concurrent-ruby (1.0.5)
@@ -105,7 +106,8 @@ GEM
       polyglot (>= 0.3.1)
     tzinfo (1.2.3)
       thread_safe (~> 0.1)
-    vault (0.10.1)
+    vault (0.12.0)
+      aws-sigv4
 
 PLATFORMS
   ruby
@@ -121,4 +123,4 @@ DEPENDENCIES
   vault-rails!
 
 BUNDLED WITH
-   1.15.3
+   1.16.2
