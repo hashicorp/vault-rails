@@ -15,7 +15,14 @@ jobs:
             wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
             unzip vault.zip
             mv vault /usr/local/bin/
+      - restore_cache:
+          keys:
+            - vault-rails-{{checksum "vault-rails.gemspec" }}
       - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
+      - save_cache:
+          key: vault-rails-{{checksum "vault-rails.gemspec" }}
+          paths:
+            - vendor/bundle
       - run: bundle exec rake app:db:create
       - run: bundle exec rake app:db:schema:load
       - run: bundle exec rake app:db:test:prepare
