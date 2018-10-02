@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  tests:
+    docker:
+      - image: ruby:2.4.4-alpine
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.6.0
+    steps:
+      - checkout
+      - run: apk add --no-cache build-base sqlite-dev tzdata
+      - run:
+          name: Install Vault
+          command: |
+            wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
+            unzip vault.zip
+            mv vault /usr/local/bin/
+      - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
+      - run: bundle exec rake app:db:create
+      - run: bundle exec rake app:db:schema:load
+      - run: bundle exec rake app:db:test:prepare
+      - run: bundle exec rspec
