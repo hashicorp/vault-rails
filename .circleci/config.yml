@@ -20,3 +20,43 @@ jobs:
       - run: bundle exec rake app:db:schema:load
       - run: bundle exec rake app:db:test:prepare
       - run: bundle exec rspec
+  publish-pre-release:
+    docker:
+      - image: ruby:2.4.4-alpine
+    steps:
+      - checkout
+      - run:
+          name: Install cURL
+          command: apk add --no-cache curl
+      - run:
+          name: Login to JFrog
+          command:
+            mkdir -p ~/.gem
+            curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
+            chmod 600 ~/.gem/credentials
+      - run:
+          name: Install Gem Versioner
+          command: gem install gem-versioner --version '~> 1.0' --no-document
+      - run:
+          name: Build gem
+          command: |
+            PRE_RELEASE="$CIRCLE_BRANCH" gem build "$CIRCLE_PROJECT_REPONAME".gemspec
+      - run:
+          name: Publish gem
+          command: |
+            package=$(ls -t1 "$CIRCLE_PROJECT_REPONAME"-*.gem | head -1)
+            gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
+workflows:
+  version: 2
+  test-then-publish:
+    jobs:
+      - tests
+      - publish-pre-release:
+          context: org-global
+          filters:
+            branches:
+              ignore: master
+            tags:
+              ignore: /.*/
+          requires:
+            - tests
