@@ -5,7 +5,7 @@ jobs:
       - image: ruby:2.4.4-alpine
         environment:
           RACK_ENV: test
-          VAULT_VERSION: 0.6.0
+          VAULT_VERSION: 0.10.0
     steps:
       - checkout
       - run: apk add --no-cache build-base sqlite-dev tzdata
@@ -17,17 +17,45 @@ jobs:
             mv vault /usr/local/bin/
       - restore_cache:
           keys:
-            - vault-rails-{{checksum "vault-rails.gemspec" }}
+            - vault-rails-{{checksum "vault.gemspec" }}
       - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
       - save_cache:
-          key: vault-rails-{{checksum "vault-rails.gemspec" }}
+          key: vault-rails-{{checksum "vault.gemspec" }}
           paths:
             - vendor/bundle
       - run: bundle exec rake app:db:create
       - run: bundle exec rake app:db:schema:load
       - run: bundle exec rake app:db:test:prepare
       - run: bundle exec rspec
+
   publish-pre-release:
+    docker:
+      - image: ruby:2.4.4-alpine
+    steps:
+       - checkout
+       - run:
+           name: Install cURL
+           command: apk add --no-cache curl
+       - run:
+           name: Login to JFrog
+           command: |
+             mkdir -p ~/.gem
+             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
+             chmod 600 ~/.gem/credentials
+       - run:
+           name: Install Gem Versioner
+           command: gem install gem-versioner --version '~> 1.0' --no-document
+       - run:
+           name: Build gem
+           command: |
+             PRE_RELEASE="$CIRCLE_BRANCH" gem build vault.gemspec
+       - run:
+           name: Publish gem
+           command: |
+             package=$(ls -t1 vault-rails-*.gem | head -1)
+             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
+
+  publish-release:
     docker:
       - image: ruby:2.4.4-alpine
     steps:
@@ -37,7 +65,7 @@ jobs:
           command: apk add --no-cache curl
       - run:
           name: Login to JFrog
-          command:
+          command: |
             mkdir -p ~/.gem
             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
             chmod 600 ~/.gem/credentials
@@ -47,15 +75,17 @@ jobs:
       - run:
           name: Build gem
           command: |
-            PRE_RELEASE="$CIRCLE_BRANCH" gem build "$CIRCLE_PROJECT_REPONAME".gemspec
+            gem build vault.gemspec
       - run:
           name: Publish gem
           command: |
-            package=$(ls -t1 "$CIRCLE_PROJECT_REPONAME"-*.gem | head -1)
-            gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
+            package=$(ls -t1 vault-rails-*.gem | head -1)
+            gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local
+
 workflows:
   version: 2
-  test-then-publish:
+
+  test-and-pre-release:
     jobs:
       - tests
       - publish-pre-release:
@@ -67,3 +97,13 @@ workflows:
               ignore: /.*/
           requires:
             - tests
+
+  release:
+    jobs:
+      - publish-release:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+)*$/
