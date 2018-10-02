@@ -85,9 +85,12 @@ jobs:
 workflows:
   version: 2
 
-  test-and-pre-release:
+  test-and-release:
     jobs:
-      - tests
+      - tests:
+          filters:
+            tags:
+              only: /.*/
       - publish-pre-release:
           context: org-global
           filters:
@@ -97,9 +100,6 @@ workflows:
               ignore: /.*/
           requires:
             - tests
-
-  release:
-    jobs:
       - publish-release:
           context: org-global
           filters:
@@ -107,3 +107,5 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v[0-9]+(\.[0-9]+)*$/
+          requires:
+            - tests
