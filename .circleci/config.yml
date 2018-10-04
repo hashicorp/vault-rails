@@ -32,28 +32,28 @@ jobs:
     docker:
       - image: ruby:2.4.4-alpine
     steps:
-       - checkout
-       - run:
-           name: Install cURL
-           command: apk add --no-cache curl
-       - run:
-           name: Login to JFrog
-           command: |
-             mkdir -p ~/.gem
-             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
-             chmod 600 ~/.gem/credentials
-       - run:
-           name: Install Gem Versioner
-           command: gem install gem-versioner --version '~> 1.0' --no-document
-       - run:
-           name: Build gem
-           command: |
-             PRE_RELEASE="$CIRCLE_BRANCH" gem build vault.gemspec
-       - run:
-           name: Publish gem
-           command: |
-             package=$(ls -t1 vault-rails-*.gem | head -1)
-             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
+      - checkout
+      - run:
+          name: Install cURL
+          command: apk add --no-cache curl
+      - run:
+          name: Login to JFrog
+          command: |
+            mkdir -p ~/.gem
+            curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
+            chmod 600 ~/.gem/credentials
+      - run:
+          name: Install Gem Versioner
+          command: gem install gem-versioner --version '~> 1.0' --no-document
+      - run:
+          name: Build gem
+          command: |
+            PRE_RELEASE="$CIRCLE_BRANCH" gem build vault.gemspec
+      - run:
+          name: Publish gem
+          command: |
+            package=$(ls -t1 vault-rails-*.gem | head -1)
+            gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
 
   publish-release:
     docker:
@@ -62,7 +62,7 @@ jobs:
       - checkout
       - run:
           name: Install cURL
-          command: apk add --no-cache curl
+          command: apk add --no-cache curl git
       - run:
           name: Login to JFrog
           command: |
@@ -100,6 +100,7 @@ workflows:
               ignore: /.*/
           requires:
             - tests
+
       - publish-release:
           context: org-global
           filters:
