@@ -42,4 +42,57 @@ describe Vault::EncryptedModel do
       expect(klass.instance_methods).to include(:foo_was)
     end
   end
+
+  describe '#vault_persist_before_save!' do
+    let(:after_save_dummy_class) do
+      Class.new(ActiveRecord::Base) do
+        include Vault::EncryptedModel
+      end
+    end
+
+    let(:before_save_dummy_class) do
+      Class.new(ActiveRecord::Base) do
+        include Vault::EncryptedModel
+        vault_persist_before_save!
+      end
+    end
+
+    context "when not used" do
+      it "the model has an after_save callback" do
+        save_callbacks = after_save_dummy_class._save_callbacks.select do |cb|
+          cb.filter == :__vault_persist_attributes!
+        end
+
+        expect(save_callbacks.length).to eq 1
+        persist_callback = save_callbacks.first
+
+        expect(persist_callback).to be_a ActiveSupport::Callbacks::Callback
+
+        expect(persist_callback.kind).to eq :after
+      end
+    end
+
+    context "when used" do
+      it "the model does not have a after_save callback" do
+        save_callbacks = before_save_dummy_class._save_callbacks.select do |cb|
+          cb.filter == :__vault_persist_attributes!
+        end
+
+        expect(save_callbacks.length).to eq 0
+      end
+
+      it "the model has a before_save callback" do
+        save_callbacks = before_save_dummy_class._save_callbacks.select do |cb|
+          cb.filter == :__vault_encrypt_attributes!
+        end
+
+        expect(save_callbacks.length).to eq 1
+        persist_callback = save_callbacks.first
+
+        expect(persist_callback).to be_a ActiveSupport::Callbacks::Callback
+
+        expect(persist_callback.kind).to eq :before
+      end
+    end
+  end
 end
