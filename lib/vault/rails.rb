@@ -1,13 +1,16 @@
-require "vault"
+require 'vault'
 
-require "base64"
-require "json"
+require 'base64'
+require 'json'
 
-require_relative "encrypted_model"
-require_relative "rails/configurable"
-require_relative "rails/errors"
-require_relative "rails/serializer"
-require_relative "rails/version"
+require_relative 'encrypted_model'
+require_relative 'rails/configurable'
+require_relative 'rails/errors'
+require_relative 'rails/serializers/json_serializer'
+require_relative 'rails/serializers/date_serializer'
+require_relative 'rails/serializers/integer_serializer'
+require_relative 'rails/serializers/float_serializer'
+require_relative 'rails/version'
 
 module Vault
   module Rails
@@ -15,7 +18,10 @@ module Vault
     #
     # @return [Hash<Symbol, Module>]
     SERIALIZERS = {
-      json: Vault::Rails::JSONSerializer,
+      json:     Vault::Rails::Serializers::JSONSerializer,
+      date:     Vault::Rails::Serializers::DateSerializer,
+      integer:  Vault::Rails::Serializers::IntegerSerializer,
+      float:    Vault::Rails::Serializers::FloatSerializer
     }.freeze
 
     # The default encoding.
@@ -136,7 +142,7 @@ module Vault
         if serializer = SERIALIZERS[key]
           return serializer
         else
-          raise Vault::Rails::UnknownSerializerError.new(key)
+          raise Vault::Rails::Serializers::UnknownSerializerError.new(key)
         end
       end
 
