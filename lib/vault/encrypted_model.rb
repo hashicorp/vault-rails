@@ -64,29 +64,25 @@ module Vault
 
         # Getter
         define_method("#{attribute}") do
-          self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}")
+          if instance_variable_defined?("@#{attribute}")
+            return instance_variable_get("@#{attribute}")
+          end
+
+          __vault_load_attribute!(attribute, self.class.__vault_attributes[attribute])
         end
 
         # Setter
         define_method("#{attribute}=") do |value|
-          self.__vault_load_attributes! unless @__vault_loaded
-
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
           # that if you call attr=, you want it send back regardless.
-
           attribute_will_change!("#{attribute}")
           instance_variable_set("@#{attribute}", value)
-
-          # Return the value to be consistent with other AR methods.
-          value
         end
 
         # Checker
         define_method("#{attribute}?") do
-          self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}").present?
+          send("#{attribute}").present?
         end
 
         # Dirty method
@@ -154,8 +150,8 @@ module Vault
         end
       end
 
-      def vault_lazy_decrypt
-        @vault_lazy_decrypt ||= false
+      def vault_lazy_decrypt?
+        !!@vault_lazy_decrypt
       end
 
       def vault_lazy_decrypt!
@@ -166,7 +162,7 @@ module Vault
     included do
       # After a resource has been initialized, immediately communicate with
       # Vault and decrypt any attributes unless vault_lazy_decrypt is set.
-      after_initialize :__vault_initialize_attributes!
+      after_initialize :__vault_load_attributes!
 
       # After we save the record, persist all the values to Vault and reload
       # them attributes from Vault to ensure we have the proper attributes set.
@@ -178,23 +174,12 @@ module Vault
 
       # Decrypt all the attributes from Vault.
       # @return [true]
-      def __vault_initialize_attributes!
-        if self.class.vault_lazy_decrypt
-          @__vault_loaded = false
-          return
-        end
-
-        __vault_load_attributes!
-      end
-
       def __vault_load_attributes!
+        return if self.class.vault_lazy_decrypt?
+
         self.class.__vault_attributes.each do |attribute, options|
           self.__vault_load_attribute!(attribute, options)
         end
-
-        @__vault_loaded = true
-
-        return true
       end
 
       # Decrypt and load a single attribute from Vault.
@@ -208,19 +193,14 @@ module Vault
         # Load the ciphertext
         ciphertext = read_attribute(column)
 
-        # If the user provided a value for the attribute, do not try to load
-        # it from Vault
-        if instance_variable_get("@#{attribute}")
-          return
-        end
+        # If the user provided a value for the attribute, do not try to load it from Vault
+        return if instance_variable_get("@#{attribute}")
 
         # Load the plaintext value
         plaintext = Vault::Rails.decrypt(path, key, ciphertext, Vault.client, convergent)
 
         # Deserialize the plaintext value, if a serializer exists
-        if serializer
-          plaintext = serializer.decode(plaintext)
-        end
+        plaintext = serializer.decode(plaintext) if serializer
 
         # Write the virtual attribute with the plaintext value
         instance_variable_set("@#{attribute}", plaintext)
@@ -235,9 +215,7 @@ module Vault
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
         # already in a transaction due to the callback.
-        if !changes.empty?
-          self.update_columns(changes)
-        end
+        self.update_columns(changes) if !changes.empty?
 
         true
       end
@@ -291,13 +269,14 @@ module Vault
       # reload a record from the database.
       def reload(*)
         super.tap do
-          # Unset all the instance variables to force the new data to be pulled
-          # from Vault
+          # Unset all the instance variables to force the new data to be pulled from Vault
           self.class.__vault_attributes.each do |attribute, _|
-            self.instance_variable_set("@#{attribute}", nil)
+            if instance_variable_defined?("@#{attribute}")
+              self.remove_instance_variable("@#{attribute}")
+            end
           end
 
-          self.__vault_initialize_attributes!
+          self.__vault_load_attributes!
         end
       end
     end
