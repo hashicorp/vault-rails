@@ -21,5 +21,7 @@ class Person < ActiveRecord::Base
     decode: ->(raw) { raw && raw[3...-3] }
 
   vault_attribute :non_ascii
+
+  vault_attribute :email, convergent: true
 end
 

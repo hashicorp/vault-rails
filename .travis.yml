@@ -4,10 +4,10 @@ dist: trusty
 sudo: false
 
 env:
-  - VAULT_VERSION=0.6.0
-  - VAULT_VERSION=0.5.3
-  - VAULT_VERSION=0.4.1
-  - VAULT_VERSION=0.3.1
+  - VAULT_VERSION=0.10.4
+  - VAULT_VERSION=0.9.6
+  - VAULT_VERSION=0.8.3
+  - VAULT_VERSION=0.7.3
 
 gemfile:
   - Gemfile
