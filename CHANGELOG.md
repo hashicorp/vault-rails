@@ -1,5 +1,14 @@
 # Vault Rails Changelog
 
+## v0.5.0 (October 9, 2018)
+NEW FEATURES
+- Convergent Encryption
+- New serializers
+- Encrypting attributes on before_save
+
+IMPROVEMENTS
+- Improved lazy decryption
+
 ## v0.4.0 (November 9, 2017)
 - Update supported Ruby and Rails versions [GH-50]
   - Ruby
