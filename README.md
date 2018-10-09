@@ -1,4 +1,4 @@
-Vault Rails [![Build Status](https://secure.travis-ci.org/hashicorp/vault-rails.svg?branch=master)](http://travis-ci.org/hashicorp/vault-rails)
+Vault Rails [![CircleCI](https://circleci.com/gh/FundingCircle/vault-rails/tree/master.svg?style=svg)](https://circleci.com/gh/FundingCircle/vault-rails/tree/master)
 ===========
 
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.
@@ -117,6 +117,12 @@ vault_attribute :details
   serialize: :json
 ```
 
+This is the list of included serializers:
+ * `:json`
+ * `:date`
+ * `:integer`
+ * `:float`
+
 - **Note** You can view the source for the exact serialization and deserialization options, but they are intentionally not customizable and cannot be used for a full object marshal/unmarshal.
 
 For customized solutions, you can also pass a module to the `:serializer` key. This module must have the following API:
@@ -153,8 +159,17 @@ vault_attribute :address,
 
 - **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrive existing values!
 
+### Lazy Decryption
+VaultRails decrypts all the encrypted attributes in an `after_initialize` callback. Although this is useful sometimes, other times it may be unnecessary. For example you may not need all or any of the encrypted attributes.
+In such cases, you can use `vault_lazy_decrypt!` in your model, and VaultRails will decrypt the attributes, one by one, only when they are needed.
+
 Caveats
 -------
+
+### Saving encrypted attributes
+By default, VaultRails will encrypt and then save the encrypted attributes in an `after_save` callback. This results in a second query to the database. If you'd like to avoid this and encrypt the attributes before the model is saved, you can use `vault_persist_before_save!` in your model, and it will encrypt the attribues in a `before_save` callback.
+
+-- **Note** You'll need to make sure that no other callbacks interfere with these callbacks e.g. (modify the ciphertext).
 
 ### Mounting/Creating Keys in Vault
 The Vault Rails plugin does not automatically mount a backend. It is assumed the proper backend is mounted and accessible by the given token. You can mount a transit backend like this:
@@ -200,6 +215,27 @@ Unless customized, the name of the key will always be:
 So for the example above, the key would be:
 
     my_app_people_ssn
+
+
+### Convergent Encryption
+Convergent encryption is a mode where the same set of plaintext and context always result in the same ciphertext. It does this by deriving a key using a key derivation function but also by deterministically deriving a nonce. You can use this if you need to check for uniqueness, or if you need the ability to search (exact-match).
+
+Vault supports convergent encryption since v0.6.1. We take advantage of this functionality.
+
+You'll need to provide an encryption context for the key derivation function in order to use convergent encryption.
+```ruby
+Vault::Rails.configure do |vault|
+  vault.convergent_encryption_context = ENV['CONVERGENT_ENCRYPTION_CONTEXT']
+end
+```
+
+Then, you can tell Vault to use convergent encryption like so:
+```ruby
+vault_attribute :ssn,
+  convergent: true
+```
+
+- **Note** Convergent encryption significantly weakens the security that encryption provides. Use this with caution!
 
 
 ### Searching Encrypted Attributes
