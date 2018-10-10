@@ -17,10 +17,10 @@ jobs:
             mv vault /usr/local/bin/
       - restore_cache:
           keys:
-            - vault-rails-{{checksum "vault.gemspec" }}
+            - vault-rails-{{checksum "fc-vault-rails.gemspec" }}
       - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
       - save_cache:
-          key: vault-rails-{{checksum "vault.gemspec" }}
+          key: vault-rails-{{checksum "fc-vault-rails.gemspec" }}
           paths:
             - vendor/bundle
       - run: bundle exec rake app:db:create
@@ -48,11 +48,11 @@ jobs:
       - run:
           name: Build gem
           command: |
-            PRE_RELEASE="$CIRCLE_BRANCH" gem build vault.gemspec
+            PRE_RELEASE="$CIRCLE_BRANCH" gem build fc-vault-rails.gemspec
       - run:
           name: Publish gem
           command: |
-            package=$(ls -t1 vault-rails-*.gem | head -1)
+            package=$(ls -t1 fc-vault-rails-*.gem | head -1)
             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
 
   publish-release:
@@ -75,11 +75,11 @@ jobs:
       - run:
           name: Build gem
           command: |
-            gem build vault.gemspec
+            gem build fc-vault-rails.gemspec
       - run:
           name: Publish gem
           command: |
-            package=$(ls -t1 vault-rails-*.gem | head -1)
+            package=$(ls -t1 fc-vault-rails-*.gem | head -1)
             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local
 
 workflows:
