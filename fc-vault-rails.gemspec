@@ -5,11 +5,11 @@ require "vault/rails/version"
 
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
-  s.name        = "vault-rails"
+  s.name        = "fc-vault-rails"
   s.version     = Vault::Rails::VERSION
-  s.authors     = ["Seth Vargo"]
-  s.email       = ["sethvargo@gmail.com"]
-  s.homepage    = "https://github.com/hashicorp/vault-rails"
+  s.authors     = ["Funding Circle Engineering", "Seth Vargo"]
+  s.email       = ["engineering+fc-vault-rails@fundingcircle.com", "sethvargo@gmail.com"]
+  s.homepage    = "https://github.com/fundingcircle/fc-vault-rails"
   s.summary     = "Official Vault plugin for Rails"
   s.description = s.summary
   s.license     = "MPL-2.0"
