@@ -260,9 +260,7 @@ module Vault
       end
 
       def log_warning(msg)
-        if defined?(::Rails) && ::Rails.logger != nil
-          ::Rails.logger.warn { msg }
-        end
+        ::ActiveRecord::Base.logger.warn { msg } if ::ActiveRecord::Base.logger
       end
 
       def encoding
