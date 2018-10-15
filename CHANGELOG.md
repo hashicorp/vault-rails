@@ -1,5 +1,12 @@
 # Vault Rails Changelog
 
+## v0.6.0 (October 15, 2018)
+
+NOTABLE CHANGES
+
+- Removed 4.1 dependency
+- Change dependency from Rails to ActiveRecord
+
 ## v0.5.0 (October 9, 2018)
 NEW FEATURES
 - Convergent Encryption
