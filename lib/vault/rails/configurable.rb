@@ -120,13 +120,16 @@ module Vault
         @retry_max_wait = val
       end
 
-      # Gets the convergent encryption context for deriving
-      # an enctyption key when using convergent encryption
-      # Raises an exception when convergent option is set
-      # to true and context is not privided
+      # The convergent encryption context for deriving an
+      # encryption key when using convergent encryption.
+      #
+      # @raise [RuntimeError]
+      #   if the convergent encryption context has not been set
+      #
+      # @return [String]
       def convergent_encryption_context
-        unless @convergent_encryption_context
-          raise StandardError, 'Missinng configuration oprion convergent_encryption_context!'
+        if !defined?(@convergent_encryption_context) || @convergent_encryption_context.nil?
+          raise RuntimeError, "Must set `Vault::Rails.convergent_encryption_context'!"
         end
 
         @convergent_encryption_context
