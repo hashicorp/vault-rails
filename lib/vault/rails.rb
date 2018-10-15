@@ -232,11 +232,10 @@ module Vault
         return Base64.strict_encode64("#{path}/#{key}".ljust(16, "x")).byteslice(0..15)
       end
 
-      # Forces the encoding into the default Rails encoding and returns the
+      # Forces the encoding into the default encoding and returns the
       # newly encoded string.
       # @return [String]
       def force_encoding(str)
-        encoding = ::Rails.application.config.encoding || DEFAULT_ENCODING
         str.force_encoding(encoding).encode(encoding)
       end
 
@@ -264,6 +263,11 @@ module Vault
         if defined?(::Rails) && ::Rails.logger != nil
           ::Rails.logger.warn { msg }
         end
+      end
+
+      def encoding
+        encoding = ::Rails.application.config.encoding if defined?(::Rails)
+        encoding || DEFAULT_ENCODING
       end
     end
   end
