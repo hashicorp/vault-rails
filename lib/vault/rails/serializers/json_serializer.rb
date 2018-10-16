@@ -1,3 +1,5 @@
+require "json"
+
 module Vault
   module Rails
     module Serializers
@@ -8,26 +10,13 @@ module Vault
         }.freeze
 
         def self.encode(raw)
-          self._init!
-
-          raw = {} if raw.nil?
-
+          return if raw.nil?
           JSON.fast_generate(raw)
         end
 
         def self.decode(raw)
-          self._init!
-
-          return {} if raw.nil? || raw.empty?
+          return if raw.nil?
           JSON.parse(raw, DECODE_OPTIONS)
-        end
-
-        protected
-
-        def self._init!
-          return if defined?(@_init)
-          require "json"
-          @_init = true
         end
       end
     end

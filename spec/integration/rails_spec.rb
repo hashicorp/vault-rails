@@ -316,13 +316,18 @@ describe Vault::Rails do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
     end
 
-    it "has a default value for unpersisted records" do
+    it "allows nil for unpersisted records" do
       person = Person.new
-      expect(person.details).to eq({})
+      expect(person.details).to be_nil
     end
 
-    it "has a default value for persisted records" do
+    it "allows nil for persisted records" do
       person = Person.create!
+      expect(person.details).to be_nil
+    end
+
+    it 'saves an empty hash' do
+      person = Person.create!(details: {})
       expect(person.details).to eq({})
     end
 
