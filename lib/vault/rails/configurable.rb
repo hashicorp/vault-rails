@@ -3,6 +3,13 @@ module Vault
     module Configurable
       include Vault::Configurable
 
+      # The default encoding, used if Vault::Rails.encoding is not set,
+      # and we're not in a rails app so can't use the default encoding for
+      # the rails app (via Rails.application.config.encoding)
+      #
+      # @return [String]
+      DEFAULT_ENCODING = Encoding::UTF_8
+
       # The name of the Vault::Rails application.
       #
       # @raise [RuntimeError]
@@ -138,6 +145,28 @@ module Vault
       # Sets the convergent encryption context for use with convergent encryption
       def convergent_encryption_context=(context)
         @convergent_encryption_context = context
+      end
+
+      # The encoding to be used when decrypting values.  Defaults to
+      # UTF-8 if not explicitly set.
+      #
+      # @return [String]
+      def encoding
+        @encoding ||= default_encoding
+      end
+
+      # Set the encoding to be used when decrypting values.
+      #
+      # @param [String] new_encoding
+      def encoding=(new_encoding)
+        @encoding = Encoding.find(new_encoding)
+      end
+
+      private
+
+      def default_encoding
+        default_encoding = ::Rails.application.config.encoding if defined?(::Rails)
+        Encoding.find(default_encoding || DEFAULT_ENCODING)
       end
     end
   end
