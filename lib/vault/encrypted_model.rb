@@ -37,10 +37,10 @@ module Vault
       #   a proc to encode the value with
       # @option options [Proc] :decode
       #   a proc to decode the value with
-      def vault_attribute(attribute, options = {})
-        encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
+      def vault_attribute(attribute_name, options = {})
+        encrypted_column = options[:encrypted_column] || "#{attribute_name}_encrypted"
         path = options[:path] || "transit"
-        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute_name}"
         convergent = options.fetch(:convergent, false)
 
         # Sanity check options!
@@ -62,50 +62,35 @@ module Vault
           serializer.define_singleton_method(:decode, &options[:decode])
         end
 
-        # Getter
-        define_method("#{attribute}") do
-          if instance_variable_defined?("@#{attribute}")
-            return instance_variable_get("@#{attribute}")
+        attribute_type = options.fetch(:type, :value)
+
+        if attribute_type.is_a?(Symbol)
+          constant_name = attribute_type.to_s.camelize
+
+          unless ActiveRecord::Type.const_defined?(constant_name)
+            raise RuntimeError, "Unrecognized attribute type `#{attribute_type}`!"
           end
 
-          __vault_load_attribute!(attribute, self.class.__vault_attributes[attribute])
+          attribute_type = ActiveRecord::Type.const_get(constant_name).new
+        end
+
+        # Attribute API
+        attribute(attribute_name, attribute_type)
+
+        # Getter
+        define_method(attribute_name) do
+          read_attribute(attribute_name) || __vault_load_attribute!(attribute_name, self.class.__vault_attributes[attribute_name])
         end
 
         # Setter
-        define_method("#{attribute}=") do |value|
-          # We always set it as changed without comparing with the current value
-          # because we allow our held values to be mutated, so we need to assume
-          # that if you call attr=, you want it send back regardless.
-          attribute_will_change!("#{attribute}")
-          instance_variable_set("@#{attribute}", value)
-        end
-
-        # Checker
-        define_method("#{attribute}?") do
-          send("#{attribute}").present?
-        end
-
-        # Dirty method
-        define_method("#{attribute}_change") do
-          changes["#{attribute}"]
-        end
-
-        # Dirty method
-        define_method("#{attribute}_changed?") do
-          changed.include?("#{attribute}")
-        end
-
-        # Dirty method
-        define_method("#{attribute}_was") do
-          if changes["#{attribute}"]
-            changes["#{attribute}"][0]
-          else
-            public_send("#{attribute}")
-          end
+        define_method("#{attribute_name}=") do |value|
+          # Force the update of the attribute, to be consistent with old behaviour
+          attribute_will_change!(attribute_name)
+          write_attribute(attribute_name, value)
         end
 
         # Make a note of this attribute so we can use it in the future (maybe).
-        __vault_attributes[attribute.to_sym] = {
+        __vault_attributes[attribute_name.to_sym] = {
           key: key,
           path: path,
           serializer: serializer,
@@ -173,7 +158,6 @@ module Vault
       after_save :__vault_persist_attributes!
 
       # Decrypt all the attributes from Vault.
-      # @return [true]
       def __vault_load_attributes!
         return if self.class.vault_lazy_decrypt?
 
@@ -184,6 +168,9 @@ module Vault
 
       # Decrypt and load a single attribute from Vault.
       def __vault_load_attribute!(attribute, options)
+        # If the user provided a value for the attribute, do not try to load it from Vault
+        return unless read_attribute(attribute).nil?
+
         key        = options[:key]
         path       = options[:path]
         serializer = options[:serializer]
@@ -193,9 +180,6 @@ module Vault
         # Load the ciphertext
         ciphertext = read_attribute(column)
 
-        # If the user provided a value for the attribute, do not try to load it from Vault
-        return if instance_variable_get("@#{attribute}")
-
         # Load the plaintext value
         plaintext = Vault::Rails.decrypt(path, key, ciphertext, Vault.client, convergent)
 
@@ -203,7 +187,7 @@ module Vault
         plaintext = serializer.decode(plaintext) if serializer
 
         # Write the virtual attribute with the plaintext value
-        instance_variable_set("@#{attribute}", plaintext)
+        write_attribute(attribute, plaintext)
       end
 
       # Encrypt all the attributes using Vault and set the encrypted values back
@@ -246,7 +230,7 @@ module Vault
         convergent = options[:convergent]
 
         # Get the current value of the plaintext attribute
-        plaintext = instance_variable_get("@#{attribute}")
+        plaintext = read_attribute(attribute)
 
         # Apply the serialize to the plaintext value, if one exists
         if serializer
@@ -269,14 +253,13 @@ module Vault
       # reload a record from the database.
       def reload(*)
         super.tap do
-          # Unset all the instance variables to force the new data to be pulled from Vault
+          # Unset all attributes to force the new data to be pulled from Vault
           self.class.__vault_attributes.each do |attribute, _|
-            if instance_variable_defined?("@#{attribute}")
-              self.remove_instance_variable("@#{attribute}")
-            end
+            write_attribute(attribute, nil)
           end
 
           self.__vault_load_attributes!
+          clear_changes_information
         end
       end
     end

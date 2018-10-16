@@ -109,6 +109,31 @@ vault_attribute :credit_card,
 
 - **Note** Changing this value for an existing application will make existing values no longer decryptable!
 
+#### Attribute types
+The latest version of VaultRails uses ActiveRecord's Attribute API to implement encrypted attributes. This allows us to use its's internal type casting mechanism, and makes encrypted attributes behave like normal ActiveRecord ones. If you don't specify a type, the default is ActiveRecord::Type::Value, which can hold any value.
+
+Since Vault ciphertexts are always Base64 encoded strings, we still need to tell ActiveRecord how to handle this. ActiveRecord knows how to convert between ruby objects and datatypes that the database understands, but this is not useful to us in this case. There are a number of ways to deal with this:
+ * use serializers
+ * use `encode`/`decode` procs
+ * Define your own types (inherit from `ActiveRecord::Type::Value`) and override the `type_cast_from_database`/`type_cast_for_database` (AR 4.2) or `serialize`/`deserialize` (AR 5+)
+
+```ruby
+class User < ActiveRecord::Base
+  include Vault::EncryptedModel
+  vault_attribute :date_of_birth,
+    type: :date,
+    encode: -> (raw) { raw.to_s if raw },
+    decode: -> (raw) { raw.to_date if raw }
+end
+
+>> user = User.new
+=> #<User:0x0000...>
+>> user.date_of_birth = '1988-10-15'
+=> "1988-10-15"
+>> user.date_of_birth.class
+=> Date
+```
+
 #### Automatic serializing
 By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
 

@@ -49,6 +49,7 @@ GEM
     arel (6.0.4)
     aws-sigv4 (1.0.3)
     builder (3.2.3)
+    byebug (10.0.2)
     coderay (1.1.1)
     concurrent-ruby (1.0.5)
     crass (1.0.4)
@@ -137,6 +138,7 @@ PLATFORMS
 DEPENDENCIES
   appraisal (~> 2.1)
   bundler
+  byebug
   fc-vault-rails!
   pry
   rails (~> 4.2.8)
