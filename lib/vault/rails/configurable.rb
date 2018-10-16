@@ -3,6 +3,13 @@ module Vault
     module Configurable
       include Vault::Configurable
 
+      # The default encoding, used if Vault::Rails.encoding is not set,
+      # and we're not in a rails app so can't use the default encoding for
+      # the rails app (via Rails.application.config.encoding)
+      #
+      # @return [String]
+      DEFAULT_ENCODING = Encoding::UTF_8
+
       # The name of the Vault::Rails application.
       #
       # @raise [RuntimeError]
@@ -120,13 +127,16 @@ module Vault
         @retry_max_wait = val
       end
 
-      # Gets the convergent encryption context for deriving
-      # an enctyption key when using convergent encryption
-      # Raises an exception when convergent option is set
-      # to true and context is not privided
+      # The convergent encryption context for deriving an
+      # encryption key when using convergent encryption.
+      #
+      # @raise [RuntimeError]
+      #   if the convergent encryption context has not been set
+      #
+      # @return [String]
       def convergent_encryption_context
-        unless @convergent_encryption_context
-          raise StandardError, 'Missinng configuration oprion convergent_encryption_context!'
+        if !defined?(@convergent_encryption_context) || @convergent_encryption_context.nil?
+          raise RuntimeError, "Must set `Vault::Rails.convergent_encryption_context'!"
         end
 
         @convergent_encryption_context
@@ -135,6 +145,28 @@ module Vault
       # Sets the convergent encryption context for use with convergent encryption
       def convergent_encryption_context=(context)
         @convergent_encryption_context = context
+      end
+
+      # The encoding to be used when decrypting values.  Defaults to
+      # UTF-8 if not explicitly set.
+      #
+      # @return [String]
+      def encoding
+        @encoding ||= default_encoding
+      end
+
+      # Set the encoding to be used when decrypting values.
+      #
+      # @param [String] new_encoding
+      def encoding=(new_encoding)
+        @encoding = Encoding.find(new_encoding)
+      end
+
+      private
+
+      def default_encoding
+        default_encoding = ::Rails.application.config.encoding if defined?(::Rails)
+        Encoding.find(default_encoding || DEFAULT_ENCODING)
       end
     end
   end

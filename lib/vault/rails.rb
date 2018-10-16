@@ -24,11 +24,6 @@ module Vault
       float:    Vault::Rails::Serializers::FloatSerializer
     }.freeze
 
-    # The default encoding.
-    #
-    # @return [String]
-    DEFAULT_ENCODING = "utf-8".freeze
-
     # The warning string to print when running in development mode.
     DEV_WARNING = "[vault-rails] Using in-memory cipher - this is not secure " \
       "and should never be used in production-like environments!".freeze
@@ -232,12 +227,11 @@ module Vault
         return Base64.strict_encode64("#{path}/#{key}".ljust(16, "x")).byteslice(0..15)
       end
 
-      # Forces the encoding into the default Rails encoding and returns the
+      # Forces the encoding into the default encoding and returns the
       # newly encoded string.
       # @return [String]
       def force_encoding(str)
-        encoding = ::Rails.application.config.encoding || DEFAULT_ENCODING
-        str.force_encoding(encoding).encode(encoding)
+        str.force_encoding(Vault::Rails.encoding).encode(Vault::Rails.encoding)
       end
 
       private
@@ -261,9 +255,7 @@ module Vault
       end
 
       def log_warning(msg)
-        if defined?(::Rails) && ::Rails.logger != nil
-          ::Rails.logger.warn { msg }
-        end
+        ::ActiveRecord::Base.logger.warn { msg } if ::ActiveRecord::Base.logger
       end
     end
   end
