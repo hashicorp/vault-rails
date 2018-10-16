@@ -1,5 +1,15 @@
 # Vault Rails Changelog
 
+## v0.6.1 (October 16, 2018)
+
+NEW FEATURES
+- Allow specifying encoding for decrypted values via `Vault::Rails.encoding`
+
+BUG FIXES
+- Stop relying on Rails for default encoding of decrypted values
+- Use `ActiveRecord::Base.logger` instead of `Rails.logger`
+- When serialising JSON values pass through nil values as nil, not `{}`
+
 ## v0.6.0 (October 15, 2018)
 
 NOTABLE CHANGES
