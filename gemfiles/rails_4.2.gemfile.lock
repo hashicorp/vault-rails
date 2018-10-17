@@ -2,7 +2,7 @@ PATH
   remote: ..
   specs:
     fc-vault-rails (0.6.1)
-      activerecord (>= 4.2.8, < 5.1)
+      activerecord (>= 4.2.8, < 6.0)
       vault (~> 0.7)
 
 GEM

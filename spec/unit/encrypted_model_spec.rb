@@ -66,17 +66,19 @@ describe Vault::EncryptedModel do
       it 'defines a time attribute' do
         Vault::Rails.logical.write("transit/keys/dummy_people_time_data")
 
-        time = '2018-10-16 05:00:00 +00:00'.to_time
+        time = Time.parse('05:10:15 UTC')
 
         person = Person.new
         person.time_data = time
 
-        expect(person.time_data).to eq time
-
         person.save
         person.reload
 
-        expect(person.time_data).to eq time
+        person_time = person.time_data.utc
+
+        expect(person_time.hour).to eq time.hour
+        expect(person_time.min).to eq time.min
+        expect(person_time.sec).to eq time.sec
       end
 
       it 'raises an error with unknown attribute type' do
