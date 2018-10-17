@@ -107,6 +107,9 @@ module Vault
         before_save :__vault_encrypt_attributes!
       end
 
+      def vault_attribute_proxy(m1, m2, oprions={})
+      end
+
       # The list of Vault attributes.
       #
       # @return [Hash]
