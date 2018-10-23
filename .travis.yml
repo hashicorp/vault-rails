@@ -3,12 +3,6 @@ cache: bundler
 dist: trusty
 sudo: false
 
-env:
-  - VAULT_VERSION=0.10.4
-  - VAULT_VERSION=0.9.6
-  - VAULT_VERSION=0.8.3
-  - VAULT_VERSION=0.7.3
-
 gemfile:
   - Gemfile
   - gemfiles/rails_4.2.gemfile
@@ -25,14 +19,17 @@ branches:
     - master
 
 rvm:
-  - 2.2.8
-  - 2.3.5
-  - 2.4.2
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
 
 matrix:
   exclude:
     # Json 1.8.3 cannot build json gem dependency any longer with Ruby 2.4
-    - rvm: 2.4.2
+    - rvm: 2.4.4
+      gemfile: gemfiles/rails_4.2.gemfile
+    - rvm: 2.5.1
       gemfile: gemfiles/rails_4.2.gemfile
 
 before_script:
