@@ -66,8 +66,7 @@ jobs:
 
       - run:
           shell: /bin/bash -l
-          command: |
-            rvm use --default 2.5.1
+          command: rvm use --default 2.5.1
 
       - run:
           name: Install Gem Versioner
@@ -91,7 +90,6 @@ jobs:
     <<: *defaults
 
     steps:
-
       - checkout
       - run: yum -y install curl
       - run: yum clean all
@@ -104,9 +102,8 @@ jobs:
             chmod 600 ~/.gem/credentials
 
       - run:
-        shell: /bin/bash -l
-        command: |
-          rvm use --default 2.5.1
+          shell: /bin/bash -l
+          command: rvm use --default 2.5.1
 
       - run:
           name: Install Gem Versioner
