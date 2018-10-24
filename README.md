@@ -275,6 +275,15 @@ Person.where(ssn: "123-45-6789")
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
 
+### Vault Attribute Proxy
+This method is useful if you have a plaintext attribute that you want to replace with a vault attribute.
+During a transition period both attributes can be seamlessly read/changed at the same time.
+Then by using the boolean option `encrypted_attribute_only`, you will be able to test if the ciphertext field works as expected before getting rid of the plaintext attribute.
+In order to use this method for an attribute you need to add the following row in your model for given plaintext and ciphertext attributes:
+```ruby
+vault_attribute_proxy :attribute, :attribute_ciphertext, encrypted_attribute_only: true
+```
+
 
 Development
 -----------
