@@ -1,83 +1,127 @@
 version: 2
+
+defaults: &defaults
+  docker:
+    - image: quay.io/fundingcircle/centos-ruby:ci-rvm
+      auth:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+      environment:
+        RACK_ENV: test
+        VAULT_VERSION: 0.10.4
+
 jobs:
   tests:
-    docker:
-      - image: ruby:2.4.4-alpine
-        environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.0
+    <<: *defaults
+
     steps:
       - checkout
-      - run: apk add --no-cache build-base sqlite-dev tzdata
+      - run: yum -y install wget unzip sqlite
+      - run: yum clean all
+
       - run:
           name: Install Vault
           command: |
             wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
             unzip vault.zip
             mv vault /usr/local/bin/
+
       - restore_cache:
           keys:
-            - vault-rails-{{checksum "fc-vault-rails.gemspec" }}
-      - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
+            - vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum ".travis.yml" }}
+
+      - run:
+          shell: /bin/bash -l
+          command: |
+            rvm use --default 2.5.1
+            bundle check --path=/usr/local/rvm/gems || bundle install --path=/usr/local/rvm/gems
+
+      - run:
+          shell: /bin/bash -l
+          command: |
+            bundle exec rake app:db:create
+            bundle exec rake app:db:schema:load
+            bundle exec rake app:db:test:prepare
+            bundle exec wwtd
+
       - save_cache:
-          key: vault-rails-{{checksum "fc-vault-rails.gemspec" }}
+          key: vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum ".travis.yml" }}
           paths:
-            - vendor/bundle
-      - run: bundle exec rake app:db:create
-      - run: bundle exec rake app:db:schema:load
-      - run: bundle exec rake app:db:test:prepare
-      - run: bundle exec rspec
+            - /usr/local/rvm/gems
 
   publish-pre-release:
-    docker:
-      - image: ruby:2.4.4-alpine
+    <<: *defaults
+
     steps:
       - checkout
-      - run:
-          name: Install cURL
-          command: apk add --no-cache curl
+      - run: yum -y install curl
+      - run: yum clean all
+
       - run:
           name: Login to JFrog
           command: |
             mkdir -p ~/.gem
             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
             chmod 600 ~/.gem/credentials
+
+      - run:
+          shell: /bin/bash -l
+          command: |
+            rvm use --default 2.5.1
+
       - run:
           name: Install Gem Versioner
+          shell: /bin/bash -l
           command: gem install gem-versioner --version '~> 1.0' --no-document
+
       - run:
           name: Build gem
+          shell: /bin/bash -l
           command: |
             PRE_RELEASE="$CIRCLE_BRANCH" gem build fc-vault-rails.gemspec
+
       - run:
           name: Publish gem
+          shell: /bin/bash -l
           command: |
             package=$(ls -t1 fc-vault-rails-*.gem | head -1)
             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
 
   publish-release:
-    docker:
-      - image: ruby:2.4.4-alpine
+    <<: *defaults
+
     steps:
+
       - checkout
-      - run:
-          name: Install cURL
-          command: apk add --no-cache curl git
+      - run: yum -y install curl
+      - run: yum clean all
+
       - run:
           name: Login to JFrog
           command: |
             mkdir -p ~/.gem
             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
             chmod 600 ~/.gem/credentials
+
+      - run:
+        shell: /bin/bash -l
+        command: |
+          rvm use --default 2.5.1
+
       - run:
           name: Install Gem Versioner
+          shell: /bin/bash -l
           command: gem install gem-versioner --version '~> 1.0' --no-document
+
       - run:
           name: Build gem
+          shell: /bin/bash -l
           command: |
             gem build fc-vault-rails.gemspec
+
       - run:
           name: Publish gem
+          shell: /bin/bash -l
           command: |
             package=$(ls -t1 fc-vault-rails-*.gem | head -1)
             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local
@@ -88,9 +132,11 @@ workflows:
   test-and-release:
     jobs:
       - tests:
+          context: org-global
           filters:
             tags:
               only: /.*/
+
       - publish-pre-release:
           context: org-global
           filters:
