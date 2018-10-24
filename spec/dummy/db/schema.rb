@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180816090008) do
+ActiveRecord::Schema.define(version: 20181016143900) do
 
   create_table "people", force: :cascade do |t|
     t.string   "name"
@@ -23,6 +23,13 @@ ActiveRecord::Schema.define(version: 20180816090008) do
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
     t.string   "email_encrypted"
+    t.string   "address"
+    t.string   "address_encrypted"
+    t.date     "date_of_birth"
+    t.string   "date_of_birth_encrypted"
+    t.string   "integer_data_encrypted"
+    t.string   "float_data_encrypted"
+    t.string   "time_data_encrypted"
   end
 
 end

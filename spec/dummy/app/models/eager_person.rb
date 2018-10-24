@@ -1,7 +1,11 @@
 require "binary_serializer"
 
-class Person < ActiveRecord::Base
+class EagerPerson < ActiveRecord::Base
   include Vault::EncryptedModel
+
+  self.table_name = "people"
+
+  vault_persist_before_save!
 
   vault_attribute :ssn
 
@@ -23,17 +27,4 @@ class Person < ActiveRecord::Base
   vault_attribute :non_ascii
 
   vault_attribute :email, convergent: true
-
-  vault_attribute :integer_data,
-    type: :integer,
-    serialize: :integer
-
-  vault_attribute :float_data,
-    type: :float,
-    serialize: :float
-
-  vault_attribute :time_data,
-    type: ActiveRecord::Type::Time.new,
-    encode: -> (raw) { raw.to_s if raw },
-    decode: -> (raw) { raw.to_time if raw }
 end

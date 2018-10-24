@@ -22,3 +22,8 @@ RSpec.configure do |config|
 end
 
 require File.expand_path("../dummy/config/environment.rb", __FILE__)
+
+# Mount the engines we need for testing
+Vault::Rails.sys.mount("transit", :transit)
+Vault::Rails.sys.mount("non-ascii", :transit)
+Vault::Rails.sys.mount("credit-secrets", :transit)
