@@ -201,7 +201,7 @@ describe Vault::Rails do
 
       person.ssn = "111-11-1111"
 
-      expect(person).to receive(:__vault_load_attributes!).once
+      expect(person).to receive(:__vault_load_attributes!).once.and_call_original
 
       person.reload
 
