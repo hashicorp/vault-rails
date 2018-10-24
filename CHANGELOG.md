@@ -1,5 +1,14 @@
 # Vault Rails Changelog
 
+## v0.7.0 (October 24, 2018)
+
+NOTABLE CHANGES
+ - Use ActiveRecord Attribute API to implement encrypted attributes
+ - Add support for ActiveRecord >= 5.2 and ActiveRecord < 6.0
+
+ NEW FEATURES
+ - AttributeProxy for easy transition between plaintext and ciphertext attributes
+
 ## v0.6.1 (October 16, 2018)
 
 NEW FEATURES
