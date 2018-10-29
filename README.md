@@ -296,3 +296,10 @@ Important Notes:
 - **All new features must include test coverage.** At a bare minimum, Unit tests are required. It is preferred if you include acceptance tests as well.
 - **The tests must be be idempotent.** The HTTP calls made during a test should be able to be run over and over.
 - **Tests are order independent.** The default RSpec configuration randomizes the test order, so this should not be a problem.
+
+
+Getting tests to run
+--------------------
+```
+$ bundle exec db:schema:load
+```
