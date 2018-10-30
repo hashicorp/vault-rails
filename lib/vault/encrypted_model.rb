@@ -79,14 +79,26 @@ module Vault
 
         # Getter
         define_method(attribute_name) do
-          read_attribute(attribute_name) || __vault_load_attribute!(attribute_name, self.class.__vault_attributes[attribute_name])
+          unless  __vault_loaded_attributes.include?(attribute_name)
+            __vault_load_attribute!(attribute_name, self.class.__vault_attributes[attribute_name])
+          end
+
+          read_attribute(attribute_name)
         end
 
         # Setter
         define_method("#{attribute_name}=") do |value|
+          # Prevent the attribute from loading when a value is provided before
+          # the attribute is loaded from Vault but only if the model is initialized
+          __vault_loaded_attributes << attribute_name
+
           # Force the update of the attribute, to be consistent with old behaviour
+          cast_value = write_attribute(attribute_name, value)
+
+          # Rails 4.2 resets the dirty state if write_attribute is called with the same value after attribute_will_change
           attribute_will_change!(attribute_name)
-          write_attribute(attribute_name, value)
+
+          cast_value
         end
 
         # Make a note of this attribute so we can use it in the future (maybe).
@@ -181,7 +193,7 @@ module Vault
     included do
       # After a resource has been initialized, immediately communicate with
       # Vault and decrypt any attributes unless vault_lazy_decrypt is set.
-      after_initialize :__vault_load_attributes!
+      after_initialize :__vault_initialize_attributes!
 
       # After we save the record, persist all the values to Vault and reload
       # them attributes from Vault to ensure we have the proper attributes set.
@@ -191,10 +203,18 @@ module Vault
       # before theirs, resulting in attributes that are not persisted.
       after_save :__vault_persist_attributes!
 
-      # Decrypt all the attributes from Vault.
-      def __vault_load_attributes!
+      def __vault_loaded_attributes
+        @__vault_loaded_attributes ||= Set.new
+      end
+
+      def __vault_initialize_attributes!
         return if self.class.vault_lazy_decrypt?
 
+        __vault_load_attributes!
+      end
+
+      # Decrypt all the attributes from Vault.
+      def __vault_load_attributes!
         self.class.__vault_attributes.each do |attribute, options|
           self.__vault_load_attribute!(attribute, options)
         end
@@ -203,7 +223,7 @@ module Vault
       # Decrypt and load a single attribute from Vault.
       def __vault_load_attribute!(attribute, options)
         # If the user provided a value for the attribute, do not try to load it from Vault
-        return unless read_attribute(attribute).nil?
+        return if __vault_loaded_attributes.include?(attribute)
 
         key        = options[:key]
         path       = options[:path]
@@ -220,6 +240,8 @@ module Vault
         # Deserialize the plaintext value, if a serializer exists
         plaintext = serializer.decode(plaintext) if serializer
 
+        __vault_loaded_attributes << attribute
+
         # Write the virtual attribute with the plaintext value
         write_attribute(attribute, plaintext)
       end
@@ -233,7 +255,7 @@ module Vault
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
         # already in a transaction due to the callback.
-        self.update_columns(changes) if !changes.empty?
+        self.update_columns(changes) unless changes.empty?
 
         true
       end
@@ -301,7 +323,9 @@ module Vault
             write_attribute(attribute, nil)
           end
 
-          self.__vault_load_attributes!
+          __vault_loaded_attributes.clear
+
+          __vault_initialize_attributes!
           clear_changes_information
         end
       end
