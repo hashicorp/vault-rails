@@ -32,6 +32,8 @@ build/
 Gemfile.lock
 .ruby-version
 .ruby-gemset
+gemfiles/*.gemfile
+gemfiles/*.gemfile.lock
 
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
