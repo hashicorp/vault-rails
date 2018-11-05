@@ -42,10 +42,9 @@ describe Vault::EncryptedModel do
     end
 
     it "defines dirty attribute methods" do
-      klass.vault_attribute(:foo)
-      expect(klass.instance_methods).to include(:foo_change)
-      expect(klass.instance_methods).to include(:foo_changed?)
-      expect(klass.instance_methods).to include(:foo_was)
+      expect(Person.new).to respond_to(:ssn_change)
+      expect(Person.new).to respond_to(:ssn_changed?)
+      expect(Person.new).to respond_to(:ssn_was)
     end
   end
 end
