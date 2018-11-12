@@ -228,7 +228,7 @@ module Vault
       # on this model.
       # @return [true]
       def __vault_persist_attributes!
-        changes = __vault_encrypt_attributes!
+        changes = __vault_encrypt_attributes!(in_after_save: true)
 
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
@@ -238,11 +238,11 @@ module Vault
         true
       end
 
-      def __vault_encrypt_attributes!
+      def __vault_encrypt_attributes!(in_after_save: false)
         changes = {}
 
         self.class.__vault_attributes.each do |attribute, options|
-          if c = self.__vault_encrypt_attribute!(attribute, options)
+          if c = self.__vault_encrypt_attribute!(attribute, options, in_after_save: in_after_save)
             changes.merge!(c)
           end
         end
@@ -252,11 +252,11 @@ module Vault
 
       # Encrypt a single attribute using Vault and persist back onto the
       # encrypted attribute value.
-      def __vault_encrypt_attribute!(attribute, options)
+      def __vault_encrypt_attribute!(attribute, options, in_after_save: false)
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
 
-        if ActiveRecord.version >= Gem::Version.new('5.2.0')
+        if in_after_save && ActiveRecord.version >= Gem::Version.new('5.2.0')
           # ActiveRecord 5.2 changes the behaviour of `changed` in `after_*` callbacks
           # https://www.ombulabs.com/blog/rails/upgrades/active-record-5-1-api-changes.html
           # https://api.rubyonrails.org/classes/ActiveRecord/AttributeMethods/Dirty.html#method-i-saved_change_to_attribute
