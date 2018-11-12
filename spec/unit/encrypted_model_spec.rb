@@ -91,8 +91,11 @@ describe Vault::EncryptedModel do
 
   describe '#vault_persist_before_save!' do
     context "when not used" do
+      # Person hasn't had `vault_persist_before_save!` called on it
+      let(:model_class) { Person }
+
       it "the model has an after_save callback" do
-        save_callbacks = Person._save_callbacks.select do |cb|
+        save_callbacks = model_class._save_callbacks.select do |cb|
           cb.filter == :__vault_persist_attributes!
         end
 
@@ -104,26 +107,29 @@ describe Vault::EncryptedModel do
         expect(persist_callback.kind).to eq :after
       end
 
-      it 'calls the correnct callback' do
-        person = Person.new(ssn: '123-45-6789')
-        expect(person).to receive(:__vault_persist_attributes!)
+      it 'calls the correct callback' do
+        record = model_class.new(ssn: '123-45-6789')
+        expect(record).to receive(:__vault_persist_attributes!)
 
-        person.save
+        record.save
       end
 
       it 'encrypts the attribute if it has been saved' do
-        person = Person.new(ssn: '123-45-6789')
+        record = model_class.new(ssn: '123-45-6789')
         expect(Vault::Rails).to receive(:encrypt).with('transit', 'dummy_people_ssn', anything, anything, anything).and_call_original
 
-        person.save
+        record.save
 
-        expect(person.ssn_encrypted).not_to be_nil
+        expect(record.ssn_encrypted).not_to be_nil
       end
     end
 
     context "when used" do
+      # EagerPerson has had `vault_persist_before_save!` called on it
+      let(:model_class) { EagerPerson }
+
       it "the model does not have an after_save callback" do
-        save_callbacks = EagerPerson._save_callbacks.select do |cb|
+        save_callbacks = model_class._save_callbacks.select do |cb|
           cb.filter == :__vault_persist_attributes!
         end
 
@@ -131,7 +137,7 @@ describe Vault::EncryptedModel do
       end
 
       it "the model has a before_save callback" do
-        save_callbacks = EagerPerson._save_callbacks.select do |cb|
+        save_callbacks = model_class._save_callbacks.select do |cb|
           cb.filter == :__vault_encrypt_attributes!
         end
 
@@ -144,20 +150,20 @@ describe Vault::EncryptedModel do
       end
 
       it 'calls the correct callback' do
-        eager_person = EagerPerson.new(ssn: '123-45-6789')
-        expect(eager_person).not_to receive(:__vault_persist_attributes!)
-        expect(eager_person).to receive(:__vault_encrypt_attributes!)
+        record = model_class.new(ssn: '123-45-6789')
+        expect(record).not_to receive(:__vault_persist_attributes!)
+        expect(record).to receive(:__vault_encrypt_attributes!)
 
-        eager_person.save
+        record.save
       end
 
       it 'encrypts the attribute if it has been saved' do
-        eager_person = EagerPerson.new(ssn: '123-45-6789')
+        record = model_class.new(ssn: '123-45-6789')
         expect(Vault::Rails).to receive(:encrypt).with('transit', 'dummy_people_ssn',anything,anything,anything).and_call_original
 
-        eager_person.save
+        record.save
 
-        expect(eager_person.ssn_encrypted).not_to be_nil
+        expect(record.ssn_encrypted).not_to be_nil
       end
     end
   end
