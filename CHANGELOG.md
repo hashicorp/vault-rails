@@ -6,8 +6,28 @@ NOTABLE CHANGES
  - Use ActiveRecord Attribute API to implement encrypted attributes
  - Add support for ActiveRecord >= 5.2 and ActiveRecord < 6.0
 
- NEW FEATURES
- - AttributeProxy for easy transition between plaintext and ciphertext attributes
+BREAKING CHANGES
+ - `vault_attribute_proxy` is included with `Vault::EncryptedModel` by
+   default, there is no `Valut::AttributeProxy` module any more.
+ - type information is now specified on `vault_attribute` definitions
+   instead of the `vault_attribute_proxy` definitions.
+
+## v0.6.3 (October 31, 2018)
+
+NEW FEATURES
+- Allow specifying type information on `vault_attribute_proxy` definitions.
+  This allows the proxied attribute to convert between strings (what all
+  values ultimately are when send to vault for encryption) and the typed
+  representation that we'd otherwise get from a traditional activerecord
+  database-backed attribute.
+
+## v0.6.2 (October 30, 2018)
+
+NEW FEATURES
+- Introduce `vault_attribute_proxy` via including Vault::AttributeProxy.
+  This acts to unify an existing plaintext column with a new encryped
+  column defined as a `vault_attribute`.  Allowing a staged transition to
+  a fully encrypted attribute at a later date.
 
 ## v0.6.1 (October 16, 2018)
 
