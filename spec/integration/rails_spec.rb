@@ -36,11 +36,17 @@ describe Vault::Rails do
       expect(person.ssn_was).to eq("123-45-6789")
     end
 
-    it "allows attributes to be unset" do
+    it "allows attributes to be updated with nil values" do
       person = Person.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: nil)
       person.reload
 
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows attributes to be unset" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.ssn = nil
       expect(person.ssn).to be(nil)
     end
 
@@ -143,8 +149,7 @@ describe Vault::Rails do
       person = LazyPerson.create!(ssn: "123-45-6789", non_ascii: 'some text')
       expect(person.ssn).not_to be_nil
 
-      expect(person).to receive(:__vault_load_attributes!).once
-      expect(person).not_to receive(:__vault_load_attribute!)
+      expect(person).not_to receive(:__vault_load_attributes!)
 
       person.reload
       expect(person.read_attribute(:ssn)).to be nil
@@ -187,6 +192,12 @@ describe Vault::Rails do
       expect(person.ssn).to be(nil)
     end
 
+    it "allows attributes to be unset" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.ssn = nil
+      expect(person.ssn).to be(nil)
+    end
+
     it "allows attributes to be blank" do
       person = LazyPerson.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: "")
@@ -201,7 +212,8 @@ describe Vault::Rails do
 
       person.ssn = "111-11-1111"
 
-      expect(person).to receive(:__vault_load_attributes!).once.and_call_original
+      expect(person).to receive(:__vault_initialize_attributes!).once.and_call_original
+      expect(person).to receive(:__vault_load_attribute!).once.with(:ssn, any_args).and_call_original
 
       person.reload
 
