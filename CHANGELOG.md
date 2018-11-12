@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## Unreleased
+
+BUG FIXES
+- Actually persist encrypted attributes when using
+  `vault_persist_before_save!` in rails 5.2
+
 ## v0.7.0 (October 24, 2018)
 
 NOTABLE CHANGES

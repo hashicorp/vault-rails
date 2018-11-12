@@ -105,10 +105,19 @@ describe Vault::EncryptedModel do
       end
 
       it 'calls the correnct callback' do
-        eager_person = Person.new(ssn: '123-45-6789')
-        expect(eager_person).to receive(:__vault_persist_attributes!)
+        person = Person.new(ssn: '123-45-6789')
+        expect(person).to receive(:__vault_persist_attributes!)
 
-        eager_person.save
+        person.save
+      end
+
+      it 'encrypts the attribute if it has been saved' do
+        person = Person.new(ssn: '123-45-6789')
+        expect(Vault::Rails).to receive(:encrypt).with('transit', 'dummy_people_ssn', anything, anything, anything).and_call_original
+
+        person.save
+
+        expect(person.ssn_encrypted).not_to be_nil
       end
     end
 
@@ -140,6 +149,15 @@ describe Vault::EncryptedModel do
         expect(eager_person).to receive(:__vault_encrypt_attributes!)
 
         eager_person.save
+      end
+
+      it 'encrypts the attribute if it has been saved' do
+        eager_person = EagerPerson.new(ssn: '123-45-6789')
+        expect(Vault::Rails).to receive(:encrypt).with('transit', 'dummy_people_ssn',anything,anything,anything).and_call_original
+
+        eager_person.save
+
+        expect(eager_person.ssn_encrypted).not_to be_nil
       end
     end
   end
