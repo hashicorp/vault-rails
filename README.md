@@ -262,6 +262,15 @@ vault_attribute :ssn,
 
 - **Note** Convergent encryption significantly weakens the security that encryption provides. Use this with caution!
 
+### Batch encryption and decryption
+There is an option to encrypt or decrypt multiple strings at once.
+All items to be encrypted/decrypted should use the same path, key and client.
+
+``` ruby
+Vault::Rails.batch_decrypt(path, key, <array of ciphertexts>, client)
+Vault::Rails.batch_encrypt(path, key, <array of plaintexts>, client)
+```
+
 
 ### Searching Encrypted Attributes
 Because each column is uniquely encrypted, it is not possible to search for a

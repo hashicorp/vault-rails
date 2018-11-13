@@ -78,8 +78,8 @@ module Vault
       def encrypt(path, key, plaintext, client = self.client, convergent = false)
         return plaintext if plaintext.blank?
 
-        path = path.to_s if !path.is_a?(String)
-        key  = key.to_s if !key.is_a?(String)
+        path = path.to_s
+        key  = key.to_s
 
         with_retries do
           if self.enabled?
@@ -89,6 +89,24 @@ module Vault
           end
 
           return self.force_encoding(result)
+        end
+      end
+
+      # works only with convergent encryption
+      def batch_encrypt(path, key, plaintexts, client = self.client)
+        return [] if plaintexts.empty?
+
+        path = path.to_s
+        key = key.to_s
+
+        with_retries do
+          results = if self.enabled?
+                      self.vault_batch_encrypt(path, key, plaintexts, client)
+                    else
+                      self.memory_batch_encrypt(path, key, plaintexts, client)
+                    end
+
+          results.map { |result| self.force_encoding(result) }
         end
       end
 
@@ -110,8 +128,8 @@ module Vault
           return ciphertext
         end
 
-        path = path.to_s if !path.is_a?(String)
-        key  = key.to_s if !key.is_a?(String)
+        path = path.to_s
+        key  = key.to_s
 
         with_retries do
           if self.enabled?
@@ -121,6 +139,24 @@ module Vault
           end
 
           return self.force_encoding(result)
+        end
+      end
+
+      # works only with convergent encryption
+      def batch_decrypt(path, key, ciphertexts, client = self.client)
+        return [] if ciphertexts.empty?
+
+        path = path.to_s
+        key = key.to_s
+
+        with_retries do
+          results = if self.enabled?
+                      self.vault_batch_decrypt(path, key, ciphertexts, client)
+                    else
+                      self.memory_batch_decrypt(path, key, ciphertexts, client)
+                    end
+
+          results.map { |result| self.force_encoding(result) }
         end
       end
 
@@ -162,6 +198,11 @@ module Vault
         Base64.strict_encode64(iv + cipher.update(plaintext) + cipher.final)
       end
 
+      # Perform in-memory encryption. This is useful for testing and development.
+      def memory_batch_encrypt(path, key, plaintexts, _client)
+        plaintexts.map { |plaintext| memory_encrypt(path, key, ciphertext, _client, true) }
+      end
+
       # Perform in-memory decryption. This is useful for testing and development.
       def memory_decrypt(path, key, ciphertext, _client, convergent)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
@@ -179,6 +220,11 @@ module Vault
 
         cipher.update(ciphertext) + cipher.final
       end
+
+      def memory_batch_decrypt(path, key, ciphertexts, _client)
+        ciphertexts.map { |ciphertext| memory_decrypt(path, key, ciphertext, _client, true) }
+      end
+
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
       # unavailable.
@@ -202,6 +248,29 @@ module Vault
         secret.data[:ciphertext]
       end
 
+      def vault_batch_encrypt(path, key, plaintexts, client)
+        return [] if plaintexts.empty?
+
+        route = File.join(path, 'encrypt', key)
+
+        options = {
+          convergent_encryption: true,
+          derived: true
+        }
+
+        batch_input = plaintexts.map do |plaintext|
+          {
+            context: Base64.strict_encode64(Vault::Rails.convergent_encryption_context),
+            plaintext: Base64.strict_encode64(plaintext)
+          }
+        end
+
+        options.merge!(batch_input: batch_input)
+
+        secret = client.logical.write(route, options)
+        secret.data[:batch_results].map { |result| result[:ciphertext] }
+      end
+
       # Perform decryption using Vault. This will raise exceptions if Vault is
       # unavailable.
       def vault_decrypt(path, key, ciphertext, client, convergent)
@@ -219,6 +288,25 @@ module Vault
         secret = client.logical.write(route, options)
 
         Base64.strict_decode64(secret.data[:plaintext])
+      end
+
+      def vault_batch_decrypt(path, key, ciphertexts, client)
+        return [] if ciphertexts.empty?
+
+        route = File.join(path, 'decrypt', key)
+
+
+        batch_input = ciphertexts.map do |ciphertext|
+          {
+            context: Base64.strict_encode64(Vault::Rails.convergent_encryption_context),
+            ciphertext: ciphertext
+          }
+        end
+
+        options = { batch_input: batch_input }
+
+        secret = client.logical.write(route, options)
+        secret.data[:batch_results].map { |result| Base64.strict_decode64(result[:plaintext]) }
       end
 
       # The symmetric key for the given params.
