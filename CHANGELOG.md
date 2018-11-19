@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## Unreleased
+
+BUG FIXES
+- Allow blank values like `nil` and empty string as input to batch encryption and decryption (forward ported from 0.6.5)
+- Handle the case when plaintexts/ciphertexts parameter of #vault_batch_encrypt/#vault_batch_decrypt is an array with only blank values (forward ported from 0.6.7)
+
 ## 0.7.2 (December 3, 2018)
 
 NEW FEATURES
