@@ -211,6 +211,58 @@ module Vault
       def vault_lazy_decrypt!
         @vault_lazy_decrypt = true
       end
+
+      # works only with convergent encryption
+      def vault_persist_all(attribute, records, plaintexts)
+        options = __vault_attributes[attribute]
+
+        key        = options[:key]
+        path       = options[:path]
+        serializer = options[:serializer]
+        column     = options[:encrypted_column]
+
+        # Apply the serialize to the plaintext values, if one exists
+        if serializer
+          plaintexts = plaintexts.map { |plaintext| serializer.encode(plaintext) }
+        end
+
+        # Generate the ciphertext and store it back as an attribute
+        ciphertexts = Vault::Rails.batch_encrypt(path, key, plaintexts, Vault.client)
+
+        records.each_with_index do |record, index|
+          record.send("#{column}=", ciphertexts[index])
+          record.save
+        end
+      end
+
+      # works only with convergent encryption
+      # relevant only if lazy decryption is enabled
+      def vault_load_all(attribute, records)
+        options = __vault_attributes[attribute]
+
+        key        = options[:key]
+        path       = options[:path]
+        serializer = options[:serializer]
+        column     = options[:encrypted_column]
+
+        # Load the ciphertext
+        ciphertexts = records.map { |record| record.read_attribute(column) }
+
+        # Load the plaintext value
+        plaintexts = Vault::Rails.batch_decrypt(path, key, ciphertexts, Vault.client)
+
+        # Deserialize the plaintext values, if a serializer exists
+        if serializer
+          plaintexts = plaintexts.map { |plaintext| serializer.decode(plaintext) }
+        end
+
+        records.each_with_index do |record, index|
+          record.__vault_loaded_attributes << attribute
+
+          # Write the virtual attribute with the plaintext value
+          record.write_attribute(attribute, plaintexts[index])
+        end
+      end
     end
 
     included do

@@ -499,4 +499,56 @@ describe Vault::Rails do
       end
     end
   end
+
+  context 'batch encryption and decryption' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    describe '.vault_load_all' do
+      it 'calls Vault just once' do
+        first_person = LazyPerson.create!(passport_number: '12345678')
+        second_person = LazyPerson.create!(passport_number: '12345679')
+
+        people = [first_person.reload, second_person.reload]
+        expect(Vault.logical).to receive(:write).once.and_call_original
+        LazyPerson.vault_load_all(:passport_number, people)
+
+        first_person.passport_number
+        second_person.passport_number
+      end
+
+      it 'loads the attribute of all records' do
+        first_person = LazyPerson.create!(passport_number: '12345678')
+        second_person = LazyPerson.create!(passport_number: '12345679')
+
+        first_person.reload
+        second_person.reload
+
+        LazyPerson.vault_load_all(:passport_number, [first_person, second_person])
+        expect(first_person.passport_number).to eq('12345678')
+        expect(second_person.passport_number).to eq('12345679')
+      end
+    end
+
+    describe '.vault_persist_all' do
+      it 'calls Vault just once' do
+        first_person = LazyPerson.new
+        second_person = LazyPerson.new
+
+        expect(Vault.logical).to receive(:write).once.and_call_original
+        LazyPerson.vault_persist_all(:passport_number, [first_person, second_person], %w(12345678 12345679))
+      end
+
+      it 'saves the attribute of all records' do
+        first_person = LazyPerson.new
+        second_person = LazyPerson.new
+
+        LazyPerson.vault_persist_all(:passport_number, [first_person, second_person], %w(12345678 12345679))
+
+        expect(first_person.reload.passport_number).to eq('12345678')
+        expect(second_person.reload.passport_number).to eq('12345679')
+      end
+    end
+  end
 end
