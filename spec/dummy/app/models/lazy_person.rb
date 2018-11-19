@@ -25,4 +25,6 @@ class LazyPerson < ActiveRecord::Base
     decode: ->(raw) { raw && raw[3...-3] }
 
   vault_attribute :non_ascii
+
+  vault_attribute :passport_number, convergent: true
 end
