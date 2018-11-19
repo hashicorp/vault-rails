@@ -209,7 +209,7 @@ module Vault
 
       # Perform in-memory encryption. This is useful for testing and development.
       def memory_batch_encrypt(path, key, plaintexts, _client)
-        plaintexts.map { |plaintext| memory_encrypt(path, key, ciphertext, _client, true) }
+        plaintexts.map { |plaintext| memory_encrypt(path, key, plaintext, _client, true) }
       end
 
       # Perform in-memory decryption. This is useful for testing and development.
