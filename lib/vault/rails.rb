@@ -5,6 +5,7 @@ require 'json'
 
 require_relative 'encrypted_model'
 require_relative 'attribute_proxy'
+require_relative 'perform_in_batches'
 require_relative 'rails/configurable'
 require_relative 'rails/errors'
 require_relative 'rails/serializers/json_serializer'
