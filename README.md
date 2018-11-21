@@ -293,6 +293,18 @@ In order to use this method for an attribute you need to add the following row i
 vault_attribute_proxy :attribute, :attribute_ciphertext, encrypted_attribute_only: true
 ```
 
+Upgrading to 0.7 from 0.6
+-------------------------
+
+Version 0.6 targets rails 4.x and 0.7 targets rails 5.x.  There are breaking changes between the two versions too, so upgrading isn't as smooth as it could be.
+
+1. You no longer need to `include Vault::AttributeProxy` to get `vault_attribute_proxy` as it is part of `Vault::EncryptedModel` now. In 0.7.0 the `Vault::AttributeProxy` module isn't part of the gem, but from 0.7.1+ it exists just to emit a deprecation warning reminding you to stop including it.
+
+    **If you do nothing** your app will still work properly in 0.7.1+, but you'll get annoying messages.
+
+2. The position of the `type` parameter has changed from `vault_attribute_proxy` in 0.6 to `vault_attribute` in 0.7.  In 0.7 if you have a `type` option on `vault_attribute_proxy` it will emit a deprecation warning reminding you to move the definition onto `vault_attribute`.
+
+    **If you do nothing** your app will likely break because `fc-vault-rails` will assume your `vault_attribute` is just a string and if you had `type` on `vault_attribute_proxy` it's likely not.
 
 Development
 -----------
