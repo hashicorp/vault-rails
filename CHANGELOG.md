@@ -3,6 +3,8 @@
 ## Unreleased
 
 NEW FEATURES
+- Support for batch encryption/decryption via `Vault::Rails.batch_encrypt`
+  and `Vault::Rails.batch_decrypt` methods.
 - Introduce deprecation warnings for the breaking changes between 0.6 and
   0.7.  This includes adding back `Vault::AttributeProxy` as an empty
   module that generates a deprecation warning.
@@ -10,6 +12,7 @@ NEW FEATURES
 BUG FIXES
 - Actually persist encrypted attributes when using
   `vault_persist_before_save!` in rails 5.2
+- Support lazy loading of `nil` values.
 
 ## v0.7.0 (October 24, 2018)
 
