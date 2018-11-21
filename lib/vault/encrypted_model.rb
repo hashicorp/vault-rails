@@ -138,6 +138,9 @@ module Vault
       #   Whether to read and write to both encrypted and non-encrypted attributes.
       #   Useful for when we stop using the non-encrypted one.
       def vault_attribute_proxy(non_encrypted_attribute, encrypted_attribute, options={})
+        if options[:type].present?
+          ActiveSupport::Deprecation.warn('The `type` option on `vault_attribute_proxy` is now ignored.  To specify type information you should move the `type` option onto the `vault_attribute` definition.')
+        end
         # Only return the encrypted attribute if it's available and encrypted_attribute_only is true.
         define_method(non_encrypted_attribute) do
           return send(encrypted_attribute) if options[:encrypted_attribute_only]
