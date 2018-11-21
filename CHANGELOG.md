@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## v0.7.1 (November 21, 2018)
 
 NEW FEATURES
 - Support for batch encryption/decryption via `Vault::Rails.batch_encrypt`
