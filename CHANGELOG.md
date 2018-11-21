@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+NEW FEATURES
+- Introduce deprecation warnings for the breaking changes between 0.6 and
+  0.7.  This includes adding back `Vault::AttributeProxy` as an empty
+  module that generates a deprecation warning.
+
 BUG FIXES
 - Actually persist encrypted attributes when using
   `vault_persist_before_save!` in rails 5.2
