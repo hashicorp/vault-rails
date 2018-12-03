@@ -6,6 +6,8 @@ NEW FEATURES
 - New serializers for `time` and `datetime`
 - Allow symbol values for `type` to find any type class registered with
   `ActiveRecord::Type`, not just the constants defined under it
+- If `type` is specified and serialization options aren't attempt to detect
+  a default serializer based on the type.
 
 BREAKING CHANGES
 - Actually drop support for rails 4.x, we should have done this in 0.7.0
