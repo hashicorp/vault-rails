@@ -62,16 +62,18 @@ module Vault
           serializer.define_singleton_method(:decode, &options[:decode])
         end
 
-        attribute_type = options.fetch(:type, :value)
+        attribute_type = options.fetch(:type, ActiveRecord::Type::Value.new)
 
         if attribute_type.is_a?(Symbol)
-          constant_name = attribute_type.to_s.camelize
-
-          unless ActiveRecord::Type.const_defined?(constant_name)
-            raise RuntimeError, "Unrecognized attribute type `#{attribute_type}`!"
+          begin
+            attribute_type = ActiveRecord::Type.lookup(attribute_type)
+          rescue ArgumentError => e
+            if e.message =~ /Unknown type /
+              raise RuntimeError, "Unrecognized attribute type `#{attribute_type}`!"
+            else
+              raise
+            end
           end
-
-          attribute_type = ActiveRecord::Type.const_get(constant_name).new
         end
 
         # Attribute API
