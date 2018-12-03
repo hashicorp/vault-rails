@@ -1,5 +1,10 @@
 # Vault Rails Changelog
 
+## Unreleased
+
+BREAKING CHANGES
+- Actually drop support for rails 4.x, we should have done this in 0.7.0
+
 ## v0.7.1 (November 21, 2018)
 
 NEW FEATURES
