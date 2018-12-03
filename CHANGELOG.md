@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## 0.7.2 (December 3, 2018)
 
 NEW FEATURES
 - New serializers for `time` and `datetime`
@@ -39,6 +39,26 @@ BREAKING CHANGES
    default, there is no `Valut::AttributeProxy` module any more.
  - type information is now specified on `vault_attribute` definitions
    instead of the `vault_attribute_proxy` definitions.
+
+## v0.6.6 (December 3, 2018)
+
+NEW FEATURES
+- New serializers for `time` and `datetime`
+- New serializer for `ipaddr`.
+
+## v0.6.5 (November 28, 2018)
+
+IMPROVEMENTS
+- Add `EncryptedModel.vault_persist_all` for encrypting and saving one attribute of multiple records with just one call to Vault
+- Add `EncryptedModel.vault_load_all` for decrypting and loading one attribute of multiple records with just one call to Vault
+- Allow blank values like `nil` and empty string as input to batch encryption and decryption
+
+## v0.6.4 (November 13, 2018)
+
+NEW FEATURES
+- Allow batch encryption and decryption.
+  Now there is an option to encrypt or decrypt multiple strings at once.
+  All items to be encrypted/decrypted should use the same path, key and client.
 
 ## v0.6.3 (October 31, 2018)
 
