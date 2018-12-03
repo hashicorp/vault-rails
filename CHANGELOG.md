@@ -1,5 +1,19 @@
 # Vault Rails Changelog
 
+## Unreleased
+
+NEW FEATURES
+- New serializers for `time` and `datetime`
+- Allow symbol values for `type` to find any type class registered with
+  `ActiveRecord::Type`, not just the constants defined under it
+- If `type` is specified but serialization options aren't then attempt to
+  detect a default serializer based on the type.
+- New serializer for `ipaddr`, which acts as a default for `inet` and
+  `cidr` too.
+
+BREAKING CHANGES
+- Actually drop support for rails 4.x, we should have done this in 0.7.0
+
 ## v0.7.1 (November 21, 2018)
 
 NEW FEATURES
