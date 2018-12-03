@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## 0.7.2 (December 3, 2018)
 
 NEW FEATURES
 - New serializers for `time` and `datetime`
