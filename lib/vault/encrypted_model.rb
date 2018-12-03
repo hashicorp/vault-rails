@@ -1,4 +1,6 @@
 require "active_support/concern"
+require "active_record"
+require "active_record/type"
 
 module Vault
   module EncryptedModel
@@ -46,35 +48,7 @@ module Vault
         # Sanity check options!
         _vault_validate_options!(options)
 
-        # Get the serializer if one was given.
-        serializer = options[:serialize]
-
-        # Unless a class or module was given, construct our serializer. (Slass
-        # is a subset of Module).
-        if serializer && !serializer.is_a?(Module)
-          serializer = Vault::Rails.serializer_for(serializer)
-        end
-
-        # See if custom encoding or decoding options were given.
-        if options[:encode] && options[:decode]
-          serializer = Class.new
-          serializer.define_singleton_method(:encode, &options[:encode])
-          serializer.define_singleton_method(:decode, &options[:decode])
-        end
-
-        attribute_type = options.fetch(:type, ActiveRecord::Type::Value.new)
-
-        if attribute_type.is_a?(Symbol)
-          begin
-            attribute_type = ActiveRecord::Type.lookup(attribute_type)
-          rescue ArgumentError => e
-            if e.message =~ /Unknown type /
-              raise RuntimeError, "Unrecognized attribute type `#{attribute_type}`!"
-            else
-              raise
-            end
-          end
-        end
+        attribute_type = _vault_fetch_attribute_type(options)
 
         # Attribute API
         attribute(attribute_name, attribute_type)
@@ -102,6 +76,8 @@ module Vault
 
           cast_value
         end
+
+        serializer = _vault_fetch_serializer(options, attribute_type)
 
         # Make a note of this attribute so we can use it in the future (maybe).
         __vault_attributes[attribute_name.to_sym] = {
@@ -183,6 +159,48 @@ module Vault
         if options[:decode] && !options[:encode]
           raise Vault::Rails::ValidationFailedError, "Cannot specify " \
             "`:decode' without specifying `:encode' as well!"
+        end
+      end
+
+      def _vault_fetch_attribute_type(options)
+        attribute_type = options.fetch(:type, ActiveRecord::Type::Value.new)
+
+        if attribute_type.is_a?(Symbol)
+          ActiveRecord::Type.lookup(attribute_type)
+        else
+          attribute_type
+        end
+      rescue ArgumentError => e
+        if e.message =~ /Unknown type /
+          raise RuntimeError, "Unrecognized attribute type `#{attribute_type}`!"
+        else
+          raise
+        end
+      end
+
+      def _vault_fetch_serializer(options, attribute_type)
+        if options[:serialize]
+          serializer = options[:serialize]
+
+          # Unless a class or module was given, construct our serializer. (Slass
+          # is a subset of Module).
+          if serializer && !serializer.is_a?(Module)
+            Vault::Rails.serializer_for(serializer)
+          else
+            serializer
+          end
+        elsif options[:encode] && options[:decode]
+          # See if custom encoding or decoding options were given.
+          Class.new do
+            define_singleton_method(:encode, &options[:encode])
+            define_singleton_method(:decode, &options[:decode])
+          end
+        elsif attribute_type.is_a?(ActiveRecord::Type::Value) && attribute_type.type.present?
+          begin
+            Vault::Rails.serializer_for(attribute_type.type)
+          rescue Vault::Rails::Serializers::UnknownSerializerError
+            nil
+          end
         end
       end
 

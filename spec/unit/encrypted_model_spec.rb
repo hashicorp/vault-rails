@@ -84,7 +84,50 @@ describe Vault::EncryptedModel do
       it 'raises an error with unknown attribute type' do
         expect do
           Person.vault_attribute :unrecognized_attr, type: :unrecognized
-        end.to raise_error RuntimeError, /Unrecognized/
+        end.to raise_error RuntimeError, /Unrecognized attribute type/
+      end
+
+      it 'defines a default serialzer if it has one for the type' do
+        time_data_vault_options = TypedPerson.__vault_attributes[:time_data]
+        expect(time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::TimeSerializer
+
+        integer_data_vault_options = TypedPerson.__vault_attributes[:integer_data]
+        expect(integer_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::IntegerSerializer
+
+        float_data_vault_options = TypedPerson.__vault_attributes[:float_data]
+        expect(float_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::FloatSerializer
+
+        date_data_vault_options = TypedPerson.__vault_attributes[:date_data]
+        expect(date_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateSerializer
+
+        date_time_data_vault_options = TypedPerson.__vault_attributes[:date_time_data]
+        expect(date_time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateTimeSerializer
+      end
+
+      it 'does not add a default serialzer if it does not have one for the type' do
+        string_data_vault_options = TypedPerson.__vault_attributes[:string_data]
+        expect(string_data_vault_options[:serializer]).to be_nil
+
+        decimal_data_vault_options = TypedPerson.__vault_attributes[:decimal_data]
+        expect(decimal_data_vault_options[:serializer]).to be_nil
+
+        text_data_vault_options = TypedPerson.__vault_attributes[:text_data]
+        expect(text_data_vault_options[:serializer]).to be_nil
+      end
+
+      it 'allows overriding the default serialzer via the `serializer` option' do
+        custom_date_time_data_vault_options = TypedPerson.__vault_attributes[:custom_date_time_data]
+        expect(custom_date_time_data_vault_options[:serializer]).not_to eq Vault::Rails::Serializers::DateTimeSerializer
+        expect(custom_date_time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateSerializer
+      end
+
+      it 'allows overriding the default serializer via the `encode` and `decode` options' do
+        custom_float_data_vault_options = TypedPerson.__vault_attributes[:custom_float_data]
+        expect(custom_float_data_vault_options[:serializer]).not_to eq Vault::Rails::Serializers::FloatSerializer
+        # we can't reasonably assert on the value of serializer, so we'll
+        # check what it does instead
+        expect(custom_float_data_vault_options[:serializer].encode(1.5)).to eq '2'
+        expect(custom_float_data_vault_options[:serializer].decode('1.5')).to eq 2
       end
     end
   end
