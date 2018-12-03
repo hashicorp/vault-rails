@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+NEW FEATURES
+- New serializers for `time` and `datetime`
+
 BREAKING CHANGES
 - Actually drop support for rails 4.x, we should have done this in 0.7.0
 

@@ -9,4 +9,3 @@ describe Vault::Rails::Serializers::DateSerializer do
     expect(subject.decode('1999-12-31')).to eq Date.new(1999, 12, 31)
   end
 end
-
