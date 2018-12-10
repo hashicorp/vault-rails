@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## 0.7.3 (December 10, 2018)
 
 BUG FIXES
 - Allow blank values like `nil` and empty string as input to batch encryption and decryption (forward ported from 0.6.5)
