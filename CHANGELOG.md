@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## 0.7.3 (December 10, 2018)
 
 BUG FIXES
 - Allow blank values like `nil` and empty string as input to batch encryption and decryption (forward ported from 0.6.5)
@@ -45,6 +45,11 @@ BREAKING CHANGES
    default, there is no `Valut::AttributeProxy` module any more.
  - type information is now specified on `vault_attribute` definitions
    instead of the `vault_attribute_proxy` definitions.
+
+## v0.6.7 (December 7, 2018)
+
+BUG FIXES
+- Handle the case when plaintexts/ciphertexts parameter of #vault_batch_encrypt/#vault_batch_decrypt is an array with only blank values
 
 ## v0.6.6 (December 3, 2018)
 
