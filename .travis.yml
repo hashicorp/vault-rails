@@ -4,7 +4,10 @@ dist: trusty
 sudo: false
 
 env:
-  - VAULT_VERSION=0.6.0
+  - VAULT_VERSION=0.9.6
+  - VAULT_VERSION=0.8.3
+  - VAULT_VERSION=0.7.3
+  - VAULT_VERSION=0.6.5
   - VAULT_VERSION=0.5.3
   - VAULT_VERSION=0.4.1
   - VAULT_VERSION=0.3.1
@@ -21,9 +24,10 @@ branches:
     - master
 
 rvm:
-  - 2.2.8
-  - 2.3.5
-  - 2.4.2
+  - 2.2.10
+  - 2.3.8
+  - 2.4.5
+  - 2.5.3
 
 before_script:
   - bundle exec rake app:db:create

@@ -112,7 +112,7 @@ module Vault
         @retry_max_wait ||= Vault::Defaults::RETRY_MAX_WAIT
       end
 
-      # Sets the naximum amount of time for a single retry. Please see the Vault
+      # Sets the maximum amount of time for a single retry. Please see the Vault
       # documentation for more information.
       #
       # @param [Fixnum] val
