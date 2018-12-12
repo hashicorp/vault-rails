@@ -1,6 +1,6 @@
 # Vault Rails Changelog
 
-## Unreleased
+## 0.7.4 (December 12, 2018)
 
 IMPROVEMENTS
 - Add `EncryptedModel.vault_persist_all` for encrypting and saving one attribute of multiple records with just one call to Vault (forward ported from 0.6.5)
