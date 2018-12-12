@@ -90,7 +90,7 @@ vault_attribute :credit_card,
 - **Note** This value **cannot** be the same name as the vault attribute!
 
 #### Specifying a custom key
-By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` coption when declaring the attribute:
+By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` option when declaring the attribute:
 
 ```ruby
 vault_attribute :credit_card,
@@ -151,7 +151,7 @@ vault_attribute :address,
   decode: ->(raw) { raw.to_s }
 ```
 
-- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrive existing values!
+- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrieve existing values!
 
 Caveats
 -------
