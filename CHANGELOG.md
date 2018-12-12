@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## Unreleased
+
+IMPROVEMENTS
+- Add `EncryptedModel.vault_persist_all` for encrypting and saving one attribute of multiple records with just one call to Vault (forward ported from 0.6.5)
+- Add `EncryptedModel.vault_load_all` for decrypting and loading one attribute of multiple records with just one call to Vault (forward ported from 0.6.5)
+
 ## 0.7.3 (December 10, 2018)
 
 BUG FIXES

@@ -5,6 +5,7 @@ require 'json'
 
 require_relative 'encrypted_model'
 require_relative 'attribute_proxy'
+require_relative 'perform_in_batches'
 require_relative 'rails/configurable'
 require_relative 'rails/errors'
 require_relative 'rails/serializers/json_serializer'
@@ -209,7 +210,7 @@ module Vault
 
       # Perform in-memory encryption. This is useful for testing and development.
       def memory_batch_encrypt(path, key, plaintexts, _client)
-        plaintexts.map { |plaintext| memory_encrypt(path, key, ciphertext, _client, true) }
+        plaintexts.map { |plaintext| memory_encrypt(path, key, plaintext, _client, true) }
       end
 
       # Perform in-memory decryption. This is useful for testing and development.

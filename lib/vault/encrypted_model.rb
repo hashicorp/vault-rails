@@ -211,6 +211,21 @@ module Vault
       def vault_lazy_decrypt!
         @vault_lazy_decrypt = true
       end
+
+      # works only with convergent encryption
+      def vault_persist_all(attribute, records, plaintexts)
+        options = __vault_attributes[attribute]
+
+        Vault::PerformInBatches.new(attribute, options).encrypt(records, plaintexts)
+      end
+
+      # works only with convergent encryption
+      # relevant only if lazy decryption is enabled
+      def vault_load_all(attribute, records)
+        options = __vault_attributes[attribute]
+
+        Vault::PerformInBatches.new(attribute, options).decrypt(records)
+      end
     end
 
     included do
