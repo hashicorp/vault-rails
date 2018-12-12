@@ -30,6 +30,12 @@ class Person < ActiveRecord::Base
 
   vault_attribute :email, convergent: true
 
+  vault_attribute :driving_licence_number, convergent: true
+  validates :driving_licence_number, vault_uniqueness: true, allow_nil: true
+
+  vault_attribute :ip_address, convergent: true, serialize: :ipaddr
+  validates :ip_address, vault_uniqueness: true, allow_nil: true
+
   vault_attribute :integer_data,
     type: :integer,
     serialize: :integer

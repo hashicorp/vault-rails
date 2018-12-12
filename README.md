@@ -284,6 +284,15 @@ Person.where(ssn: "123-45-6789")
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
 
+### Uniqueness Validation
+If a column is **convergently** encrypted, it is possible to add a validation of uniqueness to it.
+Example:
+```ruby
+validates :driving_licence_number, vault_uniqueness: true
+```
+
+It is highly advisable that you also add a uniqueness constraint at database level.
+
 ### Vault Attribute Proxy
 This method is useful if you have a plaintext attribute that you want to replace with a vault attribute.
 During a transition period both attributes can be seamlessly read/changed at the same time.

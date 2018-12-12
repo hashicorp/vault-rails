@@ -3,6 +3,10 @@
 require "spec_helper"
 
 describe Vault::Rails do
+  before(:each) do
+    Person.delete_all
+  end
+
   context "with default options" do
     before(:all) do
       Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
@@ -496,6 +500,70 @@ describe Vault::Rails do
         second_person.reload
 
         expect(first_person.email_encrypted).not_to eq(second_person.email_encrypted)
+      end
+    end
+  end
+
+  context 'uniqueness validation' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    context 'new record with duplicated driving licence number' do
+      it 'is invalid' do
+        Person.create!(driving_licence_number: '12345678')
+        same_driving_licence_number_person = Person.new(driving_licence_number: '12345678')
+
+        expect(same_driving_licence_number_person).not_to be_valid
+      end
+    end
+
+    context 'new record with new different licence number' do
+      it 'is valid' do
+        Person.create!(driving_licence_number: '12345678')
+        different_driving_licence_number_person = Person.new(driving_licence_number: '12345679')
+
+        expect(different_driving_licence_number_person).to be_valid
+      end
+    end
+
+    context 'old record with duplicated driving licence number' do
+      it 'is invalid' do
+        Person.create!(driving_licence_number: '12345678')
+        another_person = Person.create!(driving_licence_number: '12345679')
+        another_person.driving_licence_number = '12345678'
+
+        expect(another_person).not_to be_valid
+      end
+    end
+
+    context 'attribute with defined serializer' do
+      context 'new record with duplicated IP address' do
+        it 'is invalid' do
+          person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          same_ip_address_person = Person.new(ip_address: IPAddr.new('127.0.0.1'))
+
+          expect(same_ip_address_person).not_to be_valid
+        end
+      end
+
+      context 'new record with different IP address' do
+        it 'is valid' do
+          Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          different_ip_address_person = Person.new(ip_address: IPAddr.new('192.168.0.1'))
+
+          expect(different_ip_address_person).to be_valid
+        end
+      end
+
+      context 'old record with duplicated IP address' do
+        it 'is invalid' do
+          Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          another_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+          another_person.ip_address = IPAddr.new('127.0.0.1')
+
+          expect(another_person).not_to be_valid
+        end
       end
     end
   end
