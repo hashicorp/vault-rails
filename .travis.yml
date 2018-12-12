@@ -29,16 +29,21 @@ branches:
     - master
 
 rvm:
-  - 2.2.8
-  - 2.3.5
-  - 2.4.2
+  - 2.2.10
+  - 2.3.8
+  - 2.4.5
+  - 2.5.3
 
 matrix:
   exclude:
     # Rails 4.1 cannot build json gem dependency any longer with Ruby 2.4
-    - rvm: 2.4.2
+    - rvm: 2.4.5
       gemfile: gemfiles/rails_4.1.gemfile
-    - rvm: 2.4.2
+    - rvm: 2.4.5
+      gemfile: gemfiles/rails_4.2.gemfile
+    - rvm: 2.5.3
+      gemfile: gemfiles/rails_4.1.gemfile
+    - rvm: 2.5.3
       gemfile: gemfiles/rails_4.2.gemfile
 
 before_script:
