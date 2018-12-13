@@ -91,7 +91,7 @@ module Vault
         self
       end
 
-      # Encrypt Vault attribures before saving them
+      # Encrypt Vault attributes before saving them
       def vault_persist_before_save!
         skip_callback :save, :after, :__vault_persist_attributes!
         before_save :__vault_encrypt_attributes!
@@ -239,6 +239,23 @@ module Vault
         plaintext = serializer ? serializer.encode(value) : value
 
         Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
+      end
+
+      def find_by_vault_attributes(attributes)
+        search_options = {}
+
+        attributes.each do |attribute_name, attribute_value|
+          attribute_options = __vault_attributes[attribute_name]
+          encrypted_column = attribute_options[:encrypted_column]
+
+          unless attribute_options[:convergent]
+            raise ArgumentError, 'You cannot search with non-convergent fields'
+          end
+
+          search_options[encrypted_column] = encrypt_value(attribute_name, attribute_value)
+        end
+
+        where(search_options)
       end
     end
 

@@ -619,4 +619,41 @@ describe Vault::Rails do
       end
     end
   end
+
+  describe '.find_by_vault_attributes' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    it 'finds the expected records' do
+      first_person = LazyPerson.create!(passport_number: '12345678')
+      second_person = LazyPerson.create!(passport_number: '12345678')
+      third_person = LazyPerson.create!(passport_number: '87654321')
+
+      expect(LazyPerson.find_by_vault_attributes(passport_number: '12345678').pluck(:id)).to match_array([first_person, second_person].map(&:id))
+    end
+
+    context 'searching by attributes with defined serializer' do
+      it 'finds the expected records' do
+        first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+        second_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+
+        expect(Person.find_by_vault_attributes(ip_address: IPAddr.new('127.0.0.1')).pluck(:id)).to match_array([first_person.id])
+      end
+    end
+
+    context 'searching by multiple attributes' do
+      it 'finds the expected records' do
+        first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'), driving_licence_number: '12345678')
+
+        expect(Person.find_by_vault_attributes(ip_address: IPAddr.new('127.0.0.1'), driving_licence_number: '12345678').pluck(:id)).to match_array([first_person.id])
+      end
+    end
+
+    context 'non-convergently encrypted attributes' do
+      it 'raises an exception' do
+        expect { LazyPerson.find_by_vault_attributes(ssn: '12345678') }.to raise_error('You cannot search with non-convergent fields')
+      end
+    end
+  end
 end
