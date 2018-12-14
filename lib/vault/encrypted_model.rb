@@ -226,6 +226,20 @@ module Vault
 
         Vault::PerformInBatches.new(attribute, options).decrypt(records)
       end
+
+      def encrypt_value(attribute, value)
+        options = __vault_attributes[attribute]
+
+        key        = options[:key]
+        path       = options[:path]
+        serializer = options[:serializer]
+        convergent = options[:convergent]
+
+        # Apply the serializer to the value, if one exists
+        plaintext = serializer ? serializer.encode(value) : value
+
+        Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
+      end
     end
 
     included do
@@ -326,22 +340,13 @@ module Vault
           return unless changed.include?("#{attribute}")
         end
 
-        key        = options[:key]
-        path       = options[:path]
-        serializer = options[:serializer]
-        column     = options[:encrypted_column]
-        convergent = options[:convergent]
+        column = options[:encrypted_column]
 
         # Get the current value of the plaintext attribute
         plaintext = read_attribute(attribute)
 
-        # Apply the serialize to the plaintext value, if one exists
-        if serializer
-          plaintext = serializer.encode(plaintext)
-        end
-
         # Generate the ciphertext and store it back as an attribute
-        ciphertext = Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
+        ciphertext = self.class.encrypt_value(attribute, plaintext)
 
         # Write the attribute back, so that we don't have to reload the record
         # to get the ciphertext

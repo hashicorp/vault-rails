@@ -10,7 +10,7 @@ class VaultUniquenessValidator < ActiveRecord::Validations::UniquenessValidator
 
     encrypted_column = attribute_options[:encrypted_column]
 
-    encrypted_value = value.present? ? encrypt_value(value, attribute_options) : value
+    encrypted_value = record.class.encrypt_value(attribute, value)
 
     super(record, encrypted_column, encrypted_value)
   end
@@ -19,14 +19,5 @@ class VaultUniquenessValidator < ActiveRecord::Validations::UniquenessValidator
 
   def vault_options(record, attribute)
     record.class.__vault_attributes[attribute]
-  end
-
-  def encrypt_value(value, attribute_options)
-    key = attribute_options[:key]
-    serializer = attribute_options[:serializer]
-
-    plaintext = serializer ? serializer.encode(value) : value
-
-    Vault::Rails.encrypt('transit', key, plaintext, Vault.client, true)
   end
 end
