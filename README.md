@@ -274,15 +274,23 @@ Vault::Rails.batch_encrypt(path, key, <array of plaintexts>, client)
 
 ### Searching Encrypted Attributes
 Because each column is uniquely encrypted, it is not possible to search for a
-particular plain-text value. For example, if the `ssn` attribute is encrypted,
+particular plain-text value with a plain `ActiveRecord` query. For example, if the `ssn` attribute is encrypted,
 the following will **NOT** work:
 
 ```ruby
 Person.where(ssn: "123-45-6789")
 ```
 
-This is because the database is unaware of the plain-text data (which is part of
-the security model).
+That's why we have added a method that provides an easy to use search interface. Instead of using `.where` you can use
+`.find_by_vault_attributes`. Example:
+
+```ruby
+Person.find_by_vault_attributes(driving_licence_number: '12345678')
+```
+
+This method will look up seamlessly in the relevant column with encrypted data.
+It is important to note that you can search only for attributes with **convergent** encryption.
+Similar to `.where` the method `.find_by_vault_attributes` also returns an `ActiveRecord::Relation`
 
 ### Uniqueness Validation
 If a column is **convergently** encrypted, it is possible to add a validation of uniqueness to it.
