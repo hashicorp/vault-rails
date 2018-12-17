@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## 0.7.5 (December 17, 2018)
+
+IMPROVEMENTS
+- Add method for database searching by convergently encrypted attributes
+- Add uniqueness validator for convergently encrypted attributes
+
 ## 0.7.4 (December 12, 2018)
 
 IMPROVEMENTS
