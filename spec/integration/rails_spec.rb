@@ -3,6 +3,10 @@
 require "spec_helper"
 
 describe Vault::Rails do
+  before(:each) do
+    Person.delete_all
+  end
+
   context "with default options" do
     before(:all) do
       Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
@@ -500,6 +504,70 @@ describe Vault::Rails do
     end
   end
 
+  context 'uniqueness validation' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    context 'new record with duplicated driving licence number' do
+      it 'is invalid' do
+        Person.create!(driving_licence_number: '12345678')
+        same_driving_licence_number_person = Person.new(driving_licence_number: '12345678')
+
+        expect(same_driving_licence_number_person).not_to be_valid
+      end
+    end
+
+    context 'new record with new different licence number' do
+      it 'is valid' do
+        Person.create!(driving_licence_number: '12345678')
+        different_driving_licence_number_person = Person.new(driving_licence_number: '12345679')
+
+        expect(different_driving_licence_number_person).to be_valid
+      end
+    end
+
+    context 'old record with duplicated driving licence number' do
+      it 'is invalid' do
+        Person.create!(driving_licence_number: '12345678')
+        another_person = Person.create!(driving_licence_number: '12345679')
+        another_person.driving_licence_number = '12345678'
+
+        expect(another_person).not_to be_valid
+      end
+    end
+
+    context 'attribute with defined serializer' do
+      context 'new record with duplicated IP address' do
+        it 'is invalid' do
+          person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          same_ip_address_person = Person.new(ip_address: IPAddr.new('127.0.0.1'))
+
+          expect(same_ip_address_person).not_to be_valid
+        end
+      end
+
+      context 'new record with different IP address' do
+        it 'is valid' do
+          Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          different_ip_address_person = Person.new(ip_address: IPAddr.new('192.168.0.1'))
+
+          expect(different_ip_address_person).to be_valid
+        end
+      end
+
+      context 'old record with duplicated IP address' do
+        it 'is invalid' do
+          Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          another_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+          another_person.ip_address = IPAddr.new('127.0.0.1')
+
+          expect(another_person).not_to be_valid
+        end
+      end
+    end
+  end
+
   context 'batch encryption and decryption' do
     before do
       allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
@@ -548,6 +616,43 @@ describe Vault::Rails do
 
         expect(first_person.reload.passport_number).to eq('12345678')
         expect(second_person.reload.passport_number).to eq('12345679')
+      end
+    end
+  end
+
+  describe '.find_by_vault_attributes' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    it 'finds the expected records' do
+      first_person = LazyPerson.create!(passport_number: '12345678')
+      second_person = LazyPerson.create!(passport_number: '12345678')
+      third_person = LazyPerson.create!(passport_number: '87654321')
+
+      expect(LazyPerson.find_by_vault_attributes(passport_number: '12345678').pluck(:id)).to match_array([first_person, second_person].map(&:id))
+    end
+
+    context 'searching by attributes with defined serializer' do
+      it 'finds the expected records' do
+        first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+        second_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+
+        expect(Person.find_by_vault_attributes(ip_address: IPAddr.new('127.0.0.1')).pluck(:id)).to match_array([first_person.id])
+      end
+    end
+
+    context 'searching by multiple attributes' do
+      it 'finds the expected records' do
+        first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'), driving_licence_number: '12345678')
+
+        expect(Person.find_by_vault_attributes(ip_address: IPAddr.new('127.0.0.1'), driving_licence_number: '12345678').pluck(:id)).to match_array([first_person.id])
+      end
+    end
+
+    context 'non-convergently encrypted attributes' do
+      it 'raises an exception' do
+        expect { LazyPerson.find_by_vault_attributes(ssn: '12345678') }.to raise_error('You cannot search with non-convergent fields')
       end
     end
   end
