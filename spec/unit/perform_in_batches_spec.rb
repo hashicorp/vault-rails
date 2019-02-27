@@ -53,6 +53,31 @@ describe Vault::PerformInBatches do
         Vault::PerformInBatches.new(attribute, options).encrypt(records, plaintexts)
       end
 
+      context 'with validation turned off' do
+        it 'encrypts one attribute for a batch of records and saves it without validations' do
+          attribute = 'test_attribute'
+
+          first_record = double(save: true)
+          second_record = double(save: true)
+          records = [first_record, second_record]
+
+          plaintexts = %w(plaintext1 plaintext2)
+
+
+          expect(Vault::Rails).to receive(:batch_encrypt)
+            .with('test_path', 'test_key', %w(plaintext1 plaintext2), Vault.client)
+            .and_return(%w(ciphertext1 ciphertext2))
+
+          expect(first_record).to receive('test_attribute_encrypted=').with('ciphertext1')
+          expect(second_record).to receive('test_attribute_encrypted=').with('ciphertext2')
+
+          expect(first_record).to receive(:save).with(validate: false)
+          expect(second_record).to receive(:save).with(validate: false)
+
+          Vault::PerformInBatches.new(attribute, options).encrypt(records, plaintexts, validate: false)
+        end
+      end
+
       context 'with given serializer' do
         let(:options) do
           {
