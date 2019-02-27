@@ -271,6 +271,18 @@ Vault::Rails.batch_decrypt(path, key, <array of ciphertexts>, client)
 Vault::Rails.batch_encrypt(path, key, <array of plaintexts>, client)
 ```
 
+Even easier, you could use:
+
+* ```EncryptedModel.vault_persist_all(attribute, records, plaintexts, validate: true)```
+
+  Encrypt all plaintext values and save them as the given attribute for the corresponding record
+  If you pass `validate: false` to `vault_persist_all` objects will be saved without validations. By default, validations are turned on.
+
+* ```EncryptedModel.vault_load_all(attribute, records)```
+
+  Decrypt and load the given attribute for each of the records
+
+
 
 ### Searching Encrypted Attributes
 Because each column is uniquely encrypted, it is not possible to search for a

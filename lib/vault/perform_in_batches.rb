@@ -10,7 +10,7 @@ module Vault
       @convergent = options[:convergent]
     end
 
-    def encrypt(records, plaintexts)
+    def encrypt(records, plaintexts, validate: true)
       raise 'Batch Operations work only with convergent attributes' unless @convergent
 
       raw_plaintexts = serialize(plaintexts)
@@ -19,7 +19,7 @@ module Vault
 
       records.each_with_index do |record, index|
         record.send("#{column}=", ciphertexts[index])
-        record.save
+        record.save(validate: validate)
       end
     end
 

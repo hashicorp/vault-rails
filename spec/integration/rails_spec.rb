@@ -617,6 +617,17 @@ describe Vault::Rails do
         expect(first_person.reload.passport_number).to eq('12345678')
         expect(second_person.reload.passport_number).to eq('12345679')
       end
+
+      context 'skipped validations' do
+        it 'saves even invalid records' do
+          first_person = LazyPerson.new
+          allow(first_person).to receive(:valid?).and_return(false)
+
+          LazyPerson.vault_persist_all(:passport_number, [first_person], %w(12345678), validate: false)
+
+          expect(first_person.reload.passport_number).to eq('12345678')
+        end
+      end
     end
   end
 
