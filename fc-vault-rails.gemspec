@@ -27,6 +27,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "pry"
   s.add_development_dependency "rake",    "~> 10.0"
   s.add_development_dependency "rspec",   "~> 3.2"
-  s.add_development_dependency "sqlite3"
+  s.add_development_dependency "sqlite3", "~> 1.3.6"
   s.add_development_dependency "wwtd"
 end
