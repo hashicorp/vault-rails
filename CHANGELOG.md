@@ -1,4 +1,9 @@
 # Vault Rails Changelog
+## 0.7.6 (February 27, 2019)
+
+IMPROVEMENTS
+- Add option to `PerformInBatches#encrypt` and `EncryptedModel.vault_persist_all` to skip `ActiveRecord` validations
+- Drop support of Ruby 2.2
 
 ## 0.7.5 (December 17, 2018)
 
