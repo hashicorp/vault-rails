@@ -515,6 +515,8 @@ describe Vault::Rails do
         same_driving_licence_number_person = Person.new(driving_licence_number: '12345678')
 
         expect(same_driving_licence_number_person).not_to be_valid
+        expect(same_driving_licence_number_person.errors[:driving_licence_number]).to include('has already been taken')
+        expect(same_driving_licence_number_person.errors[:driving_licence_number_encrypted]).not_to include('has already been taken')
       end
     end
 
