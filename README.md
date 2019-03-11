@@ -294,15 +294,27 @@ Person.where(ssn: "123-45-6789")
 ```
 
 That's why we have added a method that provides an easy to use search interface. Instead of using `.where` you can use
-`.find_by_vault_attributes`. Example:
+`.encrypted_where`. Example:
 
 ```ruby
-Person.find_by_vault_attributes(driving_licence_number: '12345678')
+Person.encrypted_where(driving_licence_number: '12345678')
 ```
 
 This method will look up seamlessly in the relevant column with encrypted data.
 It is important to note that you can search only for attributes with **convergent** encryption.
-Similar to `.where` the method `.find_by_vault_attributes` also returns an `ActiveRecord::Relation`
+Similar to `.where` the method `.encrypted_where` also returns an `ActiveRecord::Relation`
+
+There is also `.encrypted_find_by` which works like `.find_by` finds the first encrypted record matching the specified conditions
+
+```ruby
+Personal.encrypted_find_by(driving_licence_number: '12345678')
+```
+
+and `.encrypted_find_by!` like `encrypted_find_by`, except that if no record is found, raises an `ActiveRecord::RecordNotFound` error.
+
+```ruby
+Personal.encrypted_find_by!(driving_licence_number: '12345678')
+```
 
 ### Uniqueness Validation
 If a column is **convergently** encrypted, it is possible to add a validation of uniqueness to it.

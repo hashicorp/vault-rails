@@ -241,21 +241,33 @@ module Vault
         Vault::Rails.encrypt(path, key, plaintext, Vault.client, convergent)
       end
 
-      def find_by_vault_attributes(attributes)
-        search_options = {}
+      def encrypted_find_by(attributes)
+        find_by(search_options(attributes))
+      end
 
-        attributes.each do |attribute_name, attribute_value|
-          attribute_options = __vault_attributes[attribute_name]
-          encrypted_column = attribute_options[:encrypted_column]
+      def encrypted_find_by!(attributes)
+        find_by!(search_options(attributes))
+      end
 
-          unless attribute_options[:convergent]
-            raise ArgumentError, 'You cannot search with non-convergent fields'
+      def encrypted_where(attributes)
+        where(search_options(attributes))
+      end
+
+      private
+
+      def search_options(attributes)
+        {}.tap do |search_options|
+          attributes.each do |attribute_name, attribute_value|
+            attribute_options = __vault_attributes[attribute_name]
+            encrypted_column = attribute_options[:encrypted_column]
+
+            unless attribute_options[:convergent]
+              raise ArgumentError, 'You cannot search with non-convergent fields'
+            end
+
+            search_options[encrypted_column] = encrypt_value(attribute_name, attribute_value)
           end
-
-          search_options[encrypted_column] = encrypt_value(attribute_name, attribute_value)
         end
-
-        where(search_options)
       end
     end
 
