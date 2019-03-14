@@ -749,4 +749,18 @@ describe Vault::Rails do
       end
     end
   end
+
+  describe '.encrypted_where_not' do
+    before do
+      allow(Vault::Rails).to receive(:convergent_encryption_context).and_return('a' * 16).at_least(:once)
+    end
+
+    it 'finds the expected records' do
+      first_person = LazyPerson.create!(passport_number: '12345678')
+      second_person = LazyPerson.create!(passport_number: '12345678')
+      third_person = LazyPerson.create!(passport_number: '87654321')
+
+      expect(LazyPerson.encrypted_where_not(passport_number: nil).pluck(:id)).to match_array([first_person, second_person, third_person].map(&:id))
+    end
+  end
 end
