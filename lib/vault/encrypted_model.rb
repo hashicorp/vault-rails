@@ -253,6 +253,10 @@ module Vault
         where(search_options(attributes))
       end
 
+      def encrypted_where_not(attributes)
+        where.not(search_options(attributes))
+      end
+
       private
 
       def search_options(attributes)

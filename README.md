@@ -304,7 +304,9 @@ This method will look up seamlessly in the relevant column with encrypted data.
 It is important to note that you can search only for attributes with **convergent** encryption.
 Similar to `.where` the method `.encrypted_where` also returns an `ActiveRecord::Relation`
 
-There is also `.encrypted_find_by` which works like `.find_by` finds the first encrypted record matching the specified conditions
+Along with `.encrypted_where` we also have `.encrypted_where_not` which finds encrypted records not matching the specified conditions acts like `.where.not`
+
+There is also `.encrypted_find_by` which works like `.find_by` finds the first encrypted record matching the specified conditions.
 
 ```ruby
 Personal.encrypted_find_by(driving_licence_number: '12345678')

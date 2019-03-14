@@ -1,4 +1,9 @@
 # Vault Rails Changelog
+## 1.0.1 (March 14, 2019)
+
+NEW FEATURES
+- Added `encrypted_where_not` finds encrypted records not matching the specified conditions
+
 ## 1.0.0 (March 8, 2019)
 
 NEW FEATURES
