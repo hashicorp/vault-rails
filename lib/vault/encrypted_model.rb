@@ -363,13 +363,13 @@ module Vault
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
 
-        if in_after_save && ActiveRecord.version >= Gem::Version.new('5.2.0')
+        if in_after_save && ActiveRecord.version >= Gem::Version.new('5.1.0')
           # ActiveRecord 5.2 changes the behaviour of `changed` in `after_*` callbacks
           # https://www.ombulabs.com/blog/rails/upgrades/active-record-5-1-api-changes.html
           # https://api.rubyonrails.org/classes/ActiveRecord/AttributeMethods/Dirty.html#method-i-saved_change_to_attribute
           return unless saved_change_to_attribute?(attribute)
         else
-          # Rails >= 4.2.8 and <= 5.1
+          # Rails >= 4.2.8 and < 5.1
           return unless changed.include?("#{attribute}")
         end
 
