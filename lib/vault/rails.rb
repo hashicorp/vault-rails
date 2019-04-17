@@ -3,6 +3,7 @@ require 'vault'
 require 'base64'
 require 'json'
 
+require_relative 'rails/version'
 require_relative 'encrypted_model'
 require_relative 'attribute_proxy'
 require_relative 'perform_in_batches'
@@ -17,7 +18,6 @@ require_relative 'rails/serializers/time_serializer'
 require_relative 'rails/serializers/date_time_serializer'
 require_relative 'rails/serializers/ipaddr_serializer'
 require_relative 'rails/serializers/string_serializer'
-require_relative 'rails/version'
 
 module Vault
   module Rails
