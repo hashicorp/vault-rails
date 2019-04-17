@@ -1,4 +1,15 @@
 # Vault Rails Changelog
+## 2.0.0 (April 17, 2019)
+
+NEW FEATURES
+- Added support for Rails 4.2.x
+
+IMPROVEMENTS
+- No longer required to include the module `Vault::AttributeProxy`
+
+BREAKING CHANGES
+- You can not pass an `ActiveRecord::Type` through the `type` option on `vault_attribute`, to do this just specify the type as a symbol.
+
 ## 1.0.1 (March 14, 2019)
 
 NEW FEATURES
