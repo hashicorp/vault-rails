@@ -154,18 +154,27 @@ describe Vault::PerformInBatches do
           .with('test_path', 'test_key', %w(ciphertext1 ciphertext2), Vault.client)
           .and_return(%w(plaintext1 plaintext2))
 
-        first_record_loaded_attributes = []
-        allow(first_record).to receive('__vault_loaded_attributes').and_return(first_record_loaded_attributes)
-        second_record_loaded_attributes = []
-        allow(second_record).to receive('__vault_loaded_attributes').and_return(second_record_loaded_attributes)
+        if Vault::Rails.latest?
+          first_record_loaded_attributes = []
+          allow(first_record).to receive('__vault_loaded_attributes').and_return(first_record_loaded_attributes)
+          second_record_loaded_attributes = []
+          allow(second_record).to receive('__vault_loaded_attributes').and_return(second_record_loaded_attributes)
+        end
 
-        expect(first_record).to receive('write_attribute').with('test_attribute', 'plaintext1')
-        expect(second_record).to receive('write_attribute').with('test_attribute', 'plaintext2')
+        if Vault::Rails.latest?
+          expect(first_record).to receive('write_attribute').with('test_attribute', 'plaintext1')
+          expect(second_record).to receive('write_attribute').with('test_attribute', 'plaintext2')
+        else
+          expect(first_record).to receive('instance_variable_set').with('@test_attribute', 'plaintext1')
+          expect(second_record).to receive('instance_variable_set').with('@test_attribute', 'plaintext2')
+        end
 
         Vault::PerformInBatches.new(attribute, options).decrypt(records)
 
-        expect(first_record_loaded_attributes).to include(attribute)
-        expect(second_record_loaded_attributes).to include(attribute)
+        if Vault::Rails.latest?
+          expect(first_record_loaded_attributes).to include(attribute)
+          expect(second_record_loaded_attributes).to include(attribute)
+        end
       end
 
       context 'with given serializer' do
@@ -190,18 +199,27 @@ describe Vault::PerformInBatches do
             .with('test_path', 'test_key', %w(ciphertext1 ciphertext2), Vault.client)
             .and_return(%w(100 200))
 
-          first_record_loaded_attributes = []
-          allow(first_record).to receive('__vault_loaded_attributes').and_return(first_record_loaded_attributes)
-          second_record_loaded_attributes = []
-          allow(second_record).to receive('__vault_loaded_attributes').and_return(second_record_loaded_attributes)
+          if Vault::Rails.latest?
+            first_record_loaded_attributes = []
+            allow(first_record).to receive('__vault_loaded_attributes').and_return(first_record_loaded_attributes)
+            second_record_loaded_attributes = []
+            allow(second_record).to receive('__vault_loaded_attributes').and_return(second_record_loaded_attributes)
+          end
 
-          expect(first_record).to receive('write_attribute').with('test_attribute', 100)
-          expect(second_record).to receive('write_attribute').with('test_attribute', 200)
+          if Vault::Rails.latest?
+            expect(first_record).to receive('write_attribute').with('test_attribute', 100)
+            expect(second_record).to receive('write_attribute').with('test_attribute', 200)
+          else
+            expect(first_record).to receive('instance_variable_set').with('@test_attribute', 100)
+            expect(second_record).to receive('instance_variable_set').with('@test_attribute', 200)
+          end
 
           Vault::PerformInBatches.new(attribute, options).decrypt(records)
 
-          expect(first_record_loaded_attributes).to include(attribute)
-          expect(second_record_loaded_attributes).to include(attribute)
+          if Vault::Rails.latest?
+            expect(first_record_loaded_attributes).to include(attribute)
+            expect(second_record_loaded_attributes).to include(attribute)
+          end
         end
       end
     end

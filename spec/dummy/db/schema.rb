@@ -30,6 +30,8 @@ ActiveRecord::Schema.define(version: 20181212095513) do
     t.string   "county_encrypted"
     t.string   "state"
     t.string   "state_encrypted"
+    t.string   "date_of_birth"
+    t.string   "date_of_birth_encrypted"
     t.string   "passport_number_encrypted"
     t.string   "driving_licence_number_encrypted"
     t.string   "ip_address_encrypted"
