@@ -1,0 +1,75 @@
+pipeline {
+  options { timestamps () }
+  agent {
+    kubernetes {
+      label UUID.randomUUID().toString()
+      yaml libraryResource('pod-templates/ruby253.yaml')
+    }
+  }
+
+  stages {
+
+    stage('Test Gem') {
+      steps {
+        container(name: 'ruby253', shell: '/bin/sh') {
+          ansiColor('xterm') {
+            sh 'bundle install;' +
+               'bundle exec rspec -f d ' +
+               '--format documentation --out artifacts/rspec_documentation.txt ' +
+               '--format progress --out artifacts/rspec_progress.txt ' +
+               '--format RspecJunitFormatter --out build/test-reports/rspec.xml'
+            step([$class: 'ArtifactArchiver', artifacts: "artifacts/**/*, coverage/**/*, swagger/**/*", fingerprint: true, allowEmptyArchive: true])
+            junit 'build/test-reports/*.xml'
+          }
+        }
+      }
+    }
+
+    stage('Build Gem') {
+      steps {
+        container(name: 'ruby253', shell: '/bin/sh') {
+          ansiColor('xterm') {
+            sh 'gem build aan-client.gemspec'
+          }
+        }
+      }
+    }
+
+    stage('Push Gem') {
+      when{
+        branch 'master'
+      }
+      steps {
+        container(name: 'ruby253', shell: '/bin/sh') {
+          ansiColor('xterm') {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'artifactory-cicd',
+                      usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+              withEnv(["RUBYGEMS_HOST=${env.RUBYGEMS_HOST}"]) {
+                sh '''
+                  mkdir ~/.gem
+                  curl -u${USERNAME}:${PASSWORD} ${RUBYGEMS_HOST}/api/v1/api_key.yaml > ~/.gem/credentials
+                  chmod 600 ~/.gem/credentials
+                  gem push aan-client*.gem --host ${RUBYGEMS_HOST}
+                '''
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    failure {
+      slackSend channel:'#cicd',
+                color: 'danger',
+                message: "Build failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}/console|Open>)"
+    }
+    success {
+      slackSend channel:'#cicd',
+                color: 'good',
+                message: "Build succeeded - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}/console|Open>)"
+    }
+  }
+
+}
