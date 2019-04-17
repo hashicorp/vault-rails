@@ -1,6 +1,6 @@
 module Vault
   module Rails
-    VERSION = "1.0.1"
+    VERSION = "2.0.0"
 
     def self.latest?
       ActiveRecord.version >= Gem::Version.new('5.0.0')
