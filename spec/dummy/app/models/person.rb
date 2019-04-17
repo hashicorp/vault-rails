@@ -3,6 +3,9 @@ require "binary_serializer"
 class Person < ActiveRecord::Base
   include Vault::EncryptedModel
 
+  vault_attribute :date_of_birth_plaintext, type: :date
+  vault_attribute_proxy :date_of_birth, :date_of_birth_plaintext
+
   vault_attribute :county_plaintext, encrypted_column: :county_encrypted
   vault_attribute_proxy :county, :county_plaintext
 
@@ -33,7 +36,7 @@ class Person < ActiveRecord::Base
   vault_attribute :driving_licence_number, convergent: true
   validates :driving_licence_number, vault_uniqueness: true, allow_nil: true
 
-  vault_attribute :ip_address, convergent: true, serialize: :ipaddr
+  vault_attribute :ip_address, convergent: true, serialize: :ipaddr, type: 'IPAddr'
   validates :ip_address, vault_uniqueness: true, allow_nil: true
 
   vault_attribute :integer_data,
@@ -45,7 +48,7 @@ class Person < ActiveRecord::Base
     serialize: :float
 
   vault_attribute :time_data,
-    type: ActiveRecord::Type::Time.new,
+    type: :time,
     encode: -> (raw) { raw.to_s if raw },
     decode: -> (raw) { raw.to_time if raw }
 end

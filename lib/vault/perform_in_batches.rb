@@ -32,9 +32,13 @@ module Vault
       plaintexts = deserialize(raw_plaintexts)
 
       records.each_with_index do |record, index|
-        record.__vault_loaded_attributes << attribute
+        if Vault::Rails.latest?
+          record.__vault_loaded_attributes << attribute
 
-        record.write_attribute(attribute, plaintexts[index])
+          record.write_attribute(attribute, plaintexts[index])
+        else
+          record.instance_variable_set("@#{attribute}", plaintexts[index])
+        end
       end
     end
 

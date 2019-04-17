@@ -3,6 +3,18 @@ require 'spec_helper'
 RSpec.describe 'vault_attribute_proxy' do
   let(:person) { Person.new }
 
+  context 'when called with type other than string' do
+    it 'casts the value to the correct type' do
+      date_string = '2000-10-10'
+      date = Date.parse(date_string)
+
+      person.date_of_birth = date_string
+
+      expect(person.date_of_birth).to eq date
+      expect(person.date_of_birth_plaintext).to eq date
+    end
+  end
+
   context 'with encrypted_attribute_only false' do
     it 'fills both attributes' do
       county = 'Orange'

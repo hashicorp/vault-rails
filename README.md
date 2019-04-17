@@ -336,18 +336,16 @@ In order to use this method for an attribute you need to add the following row i
 vault_attribute_proxy :attribute, :attribute_ciphertext, encrypted_attribute_only: true
 ```
 
-Upgrading to 0.7 from 0.6
+Upgrading to the latest version from 0.6.x
 -------------------------
 
-Version 0.6 targets rails 4.x and 0.7 targets rails 5.x.  There are breaking changes between the two versions too, so upgrading isn't as smooth as it could be.
+Master now targets both rails 4.2.x and rails 5.x. There are breaking changes between the two versions too, so upgrading isn't as smooth as it could be.
 
-1. You no longer need to `include Vault::AttributeProxy` to get `vault_attribute_proxy` as it is part of `Vault::EncryptedModel` now. In 0.7.0 the `Vault::AttributeProxy` module isn't part of the gem, but from 0.7.1+ it exists just to emit a deprecation warning reminding you to stop including it.
+1. You no longer need to `include Vault::AttributeProxy` to get `vault_attribute_proxy` as it is part of `Vault::EncryptedModel` now in both versions.
 
-    **If you do nothing** your app will still work properly in 0.7.1+, but you'll get annoying messages.
+    **If you do nothing** your app will still work properly in master, but you'll get annoying messages.
 
-2. The position of the `type` parameter has changed from `vault_attribute_proxy` in 0.6 to `vault_attribute` in 0.7.  In 0.7 if you have a `type` option on `vault_attribute_proxy` it will emit a deprecation warning reminding you to move the definition onto `vault_attribute`.
-
-    **If you do nothing** your app will likely break because `fc-vault-rails` will assume your `vault_attribute` is just a string and if you had `type` on `vault_attribute_proxy` it's likely not.
+2. Passing a type as an object is no longer supported `type: ActiveRecord::Type::Time.new` if you need to use a `ActiveRecord::Type` pass it as a symbol e.g. `type: :time`.
 
 Development
 -----------
@@ -361,6 +359,7 @@ Important Notes:
 - **The tests must be be idempotent.** The HTTP calls made during a test should be able to be run over and over.
 - **Tests are order independent.** The default RSpec configuration randomizes the test order, so this should not be a problem.
 
+We now have two versions of `Vault::EncryptedModel` a `Latest` version which targets rails 5.x and up and a `Legacy` version which targets 4.2.x. It made sense to keep these two version seperate from one another because of the amount of differences between them. So if changes need to be applied to support both versions both files must be changed.
 
 Getting tests to run
 --------------------

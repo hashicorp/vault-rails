@@ -16,6 +16,7 @@ require_relative 'rails/serializers/float_serializer'
 require_relative 'rails/serializers/time_serializer'
 require_relative 'rails/serializers/date_time_serializer'
 require_relative 'rails/serializers/ipaddr_serializer'
+require_relative 'rails/serializers/string_serializer'
 require_relative 'rails/version'
 
 module Vault
@@ -32,7 +33,8 @@ module Vault
       datetime: Vault::Rails::Serializers::DateTimeSerializer,
       ipaddr:   Vault::Rails::Serializers::IPAddrSerializer,
       inet:     Vault::Rails::Serializers::IPAddrSerializer,
-      cidr:     Vault::Rails::Serializers::IPAddrSerializer
+      cidr:     Vault::Rails::Serializers::IPAddrSerializer,
+      string:   Vault::Rails::Serializers::StringSerializer
     }.freeze
 
     # The warning string to print when running in development mode.

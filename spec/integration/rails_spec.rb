@@ -153,7 +153,9 @@ describe Vault::Rails do
       person = LazyPerson.create!(ssn: "123-45-6789", non_ascii: 'some text')
       expect(person.ssn).not_to be_nil
 
-      expect(person).not_to receive(:__vault_load_attributes!)
+      if Vault::Rails.latest?
+        expect(person).not_to receive(:__vault_load_attributes!)
+      end
 
       person.reload
       expect(person.read_attribute(:ssn)).to be nil
@@ -216,7 +218,9 @@ describe Vault::Rails do
 
       person.ssn = "111-11-1111"
 
-      expect(person).to receive(:__vault_initialize_attributes!).once.and_call_original
+      if Vault::Rails.latest?
+        expect(person).to receive(:__vault_initialize_attributes!).once.and_call_original
+      end
       expect(person).to receive(:__vault_load_attribute!).once.with(:ssn, any_args).and_call_original
 
       person.reload
@@ -438,6 +442,18 @@ describe Vault::Rails do
       second_person.reload
 
       expect(first_person.email_encrypted).not_to eq(second_person.email_encrypted)
+    end
+  end
+
+  context 'when called with type other than string' do
+    it 'casts the value to the correct type' do
+      person = Person.new
+      date_string = '2000-10-10'
+      date = Date.parse(date_string)
+
+      person.date_of_birth_plaintext = date_string
+
+      expect(person.date_of_birth_plaintext).to eq date
     end
   end
 

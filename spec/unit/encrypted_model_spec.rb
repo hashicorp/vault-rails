@@ -81,38 +81,40 @@ describe Vault::EncryptedModel do
         expect(person_time.sec).to eq time.sec
       end
 
-      it 'raises an error with unknown attribute type' do
-        expect do
-          Person.vault_attribute :unrecognized_attr, type: :unrecognized
-        end.to raise_error RuntimeError, /Unrecognized attribute type/
-      end
+      if Vault::Rails.latest?
+        it 'raises an error with unknown attribute type' do
+          expect do
+            Person.vault_attribute :unrecognized_attr, type: :unrecognized
+          end.to raise_error RuntimeError, /Unrecognized attribute type/
+        end
 
-      it 'defines a default serialzer if it has one for the type' do
-        time_data_vault_options = TypedPerson.__vault_attributes[:time_data]
-        expect(time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::TimeSerializer
+        it 'defines a default serialzer if it has one for the type' do
+          time_data_vault_options = TypedPerson.__vault_attributes[:time_data]
+          expect(time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::TimeSerializer
 
-        integer_data_vault_options = TypedPerson.__vault_attributes[:integer_data]
-        expect(integer_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::IntegerSerializer
+          integer_data_vault_options = TypedPerson.__vault_attributes[:integer_data]
+          expect(integer_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::IntegerSerializer
 
-        float_data_vault_options = TypedPerson.__vault_attributes[:float_data]
-        expect(float_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::FloatSerializer
+          float_data_vault_options = TypedPerson.__vault_attributes[:float_data]
+          expect(float_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::FloatSerializer
 
-        date_data_vault_options = TypedPerson.__vault_attributes[:date_data]
-        expect(date_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateSerializer
+          date_data_vault_options = TypedPerson.__vault_attributes[:date_data]
+          expect(date_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateSerializer
 
-        date_time_data_vault_options = TypedPerson.__vault_attributes[:date_time_data]
-        expect(date_time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateTimeSerializer
-      end
+          date_time_data_vault_options = TypedPerson.__vault_attributes[:date_time_data]
+          expect(date_time_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::DateTimeSerializer
+        end
 
-      it 'does not add a default serialzer if it does not have one for the type' do
-        string_data_vault_options = TypedPerson.__vault_attributes[:string_data]
-        expect(string_data_vault_options[:serializer]).to be_nil
+        it 'does not add a default serialzer if it does not have one for the type' do
+          string_data_vault_options = TypedPerson.__vault_attributes[:string_data]
+          expect(string_data_vault_options[:serializer]).to eq Vault::Rails::Serializers::StringSerializer
 
-        decimal_data_vault_options = TypedPerson.__vault_attributes[:decimal_data]
-        expect(decimal_data_vault_options[:serializer]).to be_nil
+          decimal_data_vault_options = TypedPerson.__vault_attributes[:decimal_data]
+          expect(decimal_data_vault_options[:serializer]).to be_nil
 
-        text_data_vault_options = TypedPerson.__vault_attributes[:text_data]
-        expect(text_data_vault_options[:serializer]).to be_nil
+          text_data_vault_options = TypedPerson.__vault_attributes[:text_data]
+          expect(text_data_vault_options[:serializer]).to be_nil
+        end
       end
 
       it 'allows overriding the default serialzer via the `serializer` option' do
