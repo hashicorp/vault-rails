@@ -69,6 +69,16 @@ describe Vault::Rails do
       person.reload
 
       expect(person.ssn).to eq("")
+      expect(person.ssn_encrypted).to eq("")
+    end
+
+    it "allows attributes to be null" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to eq(nil)
+      expect(person.ssn_encrypted).to eq(nil)
     end
 
     it "reloads instance variables on reload" do
