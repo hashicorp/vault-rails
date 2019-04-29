@@ -27,8 +27,10 @@ module Vault
       #   the name of the encrypted column (default: +#{column}_encrypted+)
       # @option options [String] :path
       #   the path to the transit backend (default: +transit+)
-      # @option options [String] :key
-      #   the name of the encryption key (default: +#{app}_#{table}_#{column}+)
+      # @option options [String, Symbol, Proc] :key
+      #   the transit key name, or a symbol (instance method)
+      #   or proc which returns a key name
+      #   (default: +#{app}_#{table}_#{column}+)
       # @option options [Symbol, Class] :serializer
       #   the name of the serializer to use (or a class)
       # @option options [Proc] :encode
@@ -38,7 +40,7 @@ module Vault
       def vault_attribute(attribute, options = {})
         encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
         path = options[:path] || "transit"
-        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        key = options[:key]
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -189,7 +191,6 @@ module Vault
 
       # Decrypt and load a single attribute from Vault.
       def __vault_load_attribute!(attribute, options)
-        key        = options[:key]
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
@@ -202,6 +203,9 @@ module Vault
         if instance_variable_get("@#{attribute}")
           return
         end
+
+        # Compute the key name.
+        key = __vault_key_name(attribute, options)
 
         # Load the plaintext value
         plaintext = Vault::Rails.decrypt(path, key, ciphertext)
@@ -240,7 +244,6 @@ module Vault
       # Encrypt a single attribute using Vault and persist back onto the
       # encrypted attribute value.
       def __vault_persist_attribute!(attribute, options)
-        key        = options[:key]
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
@@ -259,6 +262,9 @@ module Vault
           plaintext = serializer.encode(plaintext)
         end
 
+        # Compute the key name.
+        key = __vault_key_name(attribute, options)
+
         # Generate the ciphertext and store it back as an attribute
         ciphertext = Vault::Rails.encrypt(path, key, plaintext)
 
@@ -268,6 +274,24 @@ module Vault
 
         # Return the updated column so we can save
         { column => ciphertext }
+      end
+
+      # Compute the transit key name, if needed.
+      def __vault_key_name(attribute, options)
+        case key = options[:key]
+        when String
+          key
+        when Symbol
+          send(key)
+        when Proc
+          if key.arity.nonzero?
+            key.call(self)
+          else
+            key.call
+          end
+        else
+          "#{Vault::Rails.application}_#{self.class.table_name}_#{attribute}"
+        end
       end
 
       # Override the reload method to reload the Vault attributes. This will

@@ -90,14 +90,45 @@ vault_attribute :credit_card,
 - **Note** This value **cannot** be the same name as the vault attribute!
 
 #### Specifying a custom key
-By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` option when declaring the attribute:
+
+By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` option when declaring the attribute.
+
+- **Note** Changing this value for an existing application will make existing values no longer decryptable!
+
+##### String
+
+With a string, all records will use the same transit key for this attribute:
 
 ```ruby
 vault_attribute :credit_card,
   key: "pci-data"
 ```
 
-- **Note** Changing this value for an existing application will make existing values no longer decryptable!
+##### Symbol
+
+When using a symbol, a method will be called on the record to compute the key name:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  key: :vault_key
+
+def vault_key
+  "user_#{user.id}"
+end
+```
+
+##### Proc
+
+Given a proc, it will be called each time to compute the key name:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  key: ->(record) { "user_#{record.user.id}" }
+```
 
 #### Specifying a different Vault path
 By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:

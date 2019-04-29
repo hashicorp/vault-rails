@@ -180,6 +180,30 @@ describe Vault::Rails do
       person.name = "Cinderella"
       person.save!
     end
+
+    context "with a symbol key" do
+      it "encodes and decodes attributes" do
+        person = LazyPerson.create!(symbol_key: "foobar")
+        person.reload
+
+        raw = Vault::Rails.decrypt("transit", person.encryption_key, person.symbol_key_encrypted)
+        expect(raw).to eq("foobar")
+
+        expect(person.symbol_key).to eq("foobar")
+      end
+    end
+
+    context "with a proc key" do
+      it "encodes and decodes attributes" do
+        person = LazyPerson.create!(proc_key: "foobar")
+        person.reload
+
+        raw = Vault::Rails.decrypt("transit", person.encryption_key, person.proc_key_encrypted)
+        expect(raw).to eq("foobar")
+
+        expect(person.proc_key).to eq("foobar")
+      end
+    end
   end
 
   context "with custom options" do
@@ -353,6 +377,30 @@ describe Vault::Rails do
       expect(raw).to eq("xxxbluexxx")
 
       expect(person.favorite_color).to eq("blue")
+    end
+  end
+
+  context "with a symbol key" do
+    it "encodes and decodes attributes" do
+      person = Person.create!(symbol_key: "foobar")
+      person.reload
+
+      raw = Vault::Rails.decrypt("transit", person.encryption_key, person.symbol_key_encrypted)
+      expect(raw).to eq("foobar")
+
+      expect(person.symbol_key).to eq("foobar")
+    end
+  end
+
+  context "with a proc key" do
+    it "encodes and decodes attributes" do
+      person = Person.create!(proc_key: "foobar")
+      person.reload
+
+      raw = Vault::Rails.decrypt("transit", person.encryption_key, person.proc_key_encrypted)
+      expect(raw).to eq("foobar")
+
+      expect(person.proc_key).to eq("foobar")
     end
   end
 
