@@ -390,6 +390,10 @@ module Vault
           { column => ciphertext }
         end
 
+        def unencrypted_attributes
+          attributes.delete_if { |attr| attr.ends_with?('_encrypted') }
+        end
+
         # Override the reload method to reload the Vault attributes. This will
         # ensure that we always have the most recent data from Vault when we
         # reload a record from the database.

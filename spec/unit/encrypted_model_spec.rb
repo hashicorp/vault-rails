@@ -134,6 +134,84 @@ describe Vault::EncryptedModel do
     end
   end
 
+  describe '#attributes' do
+    let(:person) { Person.new }
+
+    it 'returns all attributes' do
+      expect(person.attributes).to eq(
+        "business_card" => nil,
+        "business_card_encrypted" => nil,
+        "cc_encrypted" => nil,
+        "county" => nil,
+        "county_encrypted" => nil,
+        "county_plaintext" => nil,
+        "created_at" => nil,
+        "credit_card" => nil,
+        "date_of_birth" => nil,
+        "date_of_birth_encrypted" => nil,
+        "date_of_birth_plaintext" => nil,
+        "details" => nil,
+        "details_encrypted" => nil,
+        "driving_licence_number" => nil,
+        "driving_licence_number_encrypted" => nil,
+        "email" => nil,
+        "email_encrypted" => nil,
+        "favorite_color" => nil,
+        "favorite_color_encrypted" => nil,
+        "float_data" => nil,
+        "float_data_encrypted" => nil,
+        "id" => nil,
+        "integer_data" => nil,
+        "integer_data_encrypted" => nil,
+        "ip_address" => nil,
+        "ip_address_encrypted" => nil,
+        "name" => nil,
+        "non_ascii" => nil,
+        "non_ascii_encrypted" => nil,
+        "passport_number_encrypted" => nil,
+        "ssn" => nil,
+        "ssn_encrypted" => nil,
+        "state" => nil,
+        "state_encrypted" => nil,
+        "state_plaintext" => nil,
+        "time_data" => nil,
+        "time_data_encrypted" => nil,
+        "updated_at" => nil
+      )
+    end
+  end
+
+  describe '#unencrypted_attributes' do
+    let(:person) { Person.new }
+
+    it 'returns all attributes apart from encrypted fields' do
+      expect(person.unencrypted_attributes).to eq(
+        'business_card' => nil,
+        'county' => nil,
+        'county_plaintext' => nil,
+        'created_at' => nil,
+        'credit_card' => nil,
+        'date_of_birth' => nil,
+        'date_of_birth_plaintext' => nil,
+        'details' => nil,
+        'driving_licence_number' => nil,
+        'email' => nil,
+        'favorite_color' => nil,
+        'float_data' => nil,
+        'id' => nil,
+        'integer_data' => nil,
+        'ip_address' => nil,
+        'name' => nil,
+        'non_ascii' => nil,
+        'ssn' => nil,
+        'state' => nil,
+        'state_plaintext' => nil,
+        'time_data' => nil,
+        'updated_at' => nil
+      )
+    end
+  end
+
   describe '#vault_persist_before_save!' do
     context "when not used" do
       # Person hasn't had `vault_persist_before_save!` called on it
