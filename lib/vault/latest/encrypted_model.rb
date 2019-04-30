@@ -391,7 +391,8 @@ module Vault
         end
 
         def unencrypted_attributes
-          attributes.delete_if { |attr| attr.ends_with?('_encrypted') }
+          encrypted_attributes = self.class.__vault_attributes.values.map {|x| x[:encrypted_column].to_s }
+          attributes.delete_if { |attribute| encrypted_attributes.include?(attribute) }
         end
 
         # Override the reload method to reload the Vault attributes. This will
