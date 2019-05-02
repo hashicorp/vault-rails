@@ -1,5 +1,13 @@
 # Vault Rails Changelog
-## 2.0.0 (April 17, 2019)
+## 2.0.1 (May 2, 2019)
+
+NEW FEATURES
+- Added `.unencrypted_attributes` which returns all attributes ignoring the `encrypted_column`
+
+IMPROVEMENTS
+- Fixes issue with `.attributes` on rails >= 4.2 and < 5 now returning the `vault_attribute` correctly.
+
+## 2.0.0 (April 17, 2019)
 
 NEW FEATURES
 - Added support for Rails 4.2.x
