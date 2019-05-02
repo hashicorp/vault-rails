@@ -286,6 +286,15 @@ module Vault
           end
         end
 
+        def attributes
+          super.tap do |attrs|
+            missing_keys = self.class.__vault_attributes.keys.map(&:to_s) - attrs.keys
+            missing_keys.each do |key|
+              attrs.store(key, public_send(key))
+            end
+          end
+        end
+
         # Decrypt and load a single attribute from Vault.
         def __vault_load_attribute!(attribute, options)
           key        = options[:key]
@@ -368,6 +377,11 @@ module Vault
 
           # Return the updated column so we can save
           { column => ciphertext }
+        end
+
+        def unencrypted_attributes
+          encrypted_attributes = self.class.__vault_attributes.values.map {|x| x[:encrypted_column].to_s }
+          attributes.delete_if { |attribute| encrypted_attributes.include?(attribute) }
         end
 
         # Override the reload method to reload the Vault attributes. This will

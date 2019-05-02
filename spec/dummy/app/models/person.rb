@@ -3,8 +3,10 @@ require "binary_serializer"
 class Person < ActiveRecord::Base
   include Vault::EncryptedModel
 
-  vault_attribute :date_of_birth_plaintext, type: :date
+  vault_attribute :date_of_birth_plaintext, type: :date, encrypted_column: :date_of_birth_encrypted
   vault_attribute_proxy :date_of_birth, :date_of_birth_plaintext
+
+  vault_attribute :passport_number, encrypted_column: :passport_number_encrypted
 
   vault_attribute :county_plaintext, encrypted_column: :county_encrypted
   vault_attribute_proxy :county, :county_plaintext
