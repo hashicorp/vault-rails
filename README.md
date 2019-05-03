@@ -113,7 +113,7 @@ vault_attribute :credit_card,
 By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
 
 ```ruby
-vault_attribute :details
+vault_attribute :details,
   serialize: :json
 ```
 
