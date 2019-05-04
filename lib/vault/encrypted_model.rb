@@ -46,7 +46,7 @@ module Vault
         # You cannot call attribute_will_change! on something not registered
         # with the attributes API -- There must be attribute :user_ids if you
         # want that to be managed by Active Record.
-        attribute(vault_attr) if defined? attributes
+        attribute(vault_attr, ActiveRecord::Type::Value.new)
 
         encrypted_column = options[:encrypted_column] || "#{vault_attr}_encrypted"
         path = options[:path] || "transit"
