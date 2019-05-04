@@ -1,8 +1,4 @@
-<<<<<<< 132e351f918e3a32e2c8c730b186b88104cedfb3
 class CreatePeople < ActiveRecord::Migration[4.2]
-=======
-class CreatePeople < ActiveRecord::Migration[5.2]
->>>>>>> update rails version in dummy app to 5.2, run migrations in environment
   def change
     create_table :people do |t|
       t.string :name

@@ -41,10 +41,16 @@ module Vault
       #   a proc to encode the value with
       # @option options [Proc] :decode
       #   a proc to decode the value with
-      def vault_attribute(attribute, options = {})
-        encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
+      def vault_attribute(vault_attr, options = {})
+        # https://github.com/rails/rails/issues/33753#issuecomment-417503496
+        # You cannot call attribute_will_change! on something not registered
+        # with the attributes API -- There must be attribute :user_ids if you
+        # want that to be managed by Active Record.
+        attribute(vault_attr) if defined? attributes
+
+        encrypted_column = options[:encrypted_column] || "#{vault_attr}_encrypted"
         path = options[:path] || "transit"
-        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{vault_attr}"
         context = options[:context]
         default = options[:default]
 
@@ -68,53 +74,56 @@ module Vault
         end
 
         # Getter
-        define_method("#{attribute}") do
-          self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}")
+        define_method(vault_attr.to_s) do
+          __vault_load_attributes! unless @__vault_loaded
+          instance_variable_get("@#{vault_attr}")
         end
 
         # Setter
-        define_method("#{attribute}=") do |value|
-          self.__vault_load_attributes! unless @__vault_loaded
+        define_method("#{vault_attr}=") do |value|
+          __vault_load_attributes! unless @__vault_loaded
 
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
           # that if you call attr=, you want it send back regardless.
+          attribute_will_change!(vault_attr.to_s)
+          instance_variable_set("@#{vault_attr}", value)
 
-          attribute_will_change!("#{attribute}")
-          instance_variable_set("@#{attribute}", value)
-
-          # Return the value to be consistent with other AR methods.
-          value
+          # Call super method or return value to be consistent with other AR methods.
+          if defined?(super)
+            super(value)
+          else
+            value
+          end
         end
 
         # Checker
-        define_method("#{attribute}?") do
+        define_method("#{vault_attr}?") do
           self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}").present?
+          instance_variable_get("@#{vault_attr}").present?
         end
 
         # Dirty method
-        define_method("#{attribute}_change") do
-          changes["#{attribute}"]
+        define_method("#{vault_attr}_change") do
+          changes["#{vault_attr}"]
         end
 
         # Dirty method
-        define_method("#{attribute}_changed?") do
-          changed.include?("#{attribute}")
+        define_method("#{vault_attr}_changed?") do
+          changed.include?("#{vault_attr}")
         end
 
         # Dirty method
-        define_method("#{attribute}_was") do
-          if changes["#{attribute}"]
-            changes["#{attribute}"][0]
+        define_method("#{vault_attr}_was") do
+          if changes["#{vault_attr}"]
+            changes["#{vault_attr}"][0]
           else
-            public_send("#{attribute}")
+            public_send("#{vault_attr}")
           end
         end
 
         # Make a note of this attribute so we can use it in the future (maybe).
-        __vault_attributes[attribute.to_sym] = {
+        __vault_attributes[vault_attr.to_sym] = {
           context: context,
           default: default,
           encrypted_column: encrypted_column,
@@ -174,6 +183,9 @@ module Vault
       # After a resource has been initialized, immediately communicate with
       # Vault and decrypt any attributes unless vault_lazy_decrypt is set.
       after_initialize :__vault_initialize_attributes!
+
+      # Before save we keep changed attributes to variable
+      before_save :__vault_keep_changed_attributes!
 
       # After we save the record, persist all the values to Vault and reload
       # them attributes from Vault to ensure we have the proper attributes set.
@@ -251,20 +263,21 @@ module Vault
       def __vault_persist_attributes!
         changes = {}
 
-        self.class.__vault_attributes.each do |attribute, options|
-          if c = self.__vault_persist_attribute!(attribute, options)
-            changes.merge!(c)
-          end
+        changed_attributes = instance_variable_get('@vault_changed_attributes')
+        # Only persist changed attributes to minimize requests - this helps
+        # minimize the number of requests to Vault.
+        changed_attributes.each do |attribute|
+          options = self.class.__vault_attributes[attribute]
+          persist_attribute = self.__vault_persist_attribute!(attribute, options)
+          changes.merge!(persist_attribute) if persist_attribute
         end
 
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
         # already in a transaction due to the callback.
-        if !changes.empty?
-          self.update_columns(changes)
-        end
+        self.update_columns(changes) unless changes.empty?
 
-        return true
+        true
       end
 
       # Encrypt a single attribute using Vault and persist back onto the
@@ -276,19 +289,11 @@ module Vault
         column     = options[:encrypted_column]
         context    = options[:context]
 
-        # Only persist changed attributes to minimize requests - this helps
-        # minimize the number of requests to Vault.
-        if !changed.include?("#{attribute}")
-          return
-        end
-
         # Get the current value of the plaintext attribute
         plaintext = instance_variable_get("@#{attribute}")
 
         # Apply the serialize to the plaintext value, if one exists
-        if serializer
-          plaintext = serializer.encode(plaintext)
-        end
+        plaintext = serializer.encode(plaintext) if serializer
 
         # Generate context if needed
         generated_context = __vault_generate_context(context)
@@ -319,6 +324,16 @@ module Vault
         else
           nil
         end
+      end
+
+      # Keep changed attributes
+      def __vault_keep_changed_attributes!
+        instance_variable_set(
+          '@vault_changed_attributes',
+          self.class.__vault_attributes.keys & changed.map(&:to_sym)
+        )
+
+        true
       end
 
       # Override the reload method to reload the Vault attributes. This will

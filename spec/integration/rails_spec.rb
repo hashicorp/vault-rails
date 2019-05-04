@@ -226,25 +226,6 @@ describe Vault::Rails do
       expect(person.credit_card_was).to eq("1234567890111213")
     end
 
-    it "tracks dirty attributes init with empty field" do
-      person = Person.new(credit_card: '1234')
-      person.save!
-      expect(person.cc_encrypted).to eql('12312321')
-
-      # expect(person.credit_card_changed?).to be(false)
-      # expect(person.credit_card_change).to eq(nil)
-      # expect(person.credit_card_was).to eq("1234567890111213")
-
-      # person.credit_card = "123456789010"
-
-      # expect(person.credit_card_changed?).to be(true)
-      # expect(person.credit_card_change).to eq(["1234567890111213", "123456789010"])
-      # expect(person.credit_card_was).to eq("1234567890111213")
-
-      # person.save!
-      # expect(person.credit_card).to eq("")
-    end
-
     it "allows attributes to be unset" do
       person = Person.create!(credit_card: "1234567890111213")
       person.update_attributes!(credit_card: nil)
