@@ -25,4 +25,14 @@ class LazyPerson < ActiveRecord::Base
     decode: ->(raw) { raw && raw[3...-3] }
 
   vault_attribute :non_ascii
+
+  vault_attribute :context_symbol,
+    context: :encryption_context
+
+  vault_attribute :context_proc,
+    context: ->(record) { record.encryption_context }
+
+  def encryption_context
+    "user_#{id}"
+  end
 end

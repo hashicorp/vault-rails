@@ -29,6 +29,9 @@ module Vault
       #   the path to the transit backend (default: +transit+)
       # @option options [String] :key
       #   the name of the encryption key (default: +#{app}_#{table}_#{column}+)
+      # @option options [String, Symbol, Proc] :context
+      #   either a string context, or a symbol or proc used to generate a
+      #   context for key generation
       # @option options [Symbol, Class] :serializer
       #   the name of the serializer to use (or a class)
       # @option options [Proc] :encode
@@ -39,6 +42,7 @@ module Vault
         encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
         path = options[:path] || "transit"
         key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        context = options[:context]
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -111,6 +115,7 @@ module Vault
           path: path,
           serializer: serializer,
           encrypted_column: encrypted_column,
+          context: context,
         }
 
         self
@@ -141,6 +146,13 @@ module Vault
         if options[:decode] && !options[:encode]
           raise Vault::Rails::ValidationFailedError, "Cannot specify " \
             "`:decode' without specifying `:encode' as well!"
+        end
+
+        if context = options[:context]
+          if context.is_a?(Proc) && context.arity != 1
+            raise Vault::Rails::ValidationFailedError, "Proc passed to " \
+              "`:context' must take 1 argument!"
+          end
         end
       end
 
@@ -193,6 +205,7 @@ module Vault
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
+        context    = options[:context]
 
         # Load the ciphertext
         ciphertext = read_attribute(column)
@@ -203,8 +216,14 @@ module Vault
           return
         end
 
+        # Generate context if needed
+        generated_context = __vault_generate_context(context)
+
         # Load the plaintext value
-        plaintext = Vault::Rails.decrypt(path, key, ciphertext)
+        plaintext = Vault::Rails.decrypt(
+          path, key, ciphertext,
+          context: generated_context
+        )
 
         # Deserialize the plaintext value, if a serializer exists
         if serializer
@@ -244,6 +263,7 @@ module Vault
         path       = options[:path]
         serializer = options[:serializer]
         column     = options[:encrypted_column]
+        context    = options[:context]
 
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
@@ -259,8 +279,14 @@ module Vault
           plaintext = serializer.encode(plaintext)
         end
 
+        # Generate context if needed
+        generated_context = __vault_generate_context(context)
+
         # Generate the ciphertext and store it back as an attribute
-        ciphertext = Vault::Rails.encrypt(path, key, plaintext)
+        ciphertext = Vault::Rails.encrypt(
+          path, key, plaintext,
+          context: generated_context
+        )
 
         # Write the attribute back, so that we don't have to reload the record
         # to get the ciphertext
@@ -268,6 +294,20 @@ module Vault
 
         # Return the updated column so we can save
         { column => ciphertext }
+      end
+
+      # Generates an Vault Transit encryption context for use on derived keys.
+      def __vault_generate_context(context)
+        case context
+        when String
+          context
+        when Symbol
+          send(context)
+        when Proc
+          context.call(self)
+        else
+          nil
+        end
       end
 
       # Override the reload method to reload the Vault attributes. This will

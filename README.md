@@ -99,6 +99,51 @@ vault_attribute :credit_card,
 
 - **Note** Changing this value for an existing application will make existing values no longer decryptable!
 
+#### Specifying a context (key derivation)
+
+Vault Transit supports key derivation, which allows the same key to be used for multiple purposes by deriving a new key based on a context value.
+
+The context can be specified as a string, symbol, or proc. Symbols (an instance method on the model) and procs are called for each encryption or decryption request, and should return a string.
+
+- **Note** Changing the context or context generator for an attribute will make existing values no longer decryptable!
+
+##### String
+
+With a string, all records will use the same context for this attribute:
+
+```ruby
+vault_attribute :credit_card,
+  context: "user-cc"
+```
+
+##### Symbol
+
+When using a symbol, a method will be called on the record to compute the context:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  context: :encryption_context
+
+def encryption_context
+  "user_#{user.id}"
+end
+```
+
+##### Proc
+
+Given a proc, it will be called each time to compute the context:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  context: ->(record) { "user_#{record.user.id}" }
+```
+
+The proc must take a single argument for the record.
+
 #### Specifying a different Vault path
 By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:
 

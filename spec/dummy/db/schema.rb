@@ -10,18 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150428220101) do
+ActiveRecord::Schema.define(version: 2015_04_28_220101) do
 
   create_table "people", force: :cascade do |t|
-    t.string   "name"
-    t.string   "ssn_encrypted"
-    t.string   "cc_encrypted"
-    t.string   "details_encrypted"
-    t.string   "business_card_encrypted"
-    t.string   "favorite_color_encrypted"
-    t.string   "non_ascii_encrypted"
-    t.datetime "created_at",               null: false
-    t.datetime "updated_at",               null: false
+    t.string "name"
+    t.string "ssn_encrypted"
+    t.string "cc_encrypted"
+    t.string "details_encrypted"
+    t.string "business_card_encrypted"
+    t.string "favorite_color_encrypted"
+    t.string "non_ascii_encrypted"
+    t.string "context_string_encrypted"
+    t.string "context_symbol_encrypted"
+    t.string "context_proc_encrypted"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
 end
