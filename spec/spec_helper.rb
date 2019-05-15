@@ -1,7 +1,7 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'vault/rails'
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+require "vault/rails"
 
-require 'rspec'
+require "rspec"
 
 RSpec.configure do |config|
   # Prohibit using the should syntax
@@ -21,4 +21,4 @@ RSpec.configure do |config|
   config.order = 'random'
 end
 
-require File.expand_path('../dummy/config/environment.rb', __FILE__)
+require File.expand_path("../dummy/config/environment.rb", __FILE__)

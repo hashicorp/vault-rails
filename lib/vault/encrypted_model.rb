@@ -77,13 +77,13 @@ module Vault
 
         # Getter
         define_method(vault_attr.to_s) do
-          __vault_load_attributes! unless @__vault_loaded
+          self.__vault_load_attributes! unless @__vault_loaded
           instance_variable_get("@#{vault_attr}")
         end
 
         # Setter
         define_method("#{vault_attr}=") do |value|
-          __vault_load_attributes! unless @__vault_loaded
+          self.__vault_load_attributes! unless @__vault_loaded
 
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
@@ -277,9 +277,11 @@ module Vault
         # If there are any changes to the model, update them all at once,
         # skipping any callbacks and validation. This is okay, because we are
         # already in a transaction due to the callback.
-        self.update_columns(changes) unless changes.empty?
+        if !changes.empty?
+          self.update_columns(changes)
+        end
 
-        true
+        return true
       end
 
       # Encrypt a single attribute using Vault and persist back onto the
@@ -295,7 +297,9 @@ module Vault
         plaintext = instance_variable_get("@#{attribute}")
 
         # Apply the serialize to the plaintext value, if one exists
-        plaintext = serializer.encode(plaintext) if serializer
+        if serializer
+          plaintext = serializer.encode(plaintext)
+        end
 
         # Generate context if needed
         generated_context = __vault_generate_context(context)

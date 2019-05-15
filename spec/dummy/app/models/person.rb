@@ -1,4 +1,4 @@
-require 'binary_serializer'
+require "binary_serializer"
 
 class Person < ActiveRecord::Base
   include Vault::EncryptedModel
@@ -7,8 +7,8 @@ class Person < ActiveRecord::Base
 
   vault_attribute :credit_card,
     encrypted_column: :cc_encrypted,
-    path: 'credit-secrets',
-    key: 'people_credit_cards'
+    path: "credit-secrets",
+    key: "people_credit_cards"
 
   vault_attribute :details,
     serialize: :json
@@ -42,3 +42,4 @@ class Person < ActiveRecord::Base
     "user_#{id}"
   end
 end
+
