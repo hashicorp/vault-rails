@@ -20,6 +20,9 @@ class Person < ActiveRecord::Base
     encode: ->(raw) { "xxx#{raw}xxx" },
     decode: ->(raw) { raw && raw[3...-3] }
 
+  vault_attribute :first_pet,
+    convergent: true
+
   vault_attribute :non_ascii
 end
 
