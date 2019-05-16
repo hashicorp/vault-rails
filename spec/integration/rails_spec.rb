@@ -518,6 +518,20 @@ describe Vault::Rails do
         expect(first_person.email_encrypted).not_to eq(second_person.email_encrypted)
       end
     end
+
+    context '.vault_load_all' do
+      it 'works with records with nil and blank values' do
+        first_person = LazyPerson.create!(passport_number: nil)
+        second_person = LazyPerson.create!(passport_number: '')
+
+        first_person.reload
+        second_person.reload
+
+        LazyPerson.vault_load_all(:passport_number, [first_person, second_person])
+        expect(first_person.passport_number).to eq(nil)
+        expect(second_person.passport_number).to eq('')
+      end
+    end
   end
 
   context 'uniqueness validation' do

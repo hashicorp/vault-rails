@@ -220,7 +220,7 @@ module Vault
       def memory_decrypt(path, key, ciphertext, _client, convergent)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
-        return nil if ciphertext.nil?
+        return ciphertext if ciphertext.blank?
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
