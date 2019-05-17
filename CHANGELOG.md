@@ -1,4 +1,9 @@
 # Vault Rails Changelog
+## 2.0.2 (May 16, 2019)
+
+IMPROVEMENTS
+- Fixes issue when a blank string ciphertext is used by the `memory_decrypt` method.
+
 ## 2.0.1 (May 2, 2019)
 
 NEW FEATURES
