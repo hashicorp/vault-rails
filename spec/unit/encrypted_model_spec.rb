@@ -20,6 +20,12 @@ describe Vault::EncryptedModel do
       }.to raise_error(Vault::Rails::ValidationFailedError)
     end
 
+    it "raises an exception if a proc is passed to :context without an arity of 1" do
+      expect {
+        klass.vault_attribute(:foo, context: ->() { })
+      }.to raise_error(Vault::Rails::ValidationFailedError, /1 argument/i)
+    end
+
     it "defines a getter" do
       klass.vault_attribute(:foo)
       expect(klass.instance_methods).to include(:foo)

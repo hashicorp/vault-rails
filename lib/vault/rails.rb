@@ -72,7 +72,7 @@ module Vault
       #
       # @return [String]
       #   the encrypted cipher text
-      def encrypt(path, key, plaintext, client = self.client)
+      def encrypt(path, key, plaintext, client: self.client, context: nil)
         if plaintext.blank?
           return plaintext
         end
@@ -82,9 +82,9 @@ module Vault
 
         with_retries do
           if self.enabled?
-            result = self.vault_encrypt(path, key, plaintext, client)
+            result = self.vault_encrypt(path, key, plaintext, client: client, context: context)
           else
-            result = self.memory_encrypt(path, key, plaintext, client)
+            result = self.memory_encrypt(path, key, plaintext, client: client, context: context)
           end
 
           return self.force_encoding(result)
@@ -104,7 +104,7 @@ module Vault
       #
       # @return [String]
       #   the decrypted plaintext text
-      def decrypt(path, key, ciphertext, client = self.client)
+      def decrypt(path, key, ciphertext, client: self.client, context: nil)
         if ciphertext.blank?
           return ciphertext
         end
@@ -114,9 +114,9 @@ module Vault
 
         with_retries do
           if self.enabled?
-            result = self.vault_decrypt(path, key, ciphertext, client)
+            result = self.vault_decrypt(path, key, ciphertext, client: client, context: context)
           else
-            result = self.memory_decrypt(path, key, ciphertext, client)
+            result = self.memory_decrypt(path, key, ciphertext, client: client, context: context)
           end
 
           return self.force_encoding(result)
@@ -143,48 +143,56 @@ module Vault
       protected
 
       # Perform in-memory encryption. This is useful for testing and development.
-      def memory_encrypt(path, key, plaintext, client)
+      def memory_encrypt(path, key, plaintext, client: , context: nil)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if plaintext.nil?
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
-        cipher.key = memory_key_for(path, key)
+        cipher.key = memory_key_for(path, key) + context
         return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
       end
 
       # Perform in-memory decryption. This is useful for testing and development.
-      def memory_decrypt(path, key, ciphertext, client)
+      def memory_decrypt(path, key, ciphertext, client: , context: nil)
         log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if ciphertext.nil?
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
-        cipher.key = memory_key_for(path, key)
+        cipher.key = memory_key_for(path, key) + context
         return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
       end
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_encrypt(path, key, plaintext, client)
+      def vault_encrypt(path, key, plaintext, client: , context: nil)
         return nil if plaintext.nil?
 
-        route  = File.join(path, "encrypt", key)
-        secret = client.logical.write(route,
-          plaintext: Base64.strict_encode64(plaintext),
-        )
+        route = File.join(path, "encrypt", key)
+
+        data = { plaintext: Base64.strict_encode64(plaintext) }
+        data[:context] = Base64.strict_encode64(context) if context
+
+        secret = client.logical.write(route, data)
+
         return secret.data[:ciphertext]
       end
 
       # Perform decryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_decrypt(path, key, ciphertext, client)
+      def vault_decrypt(path, key, ciphertext, client: , context: nil)
         return nil if ciphertext.nil?
 
-        route  = File.join(path, "decrypt", key)
-        secret = client.logical.write(route, ciphertext: ciphertext)
+        route = File.join(path, "decrypt", key)
+
+        data = { ciphertext: ciphertext }
+        data[:context] = Base64.strict_encode64(context) if context
+
+        secret = client.logical.write(route, data)
+
         return Base64.strict_decode64(secret.data[:plaintext])
       end
 
