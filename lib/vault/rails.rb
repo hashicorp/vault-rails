@@ -150,7 +150,7 @@ module Vault
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
-        cipher.key = memory_key_for(path, key) + context
+        cipher.key = memory_key_for(path, key, context: context)
         return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
       end
 
@@ -162,8 +162,18 @@ module Vault
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
-        cipher.key = memory_key_for(path, key) + context
+        cipher.key = memory_key_for(path, key, context: context)
         return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+      end
+
+      # The symmetric key for the given params.
+      # @return [String]
+      def memory_key_for(path, key, context: nil)
+        md5 = OpenSSL::Digest::MD5.new
+        md5 << path
+        md5 << key
+        md5 << context if context
+        md5.digest
       end
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
@@ -194,12 +204,6 @@ module Vault
         secret = client.logical.write(route, data)
 
         return Base64.strict_decode64(secret.data[:plaintext])
-      end
-
-      # The symmetric key for the given params.
-      # @return [String]
-      def memory_key_for(path, key)
-        return Base64.strict_encode64("#{path}/#{key}".ljust(16, "x")).byteslice(0..15)
       end
 
       # Forces the encoding into the default Rails encoding and returns the
