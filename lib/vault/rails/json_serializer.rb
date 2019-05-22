@@ -7,13 +7,13 @@ module Vault
       }.freeze
 
       def self.encode(raw)
-        self._init!
+        _init!
 
         JSON.fast_generate(raw)
       end
 
       def self.decode(raw)
-        self._init!
+        _init!
 
         return nil if raw == nil || raw == ""
 
