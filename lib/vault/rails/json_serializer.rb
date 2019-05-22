@@ -9,15 +9,14 @@ module Vault
       def self.encode(raw)
         self._init!
 
-        raw = {} if raw.nil?
-
         JSON.fast_generate(raw)
       end
 
       def self.decode(raw)
         self._init!
 
-        return {} if raw.nil? || raw.empty?
+        return nil if raw == nil || raw == ""
+
         JSON.parse(raw, DECODE_OPTIONS)
       end
 
