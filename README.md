@@ -154,6 +154,29 @@ vault_attribute :credit_card,
 
 - **Note** Changing this value for an existing application will make existing values no longer decryptable!
 
+#### Lazy attribute decryption
+By default, `vault-rails` will decrypt a record’s encrypted attributes on that record’s initializarion. You can configure an encrypted model to decrypt attributes lazily, which will prevent communication with Vault until an encrypted attribute’s getter method is called, at which point all of the record’s encrypted attributes will be decrypted. This is useful if you do not always need access to encrypted attributes. For example:
+
+
+```ruby
+class Person < ActiveRecord::Base
+  include Vault::EncryptedModel
+  vault_lazy_decrypt!
+
+  vault_attribute :ssn
+end
+
+# Without vault_lazy_decrypt:
+person = Person.find(id) # Vault communication happens here
+person.ssn
+# => "123-45-6789"
+
+# With vault_lazy_decrypt:
+person = Person.find(id)
+person.ssn # Vault communication happens here
+# => "123-45-6789"
+```
+
 #### Automatic serializing
 By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
 
