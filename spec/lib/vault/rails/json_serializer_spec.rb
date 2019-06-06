@@ -34,7 +34,7 @@ RSpec.describe Vault::Rails::JSONSerializer do
       it { is_expected.to eq(nil) }
     end
 
-    context "with an empty string" do
+    context "with an empty string (only possible if column has a default)" do
       let(:raw) { "" }
       it { is_expected.to eq(nil) }
     end
