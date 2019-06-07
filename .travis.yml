@@ -13,6 +13,9 @@ env:
   - VAULT_VERSION=0.3.1
 
 before_install:
+  # Downgrade Bundler to 1.x
+  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
+  - gem install bundler -v '< 2'
   - wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
   - unzip vault.zip
   - mkdir -p ~/bin
@@ -24,10 +27,9 @@ branches:
     - master
 
 rvm:
-  - 2.2.10
-  - 2.3.8
-  - 2.4.5
-  - 2.5.3
+  - "2.4"
+  - "2.5"
+  - "2.6"
 
 before_script:
   - bundle exec rake app:db:create
