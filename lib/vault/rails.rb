@@ -6,7 +6,7 @@ require "json"
 require_relative "encrypted_model"
 require_relative "rails/configurable"
 require_relative "rails/errors"
-require_relative "rails/serializer"
+require_relative "rails/json_serializer"
 require_relative "rails/version"
 
 module Vault
