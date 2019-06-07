@@ -13,6 +13,9 @@ env:
   - VAULT_VERSION=0.3.1
 
 before_install:
+  # Downgrade Bundler to 1.x
+  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
+  - gem install bundler -v '< 2'
   - wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
   - unzip vault.zip
   - mkdir -p ~/bin
