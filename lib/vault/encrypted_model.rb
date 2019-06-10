@@ -32,6 +32,9 @@ module Vault
       # @option options [String, Symbol, Proc] :context
       #   either a string context, or a symbol or proc used to generate a
       #   context for key generation
+      # @option options [Object] :default
+      #   a default value for this attribute to be set to if the underlying
+      #   value is nil
       # @option options [Symbol, Class] :serializer
       #   the name of the serializer to use (or a class)
       # @option options [Proc] :encode
@@ -43,6 +46,7 @@ module Vault
         path = options[:path] || "transit"
         key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
         context = options[:context]
+        default = options[:default]
 
         # Sanity check options!
         _vault_validate_options!(options)
@@ -111,11 +115,12 @@ module Vault
 
         # Make a note of this attribute so we can use it in the future (maybe).
         __vault_attributes[attribute.to_sym] = {
+          context: context,
+          default: default,
+          encrypted_column: encrypted_column,
           key: key,
           path: path,
-          serializer: serializer,
-          encrypted_column: encrypted_column,
-          context: context,
+          serializer: serializer
         }
 
         self
@@ -206,6 +211,7 @@ module Vault
         serializer = options[:serializer]
         column     = options[:encrypted_column]
         context    = options[:context]
+        default    = options[:default]
 
         # Load the ciphertext
         ciphertext = read_attribute(column)
@@ -228,6 +234,11 @@ module Vault
         # Deserialize the plaintext value, if a serializer exists
         if serializer
           plaintext = serializer.decode(plaintext)
+        end
+
+        # Set to default if needed
+        if default && plaintext == nil
+          plaintext = default
         end
 
         # Write the virtual attribute with the plaintext value

@@ -22,6 +22,13 @@ class Person < ActiveRecord::Base
 
   vault_attribute :non_ascii
 
+  vault_attribute :default,
+    default: "abc123"
+
+  vault_attribute :default_with_serializer,
+    serialize: :json,
+    default: {}
+
   vault_attribute :context_string,
     context: "production"
 
@@ -35,4 +42,3 @@ class Person < ActiveRecord::Base
     "user_#{id}"
   end
 end
-

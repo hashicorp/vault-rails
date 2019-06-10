@@ -26,6 +26,16 @@ class LazyPerson < ActiveRecord::Base
 
   vault_attribute :non_ascii
 
+  vault_attribute :default,
+    default: "abc123"
+
+  vault_attribute :default_with_serializer,
+    serialize: :json,
+    default: {}
+
+  vault_attribute :context_string,
+    context: "production"
+
   vault_attribute :context_symbol,
     context: :encryption_context
 

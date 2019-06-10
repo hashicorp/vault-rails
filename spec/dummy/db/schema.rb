@@ -20,6 +20,8 @@ ActiveRecord::Schema.define(version: 2015_04_28_220101) do
     t.string "business_card_encrypted"
     t.string "favorite_color_encrypted"
     t.string "non_ascii_encrypted"
+    t.string "default_encrypted"
+    t.string "default_with_serializer_encrypted"
     t.string "context_string_encrypted"
     t.string "context_symbol_encrypted"
     t.string "context_proc_encrypted"
