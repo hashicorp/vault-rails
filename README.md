@@ -144,7 +144,21 @@ vault_attribute :credit_card,
 
 The proc must take a single argument for the record.
 
+#### Specifying a default value
+
+An attribute can specify a default value, which will be set on initialization (`.new`) or after loading the value from the database. The default will be set if the value is `nil`.
+
+```ruby
+vault_attribute :access_level,
+  default: "readonly"
+
+vault_attribute :metadata,
+  serialize: :json,
+  default: {}
+```
+
 #### Specifying a different Vault path
+
 By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:
 
 ```ruby

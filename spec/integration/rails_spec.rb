@@ -294,9 +294,73 @@ describe Vault::Rails do
     end
   end
 
+  context "with a default" do
+    %i[new create].each do |creation_method|
+      context "on #{creation_method}" do
+        context "without an initial attribute" do
+          it "sets the default" do
+            person = Person.public_send(creation_method)
+            expect(person.default).to eq("abc123")
+            person.save!
+            person.reload
+            expect(person.default).to eq("abc123")
+          end
+        end
+
+        context "with an initial attribute" do
+          it "does not set the default" do
+            person = Person.public_send(creation_method, default: "another")
+            expect(person.default).to eq("another")
+            person.save!
+            person.reload
+            expect(person.default).to eq("another")
+          end
+        end
+      end
+    end
+  end
+
+  context "with a default and serializer" do
+    %i[new create].each do |creation_method|
+      context "on #{creation_method}" do
+        context "without an initial attribute" do
+          it "sets the default" do
+            person = Person.public_send(creation_method)
+            expect(person.default_with_serializer).to eq({})
+            person.save!
+            person.reload
+            expect(person.default_with_serializer).to eq({})
+          end
+        end
+
+        context "with an initial attribute" do
+          it "does not set the default" do
+            person = Person.public_send(
+              creation_method,
+              default_with_serializer: { "foo" => "bar" }
+            )
+
+            expect(person.default_with_serializer).to eq({ "foo" => "bar" })
+            person.save!
+            person.reload
+            expect(person.default_with_serializer).to eq({ "foo" => "bar" })
+          end
+        end
+      end
+    end
+  end
+
   context "with the :json serializer"  do
     before(:all) do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
+    end
+
+    it "does not default to a hash" do
+      person = Person.new
+      expect(person.details).to eq(nil)
+      person.save!
+      person.reload
+      expect(person.details).to eq(nil)
     end
 
     it "tracks dirty attributes" do
