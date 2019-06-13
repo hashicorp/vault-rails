@@ -10,20 +10,46 @@ describe Vault::EncryptedModel do
   describe ".vault_attribute" do
     it "raises an exception if a serializer and :encode is given" do
       expect {
-        klass.vault_attribute(:foo, serializer: :json, encode: ->(r) { r })
-      }.to raise_error(Vault::Rails::ValidationFailedError)
+        klass.vault_attribute :foo,
+          serializer: :json,
+          default: {},
+          encode: ->(r) { r }
+      }.to raise_error(
+        Vault::Rails::ValidationFailedError,
+        %r{cannot use a custom encoder/decoder}i
+      )
     end
 
     it "raises an exception if a serializer and :decode is given" do
       expect {
-        klass.vault_attribute(:foo, serializer: :json, decode: ->(r) { r })
-      }.to raise_error(Vault::Rails::ValidationFailedError)
+        klass.vault_attribute :foo,
+          serializer: :json,
+          default: {},
+          decode: ->(r) { r }
+      }.to raise_error(
+        Vault::Rails::ValidationFailedError,
+        %r{cannot use a custom encoder/decoder}i
+      )
     end
 
     it "raises an exception if a proc is passed to :context without an arity of 1" do
       expect {
-        klass.vault_attribute(:foo, context: ->() { })
-      }.to raise_error(Vault::Rails::ValidationFailedError, /1 argument/i)
+        klass.vault_attribute :foo,
+          context: ->() { }
+      }.to raise_error(
+        Vault::Rails::ValidationFailedError,
+        %r{must take 1 argument}i
+      )
+    end
+
+    it "raises an exception if a serializer is given without a :default" do
+      expect {
+        klass.vault_attribute :foo,
+          serializer: :json
+      }.to raise_error(
+        Vault::Rails::ValidationFailedError,
+        %r{use of a built-in serializer requires}i
+      )
     end
 
     it "defines a getter" do

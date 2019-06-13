@@ -157,6 +157,8 @@ vault_attribute :metadata,
   default: {}
 ```
 
+Defaults are required when using a serializer.
+
 #### Specifying a different Vault path
 
 By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:
@@ -192,11 +194,17 @@ person.ssn # Vault communication happens here
 ```
 
 #### Automatic serializing
-By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
+
+By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you. Use of a built-in serializer requires that a `:default` be set,
 
 ```ruby
 vault_attribute :details,
-  serialize: :json
+  serialize: :json,
+  default: {}
+
+vault_attribute :configuration,
+  serialize: :json,
+  default: nil
 ```
 
 - **Note** You can view the source for the exact serialization and deserialization options, but they are intentionally not customizable and cannot be used for a full object marshal/unmarshal.
@@ -219,7 +227,8 @@ Your class must account for `nil` and "empty" values if necessary. Then specify 
 
 ```ruby
 vault_attribute :details,
-  serialize: MySerializer
+  serialize: MySerializer,
+  default: {}
 ```
 
 - **Note** It is possible to encode and decode entire Ruby objects using a custom serializer. Please do not do that. You will have a bad time.

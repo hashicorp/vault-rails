@@ -136,7 +136,12 @@ module Vault
       # Validate that Vault options are all a-okay! This method will raise
       # exceptions if something does not make sense.
       def _vault_validate_options!(options)
-        if options[:serializer]
+        if serializer = options[:serializer]
+          if serializer.is_a?(Symbol) && !options.has_key?(:default)
+            raise Vault::Rails::ValidationFailedError, "Use of a built-in " \
+              "serializer requires a `:default` to be set!"
+          end
+
           if options[:encode] || options[:decode]
             raise Vault::Rails::ValidationFailedError, "Cannot use a " \
               "custom encoder/decoder if a `:serializer' is specified!"
