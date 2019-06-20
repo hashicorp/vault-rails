@@ -1,6 +1,23 @@
 # Vault Rails Changelog
 
+## v0.5.0 (June 20th, 2019)
+
+IMPROVEMENTS
+
+- Added support for Vault Transit derived keys with the `:context` option. [GH-78]
+- Added a `:default` option to `vault_attribute`. [GH-83]
+
+BREAKING CHANGES
+
+- Dropped support for Ruby < 2.4, Rails < 4.2. [GH-79]
+- Null and empty types were previously deserialized to an empty JSON object (`{}`). They will now be properly deserialized as `null`, empty string (`""`), and so on. To preserve the old behavior, add `default: {}` to JSON-serialized attributes. [GH-81]
+
+BUG FIXES
+
+- Fixed uniqueness of generated key for in-memory operations. [GH-80]
+
 ## v0.4.0 (November 9, 2017)
+
 - Update supported Ruby and Rails versions [GH-50]
   - Ruby
     - Added 2.4.2
