@@ -191,15 +191,21 @@ person.ssn # Vault communication happens here
 # => "123-45-6789"
 ```
 
-#### Automatic serializing
+#### Serialization
+
 By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
 
 ```ruby
 vault_attribute :details,
-  serialize: :json
+  serialize: :json,
+  default: {}
 ```
 
+It is recommended to set a default matching type that you're serializing.
+
 - **Note** You can view the source for the exact serialization and deserialization options, but they are intentionally not customizable and cannot be used for a full object marshal/unmarshal.
+
+##### Custom Serializers
 
 For customized solutions, you can also pass a module to the `:serializer` key. This module must have the following API:
 
