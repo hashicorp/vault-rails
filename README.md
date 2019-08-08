@@ -302,6 +302,26 @@ Person.where(ssn: "123-45-6789")
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
 
+If you really need to search on encrypted attributes, there are few techniques
+you can use for exact equality:
+
+**Blind indexing**
+
+[Blind indexing](https://www.sitepoint.com/how-to-search-on-securely-encrypted-database-fields/)
+uses a keyed hash function to compute a hash of the data. The same values will have the same hash.
+With blind index all rows need to be hashed with the same key, at them moment
+this is something Vault doesn't support.
+
+You can implement hashing outside Vault and protect the hashing key with Vault.
+
+**Deterministic encryption scheme**
+
+Another approach is to use a deterministic encryption scheme, like AES-SIV.
+In this approach, the encrypted data will be the same for matches. Be careful
+not to use static IV algorithms, as this will compromise the encryption key.
+
+Vault doesn't support deterministic encryption schemes, so you are on your own
+here.
 
 Development
 -----------
