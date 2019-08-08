@@ -303,6 +303,18 @@ This is because the database is unaware of the plain-text data (which is part of
 the security model).
 
 
+### Key rotation
+After rotating the key inside the Vault, all new records will be encrypted with
+new key. If you wish to rotate old records to the new key you need to update
+those manually.
+
+```ruby
+person.update!(ssn: "678-45-123")
+```
+
+For more information on Vault key rotation check the [docs](https://www.vaultproject.io/docs/secrets/transit/index.html#working-set-management).
+
+
 Development
 -----------
 1. Clone the project on GitHub
