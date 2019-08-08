@@ -60,7 +60,7 @@ Quick Start
 
     ```ruby
     class AddEncryptedSSNToPerson < ActiveRecord::Migration
-      add_column :persons, :ssn_encrypted, :string
+      add_column :people, :ssn_encrypted, :string
     end
     ```
 
