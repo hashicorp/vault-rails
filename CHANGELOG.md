@@ -1,4 +1,9 @@
 # Vault Rails Changelog
+## 2.0.3 (August 22, 2019)
+
+BUG FIXES
+- Fix bug where JSONSerializer would raise an error when passed a string
+
 ## 2.0.2 (May 16, 2019)
 
 IMPROVEMENTS
