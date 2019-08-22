@@ -11,8 +11,10 @@ module Vault
 
         def self.encode(raw)
           return if raw.nil?
+          return raw if raw.is_a?(String)
           JSON.fast_generate(raw)
         end
+
 
         def self.decode(raw)
           return if raw.nil?
