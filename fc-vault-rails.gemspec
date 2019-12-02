@@ -17,16 +17,15 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["spec/**/*"]
 
-  s.add_dependency "activerecord", [">= 4.2", "< 6.0"]
+  s.add_dependency "activerecord", ">= 4.2"
   s.add_dependency "vault", "~> 0.7"
 
   s.add_development_dependency "appraisal", "~> 2.1"
   s.add_development_dependency "bundler"
-  s.add_development_dependency "rails", [">= 4.2", "< 6.0"]
+  s.add_development_dependency "rails", ">= 4.2"
   s.add_development_dependency "byebug"
   s.add_development_dependency "pry"
-  s.add_development_dependency "rake",    "~> 10.0"
+  s.add_development_dependency "rake"
   s.add_development_dependency "rspec",   "~> 3.2"
-  s.add_development_dependency "sqlite3", "~> 1.3.6"
-  s.add_development_dependency "wwtd"
+  s.add_development_dependency "sqlite3", '~> 1.3'
 end

@@ -10,44 +10,106 @@ defaults: &defaults
         RACK_ENV: test
         VAULT_VERSION: 0.10.4
 
-jobs:
-  tests:
-    <<: *defaults
+aliases:
+  environment: &environment
+    RACK_ENV: test
+    VAULT_VERSION: 0.10.4
+  command: &ruby-command |
+      bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
+      bundle exec rake app:db:create
+      bundle exec rake app:db:schema:load
+      bundle exec rake app:db:test:prepare
+      bundle exec rake
+  cache:
+    - restore_cache: &restore_cache
+        keys:
+          - vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum "Appraisals" }}
+    - save_cache:  &save_cache
+          key: vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum "Appraisals" }}
+          paths:
+            - vendor/bundle
+  runs:
+    - run: &install-vault
+        name: Install Vault
+        command: |
+          wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
+          unzip vault.zip
+          sudo mv vault /usr/local/bin/
+    - run: &rails4
+        shell: /bin/bash -l
+        name: Rails 4.2
+        environment:
+          BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
+        command: *ruby-command
+    - run: &rails5
+        shell: /bin/bash -l
+        name: Rails 5.0
+        environment:
+          BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
+        command: *ruby-command
+    - run: &rails51
+        shell: /bin/bash -l
+        name: Rails 5.1
+        environment:
+          BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
+        command: *ruby-command
+    - run: &rails52
+        shell: /bin/bash -l
+        name: Rails 5.2
+        environment:
+          BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
+        command: *ruby-command
+    - run: &rails6
+        shell: /bin/bash -l
+        name: Rails 6
+        environment:
+          BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
+        command: *ruby-command
 
+
+jobs:
+  test_ruby_2_3:
+    docker:
+      - image: circleci/ruby:2.3
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.10.4
     steps:
       - checkout
-      - run: yum -y install wget unzip sqlite
-      - run: yum clean all
+      - run: *install-vault
+      - run: *rails4
+      - run: *rails5
+      - run: *rails51
+      - run: *rails52
 
-      - run:
-          name: Install Vault
-          command: |
-            wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
-            unzip vault.zip
-            mv vault /usr/local/bin/
+  test_ruby_2_4:
+    docker:
+      - image: circleci/ruby:2.4
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.10.4
+    steps:
+      - checkout
+      - run: *install-vault
+      - run: *rails4
+      - run: *rails5
+      - run: *rails51
+      - run: *rails52
 
-      - restore_cache:
-          keys:
-            - vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum ".travis.yml" }}
-
-      - run:
-          shell: /bin/bash -l
-          command: |
-            rvm use --default 2.5.1
-            bundle check --path=/usr/local/rvm/gems || bundle install --path=/usr/local/rvm/gems
-
-      - run:
-          shell: /bin/bash -l
-          command: |
-            bundle exec rake app:db:create
-            bundle exec rake app:db:schema:load
-            bundle exec rake app:db:test:prepare
-            bundle exec wwtd
-
-      - save_cache:
-          key: vault-rails-{{checksum "fc-vault-rails.gemspec" }}-{{checksum ".travis.yml" }}
-          paths:
-            - /usr/local/rvm/gems
+  test_ruby_2_5:
+    docker:
+      - image: circleci/ruby:2.5
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.10.4
+    steps:
+      - checkout
+      - run: *install-vault
+      - run: *rails4
+      - run: *rails5
+      - run: *rails51
+      - run: *rails52
+      - run: *rails6
 
   publish-pre-release:
     <<: *defaults
@@ -128,7 +190,19 @@ workflows:
 
   test-and-release:
     jobs:
-      - tests:
+      - test_ruby_2_3:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+
+      - test_ruby_2_4:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+
+      - test_ruby_2_5:
           context: org-global
           filters:
             tags:
@@ -142,7 +216,9 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - tests
+            - test_ruby_2_3
+            - test_ruby_2_4
+            - test_ruby_2_5
 
       - publish-release:
           context: org-global
@@ -152,4 +228,6 @@ workflows:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*$/
           requires:
-            - tests
+            - test_ruby_2_3
+            - test_ruby_2_4
+            - test_ruby_2_5
