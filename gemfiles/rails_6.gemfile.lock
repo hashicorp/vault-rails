@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    fc-vault-rails (2.0.3)
+    fc-vault-rails (2.0.4)
       activerecord (>= 4.2)
       vault (~> 0.7)
 
