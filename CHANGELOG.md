@@ -1,4 +1,11 @@
 # Vault Rails Changelog
+
+## 2.0.4 (December 2, 2019)
+
+IMPROVEMENTS
+- Add Rails 6 Support
+- Get rid of travis in the build pipeline
+
 ## 2.0.3 (August 22, 2019)
 
 BUG FIXES
