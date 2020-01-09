@@ -192,6 +192,130 @@ describe Vault::Rails do
     end
   end
 
+  context "lazy single decrypt" do
+    before(:all) do
+      Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
+    end
+
+    it "encrypts attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      expect(person.ssn_encrypted).to be
+      expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "decrypts attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+      expect(person.ssn.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "does not decrypt on initialization" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+    end
+
+    it "does not decrypt all attributes on single read" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmno")
+      expect(person.credit_card).to eq("abcd-efgh-hijk-lmno")
+
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+      expect(p2.instance_variable_get("@credit_card")).to eq(nil)
+      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmno")
+    end
+
+    it "does not decrypt all attributes on single write" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmno")
+      expect(person.credit_card).to eq("abcd-efgh-hijk-lmno")
+
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+      person.ssn = "111-11-1111"
+      expect(p2.instance_variable_get("@credit_card")).to eq(nil)
+      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmno")
+    end
+
+    it "tracks dirty attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+
+      expect(person.ssn_changed?).to be(false)
+      expect(person.ssn_change).to be(nil)
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
+      expect(person.ssn_was).to eq("123-45-6789")
+    end
+
+    it "allows attributes to be unset" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows saving without validations" do
+      person = LazySinglePerson.new(ssn: "123-456-7890")
+      expect(person.save(validate: false)).to be(true)
+      expect(person.ssn_encrypted).to match("vault:")
+    end
+
+    it "allows attributes to be unset after reload" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: "")
+      person.reload
+
+      expect(person.ssn).to eq("")
+    end
+
+    it "reloads instance variables on reload" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+    end
+
+    it "does not try to encrypt unchanged attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:encrypt)
+      person.name = "Cinderella"
+      person.save!
+    end
+  end
+
   context "with custom options" do
     before(:all) do
       Vault::Rails.sys.mount("credit-secrets", :transit)
