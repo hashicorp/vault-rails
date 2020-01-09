@@ -69,13 +69,13 @@ module Vault
 
         # Getter
         define_method("#{attribute}") do
-          self.__vault_load_attributes! unless @__vault_loaded
+          self.__vault_load_attributes!(attribute) unless @__vault_loaded
           instance_variable_get("@#{attribute}")
         end
 
         # Setter
         define_method("#{attribute}=") do |value|
-          self.__vault_load_attributes! unless @__vault_loaded
+          self.__vault_load_attributes!(attribute) unless @__vault_loaded
 
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
@@ -90,7 +90,7 @@ module Vault
 
         # Checker
         define_method("#{attribute}?") do
-          self.__vault_load_attributes! unless @__vault_loaded
+          self.__vault_load_attributes!(attribute) unless @__vault_loaded
           instance_variable_get("@#{attribute}").present?
         end
 
@@ -168,6 +168,14 @@ module Vault
       def vault_lazy_decrypt!
         @vault_lazy_decrypt = true
       end
+
+      def vault_single_decrypt
+        @vault_single_decrypt ||= false
+      end
+
+      def vault_single_decrypt!
+        @vault_single_decrypt = true
+      end
     end
 
     included do
@@ -194,12 +202,16 @@ module Vault
         __vault_load_attributes!
       end
 
-      def __vault_load_attributes!
+      def __vault_load_attributes!(attribute_to_read = nil)
         self.class.__vault_attributes.each do |attribute, options|
+          # skip loading certain keys in one of two cases:
+          # 1- the attribute has already been loaded
+          # 2- the single decrypt option is set AND this is not the attribute we're requesting to decrypt
+          next if instance_variable_get("@#{attribute}") || (self.class.vault_single_decrypt && attribute_to_read != attribute)
           self.__vault_load_attribute!(attribute, options)
         end
 
-        @__vault_loaded = true
+        @__vault_loaded = self.class.__vault_attributes.all? { |attribute, __| instance_variable_get("@#{attribute}") }
 
         return true
       end
