@@ -223,8 +223,8 @@ describe Vault::Rails do
 
     it "does not decrypt all attributes on single read" do
       person = LazySinglePerson.create!(ssn: "123-45-6789")
-      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmno")
-      expect(person.credit_card).to eq("abcd-efgh-hijk-lmno")
+      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmnp")
+      expect(person.credit_card).to eq("abcd-efgh-hijk-lmnp")
 
       person.reload
 
@@ -233,7 +233,7 @@ describe Vault::Rails do
       expect(p2.instance_variable_get("@ssn")).to eq(nil)
       expect(p2.ssn).to eq("123-45-6789")
       expect(p2.instance_variable_get("@credit_card")).to eq(nil)
-      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmno")
+      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmnp")
     end
 
     it "does not decrypt all attributes on single write" do
