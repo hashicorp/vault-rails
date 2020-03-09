@@ -5,8 +5,17 @@ Vault is the official Rails plugin for interacting with [Vault](https://vaultpro
 
 **The documentation in this README corresponds to the master branch of the Vault Rails plugin. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the Vault Rails plugin for the proper documentation.**
 
+## Table of Contents
+1. [Quick Start](#quick-start)
+1. [Advanced Configuration](#advanced-configuration)
+1. [Caveats](#caveats)
+1. [Development](#development)
+
+
 Quick Start
 -----------
+↥ [back to top](#table-of-contents)
+
 1. Add to your Gemfile:
 
     ```ruby
@@ -76,6 +85,8 @@ Quick Start
 
 Advanced Configuration
 ----------------------
+↥ [back to top](#table-of-contents)
+
 The following section details some of the more advanced configuration options for vault-rails. As a general rule, you should try to use vault-rails without these options until absolutely necessary.
 
 #### Specifying the encrypted column
@@ -243,6 +254,8 @@ vault_attribute :address,
 
 Caveats
 -------
+↥ [back to top](#table-of-contents)
+
 
 ### Mounting/Creating Keys in Vault
 The Vault Rails plugin does not automatically mount a backend. It is assumed the proper backend is mounted and accessible by the given token. You can mount a transit backend like this:
@@ -305,6 +318,8 @@ the security model).
 
 Development
 -----------
+↥ [back to top](#table-of-contents)
+
 1. Clone the project on GitHub
 2. Create a feature branch
 3. Submit a Pull Request
