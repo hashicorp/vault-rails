@@ -2,10 +2,7 @@ version: 2
 
 defaults: &defaults
   docker:
-    - image: quay.io/fundingcircle/centos-ruby:ci-rvm
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+    - image: circleci/ruby:2.7
       environment:
         RACK_ENV: test
         VAULT_VERSION: 0.10.4
@@ -15,6 +12,7 @@ aliases:
     RACK_ENV: test
     VAULT_VERSION: 0.10.4
   command: &ruby-command |
+      gem install bundler:1.17.3
       bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
       bundle exec rake app:db:create
       bundle exec rake app:db:schema:load
@@ -68,20 +66,6 @@ aliases:
 
 
 jobs:
-  test_ruby_2_3:
-    docker:
-      - image: circleci/ruby:2.3
-        environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.4
-    steps:
-      - checkout
-      - run: *install-vault
-      - run: *rails4
-      - run: *rails5
-      - run: *rails51
-      - run: *rails52
-
   test_ruby_2_4:
     docker:
       - image: circleci/ruby:2.4
@@ -111,13 +95,39 @@ jobs:
       - run: *rails52
       - run: *rails6
 
+  test_ruby_2_6:
+    docker:
+      - image: circleci/ruby:2.6
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.10.4
+    steps:
+      - checkout
+      - run: *install-vault
+      - run: *rails5
+      - run: *rails51
+      - run: *rails52
+      - run: *rails6
+
+  test_ruby_2_7:
+    docker:
+      - image: circleci/ruby:2.7
+        environment:
+          RACK_ENV: test
+          VAULT_VERSION: 0.10.4
+    steps:
+      - checkout
+      - run: *install-vault
+      - run: *rails5
+      - run: *rails51
+      - run: *rails52
+      - run: *rails6
+
   publish-pre-release:
     <<: *defaults
 
     steps:
       - checkout
-      - run: yum -y install curl
-      - run: yum clean all
 
       - run:
           name: Login to JFrog
@@ -125,10 +135,6 @@ jobs:
             mkdir -p ~/.gem
             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
             chmod 600 ~/.gem/credentials
-
-      - run:
-          shell: /bin/bash -l
-          command: rvm use --default 2.5.1
 
       - run:
           name: Install Gem Versioner
@@ -153,8 +159,6 @@ jobs:
 
     steps:
       - checkout
-      - run: yum -y install curl
-      - run: yum clean all
 
       - run:
           name: Login to JFrog
@@ -162,10 +166,6 @@ jobs:
             mkdir -p ~/.gem
             curl --user "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems/api/v1/api_key.yaml > ~/.gem/credentials
             chmod 600 ~/.gem/credentials
-
-      - run:
-          shell: /bin/bash -l
-          command: rvm use --default 2.5.1
 
       - run:
           name: Install Gem Versioner
@@ -190,12 +190,6 @@ workflows:
 
   test-and-release:
     jobs:
-      - test_ruby_2_3:
-          context: org-global
-          filters:
-            tags:
-              only: /.*/
-
       - test_ruby_2_4:
           context: org-global
           filters:
@@ -203,6 +197,18 @@ workflows:
               only: /.*/
 
       - test_ruby_2_5:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+
+      - test_ruby_2_6:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+
+      - test_ruby_2_7:
           context: org-global
           filters:
             tags:
@@ -216,9 +222,10 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - test_ruby_2_3
             - test_ruby_2_4
             - test_ruby_2_5
+            - test_ruby_2_6
+            - test_ruby_2_7
 
       - publish-release:
           context: org-global
@@ -228,6 +235,7 @@ workflows:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*$/
           requires:
-            - test_ruby_2_3
             - test_ruby_2_4
             - test_ruby_2_5
+            - test_ruby_2_6
+            - test_ruby_2_7
