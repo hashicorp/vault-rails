@@ -1,9 +1,21 @@
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
-require "vault/rails"
 
+require "vault/rails"
 require "rspec"
 
+module PathHelpers
+  def project_root
+    @project_root ||= File.expand_path('../..', __FILE__)
+  end
+
+  def dummy_root
+    File.join(project_root, 'spec', 'dummy')
+  end
+end
+
 RSpec.configure do |config|
+  config.include PathHelpers
+
   # Prohibit using the should syntax
   config.expect_with :rspec do |spec|
     spec.syntax = :expect
