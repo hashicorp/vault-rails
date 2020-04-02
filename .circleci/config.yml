@@ -1,18 +1,12 @@
 version: 2
 
-defaults: &defaults
-  docker:
-    - image: circleci/ruby:2.7
-      environment:
-        RACK_ENV: test
-        VAULT_VERSION: 0.10.4
-
 aliases:
   environment: &environment
     RACK_ENV: test
     VAULT_VERSION: 0.10.4
+    BUNDLER_VERSION: 2.1.4
   command: &ruby-command |
-      gem install bundler:1.17.3
+      gem install bundler:$BUNDLER_VERSION
       bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
       bundle exec rake app:db:create
       bundle exec rake app:db:schema:load
@@ -70,8 +64,7 @@ jobs:
     docker:
       - image: circleci/ruby:2.4
         environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.4
+          <<: *environment
     steps:
       - checkout
       - run: *install-vault
@@ -84,8 +77,7 @@ jobs:
     docker:
       - image: circleci/ruby:2.5
         environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.4
+          <<: *environment
     steps:
       - checkout
       - run: *install-vault
@@ -99,8 +91,7 @@ jobs:
     docker:
       - image: circleci/ruby:2.6
         environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.4
+          <<: *environment
     steps:
       - checkout
       - run: *install-vault
@@ -113,8 +104,7 @@ jobs:
     docker:
       - image: circleci/ruby:2.7
         environment:
-          RACK_ENV: test
-          VAULT_VERSION: 0.10.4
+          <<: *environment
     steps:
       - checkout
       - run: *install-vault
@@ -124,7 +114,10 @@ jobs:
       - run: *rails6
 
   publish-pre-release:
-    <<: *defaults
+    docker:
+      - image: circleci/ruby:2.7
+        environment:
+          <<: *environment
 
     steps:
       - checkout
@@ -155,7 +148,10 @@ jobs:
             gem push "$package" --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
 
   publish-release:
-    <<: *defaults
+    docker:
+      - image: circleci/ruby:2.7
+        environment:
+          <<: *environment
 
     steps:
       - checkout
