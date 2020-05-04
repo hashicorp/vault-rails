@@ -35,6 +35,7 @@ before_script:
   - bundle exec rake app:db:create
   - bundle exec rake app:db:schema:load
   - bundle exec rake app:db:test:prepare
+  - gem uninstall sqlite3
   - bundle exec appraisal install
 
 script: bundle exec appraisal rake
