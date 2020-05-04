@@ -67,10 +67,13 @@ module Vault
           serializer.define_singleton_method(:decode, &options[:decode])
         end
 
+        self.attribute attribute.to_s, ActiveRecord::Type::Value.new,
+          default: nil
+
         # Getter
         define_method("#{attribute}") do
           self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}")
+          super()
         end
 
         # Setter
@@ -83,6 +86,7 @@ module Vault
 
           attribute_will_change!("#{attribute}")
           instance_variable_set("@#{attribute}", value)
+          super(value)
 
           # Return the value to be consistent with other AR methods.
           value
@@ -90,27 +94,7 @@ module Vault
 
         # Checker
         define_method("#{attribute}?") do
-          self.__vault_load_attributes! unless @__vault_loaded
-          instance_variable_get("@#{attribute}").present?
-        end
-
-        # Dirty method
-        define_method("#{attribute}_change") do
-          changes["#{attribute}"]
-        end
-
-        # Dirty method
-        define_method("#{attribute}_changed?") do
-          changed.include?("#{attribute}")
-        end
-
-        # Dirty method
-        define_method("#{attribute}_was") do
-          if changes["#{attribute}"]
-            changes["#{attribute}"][0]
-          else
-            public_send("#{attribute}")
-          end
+          public_send(attribute).present?
         end
 
         # Make a note of this attribute so we can use it in the future (maybe).
@@ -218,7 +202,7 @@ module Vault
 
         # If the user provided a value for the attribute, do not try to load
         # it from Vault
-        if instance_variable_get("@#{attribute}")
+        if attributes[attribute.to_s]
           return
         end
 
@@ -243,6 +227,7 @@ module Vault
 
         # Write the virtual attribute with the plaintext value
         instance_variable_set("@#{attribute}", plaintext)
+        @attributes.write_from_database attribute.to_s, plaintext
       end
 
       # Encrypt all the attributes using Vault and set the encrypted values back
@@ -278,12 +263,16 @@ module Vault
 
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
-        if !changed.include?("#{attribute}")
-          return
+        if ActiveRecord.gem_version >= Gem::Version.new("5.2")
+          return unless previous_changes_include?(attribute)
+        elsif ActiveRecord.gem_version >= Gem::Version.new("5.1")
+          return unless saved_change_to_attribute?(attribute.to_s)
+        else
+          return unless attribute_changed?(attribute)
         end
 
         # Get the current value of the plaintext attribute
-        plaintext = instance_variable_get("@#{attribute}")
+        plaintext = attributes[attribute.to_s]
 
         # Apply the serialize to the plaintext value, if one exists
         if serializer
@@ -330,6 +319,7 @@ module Vault
           # from Vault
           self.class.__vault_attributes.each do |attribute, _|
             self.instance_variable_set("@#{attribute}", nil)
+            @attributes.write_from_database attribute.to_s, nil
           end
 
           self.__vault_initialize_attributes!
