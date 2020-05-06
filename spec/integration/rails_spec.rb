@@ -199,7 +199,8 @@ describe Vault::Rails do
 
     it "encrypts attributes" do
       person = LazySinglePerson.create!(ssn: "123-45-6789")
-      expect(person.ssn_encrypted).to be
+      expect(person.ssn_encrypted.length).to eq(61)
+      expect(person.ssn_encrypted).to start_with("vault:v1:")
       expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
     end
 
