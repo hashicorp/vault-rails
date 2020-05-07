@@ -510,4 +510,19 @@ describe Vault::Rails do
       }.to raise_error(Vault::HTTPClientError)
     end
   end
+
+  context "without a server" do
+    it "encrypts attributes with a dev prefix" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = Person.create!(credit_card: "1234567890111213")
+      expect(person.cc_encrypted).to start_with(Vault::Rails::DEV_PREFIX)
+    end
+
+    it "decrypts attributes" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = Person.create!(credit_card: "1234567890111213")
+      person.reload
+      expect(person.credit_card).to eq("1234567890111213")
+    end
+  end
 end
