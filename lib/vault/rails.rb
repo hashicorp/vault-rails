@@ -26,6 +26,7 @@ module Vault
     # The warning string to print when running in development mode.
     DEV_WARNING = "[vault-rails] Using in-memory cipher - this is not secure " \
       "and should never be used in production-like environments!".freeze
+    DEV_PREFIX = "vault:dev:".freeze
 
     class << self
       # API client object based off the configured options in {Configurable}.
@@ -151,7 +152,7 @@ module Vault
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
         cipher.key = memory_key_for(path, key, context: context)
-        return Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
+        return DEV_PREFIX + Base64.strict_encode64(cipher.update(plaintext) + cipher.final)
       end
 
       # Perform in-memory decryption. This is useful for testing and development.
@@ -160,10 +161,13 @@ module Vault
 
         return nil if ciphertext.nil?
 
+        raise Vault::Rails::InvalidCiphertext.new(ciphertext) if !ciphertext.start_with?(DEV_PREFIX)
+        data = ciphertext[DEV_PREFIX.length..-1]
+
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
         cipher.key = memory_key_for(path, key, context: context)
-        return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+        return cipher.update(Base64.strict_decode64(data)) + cipher.final
       end
 
       # The symmetric key for the given params.

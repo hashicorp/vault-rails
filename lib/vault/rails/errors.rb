@@ -14,6 +14,14 @@ module Vault
       end
     end
 
+    class InvalidCiphertext < VaultRailsError
+      def initialize(ciphertext)
+        super <<~EOH
+          Invalid ciphertext: `#{ciphertext}'.
+        EOH
+      end
+    end
+
     class ValidationFailedError < VaultRailsError; end
   end
 end

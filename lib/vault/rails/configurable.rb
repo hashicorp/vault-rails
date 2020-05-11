@@ -10,10 +10,13 @@ module Vault
       #
       # @return [String]
       def application
-        if !defined?(@application) || @application.nil?
-          raise RuntimeError, "Must set `Vault::Rails#application'!"
+        if defined?(@application) && !@application.nil?
+          return @application
         end
-        return @application
+        if ENV.has_key?("VAULT_RAILS_APPLICATION")
+          return ENV["VAULT_RAILS_APPLICATION"]
+        end
+        raise RuntimeError, "Must set `Vault::Rails#application'!"
       end
 
       # Set the name of the application.
@@ -30,10 +33,13 @@ module Vault
       #
       # @return [true, false]
       def enabled?
-        if !defined?(@enabled) || @enabled.nil?
-          return false
+        if defined?(@enabled) && !@enabled.nil?
+          return @enabled
         end
-        return @enabled
+        if ENV.has_key?("VAULT_RAILS_ENABLED")
+          return (ENV["VAULT_RAILS_ENABLED"] == "true")
+        end
+        return false
       end
 
       # Sets whether Vault is enabled. Users can set this in an initializer
