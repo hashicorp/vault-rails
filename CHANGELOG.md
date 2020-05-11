@@ -1,5 +1,17 @@
 # Vault Rails Changelog
 
+## v0.6.0 (May 11th, 2020)
+
+IMPROVEMENTS
+
+- Added support for Rails 5.2+ (including 6.0+)
+- Added ciphertext prefixes in development/test environments to more closely resemble production environments
+- Added single-decrypt functionality to allow clients to request individual attributes rather than exposing an entire model with one call
+
+BREAKING CHANGES
+
+- Ciphertext prefixes may break development environments for some users. If this occurs, a restart may fix the issue. Feel free to let the maintainers know if this is not the case.
+
 ## v0.5.0 (June 20th, 2019)
 
 IMPROVEMENTS
