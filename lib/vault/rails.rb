@@ -141,6 +141,34 @@ module Vault
         end
       end
 
+      def transform_encode(plaintext, opts={})
+        return plaintext if plaintext&.empty?
+        request_opts = {}
+        request_opts[:value] = plaintext
+
+        if opts[:transformation]
+          request_opts[:transformation] = opts[:transformation]
+        end
+
+        role_name = transform_role_name(opts)
+        client.transform.encode(role_name: role_name, **request_opts)
+      end
+
+      def transform_decode(ciphertext, opts={})
+        return ciphertext if ciphertext&.empty?
+        request_opts = {}
+        request_opts[:value] = ciphertext
+
+        if opts[:transformation]
+          request_opts[:transformation] = opts[:transformation]
+        end
+
+        role_name = transform_role_name(opts)
+        puts request_opts
+        client.transform.decode(role_name: role_name, **request_opts)
+      end
+
+
       protected
 
       # Perform in-memory encryption. This is useful for testing and development.
@@ -242,6 +270,10 @@ module Vault
         if defined?(::Rails) && ::Rails.logger != nil
           ::Rails.logger.warn { msg }
         end
+      end
+
+      def transform_role_name(opts)
+        opts[:role_name] || self.default_role_name || self.application
       end
     end
   end

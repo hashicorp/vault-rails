@@ -628,6 +628,26 @@ describe Vault::Rails do
     end
   end
 
+  context 'with transform_secret' do
+    before(:all) do
+      Vault::Rails.sys.mount("transform", :transform)
+      Vault::Rails.client.transform.create_transformation(
+        "social_sec",
+        template: "builtin/socialsecuritynumber",
+        tweak_source: "internal",
+        type: "fpe",
+        allowed_roles: [Vault::Rails.application]
+      )
+      Vault::Rails.client.transform.create_role(Vault::Rails.application, transformations: ["social_sec"])
+    end
+
+    it "encrypts the attribute using the given transformation" do
+      person = Person.create!(transform_ssn: "123-45-6789")
+      expect(person[:transform_ssn]).not_to eq("123-45-6789")
+      expect(person[:transform_ssn]).to match(/\d{3}-\d{2}-\d{4}/)
+    end
+  end
+
   context 'with errors' do
     it 'raises the appropriate exception' do
       expect {

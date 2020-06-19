@@ -38,6 +38,12 @@ class Person < ActiveRecord::Base
   vault_attribute :context_proc,
     context: ->(record) { record.encryption_context }
 
+  vault_attribute :transform_ssn,
+    encrypted_column: :transform_ssn,
+    transform_secret: {
+      transformation: "social_sec"
+    }
+
   def encryption_context
     "user_#{id}"
   end

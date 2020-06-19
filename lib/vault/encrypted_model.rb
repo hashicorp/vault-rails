@@ -41,31 +41,21 @@ module Vault
       #   a proc to encode the value with
       # @option options [Proc] :decode
       #   a proc to decode the value with
+      # @option options [Hash, String] :transform_secret
+      #   a hash providing details about a transformation to use,
+      #   or a name of an existing transformation
       def vault_attribute(attribute, options = {})
-        encrypted_column = options[:encrypted_column] || "#{attribute}_encrypted"
-        path = options[:path] || "transit"
-        key = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
-        context = options[:context]
-        default = options[:default]
-
         # Sanity check options!
         _vault_validate_options!(options)
 
-        # Get the serializer if one was given.
-        serializer = options[:serialize]
+        parsed_opts = if options[:transform_secret]
+                        parse_transform_secret_attributes(attribute, options)
+                      else
+                        parse_transit_attributes(attribute, options)
+                      end
 
-        # Unless a class or module was given, construct our serializer. (Slass
-        # is a subset of Module).
-        if serializer && !serializer.is_a?(Module)
-          serializer = Vault::Rails.serializer_for(serializer)
-        end
-
-        # See if custom encoding or decoding options were given.
-        if options[:encode] && options[:decode]
-          serializer = Class.new
-          serializer.define_singleton_method(:encode, &options[:encode])
-          serializer.define_singleton_method(:decode, &options[:decode])
-        end
+        # Make a note of this attribute so we can use it in the future (maybe).
+        __vault_attributes[attribute.to_sym] = parsed_opts
 
         self.attribute attribute.to_s, ActiveRecord::Type::Value.new,
           default: nil
@@ -82,7 +72,7 @@ module Vault
 
           # We always set it as changed without comparing with the current value
           # because we allow our held values to be mutated, so we need to assume
-          # that if you call attr=, you want it send back regardless.
+          # that if you call attr=, you want it sent back regardless.
 
           attribute_will_change!("#{attribute}")
           instance_variable_set("@#{attribute}", value)
@@ -97,16 +87,6 @@ module Vault
           self.__vault_load_attributes!(attribute) unless @__vault_loaded
           instance_variable_get("@#{attribute}").present?
         end
-
-        # Make a note of this attribute so we can use it in the future (maybe).
-        __vault_attributes[attribute.to_sym] = {
-          context: context,
-          default: default,
-          encrypted_column: encrypted_column,
-          key: key,
-          path: path,
-          serializer: serializer
-        }
 
         self
       end
@@ -126,6 +106,11 @@ module Vault
             raise Vault::Rails::ValidationFailedError, "Cannot use a " \
               "custom encoder/decoder if a `:serializer' is specified!"
           end
+
+          if options[:transform_secret]
+            raise Vault::Rails::ValidationFailedError, "Cannot use the " \
+              "transform secrets engine with a specified `:serializer'!"
+          end
         end
 
         if options[:encode] && !options[:decode]
@@ -144,6 +129,19 @@ module Vault
               "`:context' must take 1 argument!"
           end
         end
+        if transform_opts = options[:transform_secret]
+          if !transform_opts[:transformation]
+            if !transform_opts[:type] && !transform_opts[:template]
+              raise Vault::Rails::ValidationFailedError, "Option " \
+                "`:transform_secret' must be supplied with either a " \
+                "`:transformation' option or a `:type' and `:template!"
+            elsif (transform_opts[:type] && !transform_opts[:template]) ||
+                  (!transform_opts[:type] && transform_opts[:template])
+              raise Vault::Rails::VaildationFailedError, "Transform Secrets " \
+                "requires both a `:type' and a `:template'!"
+            end
+          end
+        end
       end
 
       def vault_lazy_decrypt
@@ -160,6 +158,56 @@ module Vault
 
       def vault_single_decrypt!
         @vault_single_decrypt = true
+      end
+
+      private
+
+      def parse_transform_secret_attributes(attribute, options)
+        opts = {}
+        opts[:transform_secret] = true
+        opts[:encrypted_column] = options[:encrypted_column] || "#{attribute}"
+
+        serializer = Class.new
+        serializer.define_singleton_method(:encode) do |raw|
+          return if raw.nil?
+          resp = Vault::Rails.transform_encode(raw, options[:transform_secret])
+          resp.dig(:data, :encoded_value)
+        end
+        serializer.define_singleton_method(:decode) do |raw|
+          return if raw.nil?
+          resp = Vault::Rails.transform_decode(raw, options[:transform_secret])
+          resp.dig(:data, :decoded_value)
+        end
+        opts[:serializer] = serializer
+        opts
+      end
+
+      def parse_transit_attributes(attribute, options)
+        opts = {}
+        opts[:encrypted_column] = options[:encrypted_column] || "#{attribute}_encrypted"
+        opts[:path] = options[:path] || "transit"
+        opts[:key] = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
+        opts[:context] = options[:context]
+        opts[:default] = options[:default]
+
+        # Get the serializer if one was given.
+        serializer = options[:serialize]
+
+        # Unless a class or module was given, construct our serializer. (Slass
+        # is a subset of Module).
+        if serializer && !serializer.is_a?(Module)
+          serializer = Vault::Rails.serializer_for(serializer)
+        end
+
+        # See if custom encoding or decoding options were given.
+        if options[:encode] && options[:decode]
+          serializer = Class.new
+          serializer.define_singleton_method(:encode, &options[:encode])
+          serializer.define_singleton_method(:decode, &options[:decode])
+        end
+
+        opts[:serializer] = serializer
+        opts
       end
     end
 
@@ -209,6 +257,7 @@ module Vault
         column     = options[:encrypted_column]
         context    = options[:context]
         default    = options[:default]
+        transform  = options[:transform_secret]
 
         # Load the ciphertext
         ciphertext = read_attribute(column)
@@ -222,11 +271,15 @@ module Vault
         # Generate context if needed
         generated_context = __vault_generate_context(context)
 
-        # Load the plaintext value
-        plaintext = Vault::Rails.decrypt(
-          path, key, ciphertext,
-          context: generated_context
-        )
+        if transform
+          plaintext = ciphertext
+        else
+          # Load the plaintext value
+          plaintext = Vault::Rails.decrypt(
+            path, key, ciphertext,
+            context: generated_context
+          )
+        end
 
         # Deserialize the plaintext value, if a serializer exists
         if serializer
@@ -273,6 +326,7 @@ module Vault
         serializer = options[:serializer]
         column     = options[:encrypted_column]
         context    = options[:context]
+        transform  = options[:transform_secret]
 
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
@@ -297,11 +351,15 @@ module Vault
         # Generate context if needed
         generated_context = __vault_generate_context(context)
 
-        # Generate the ciphertext and store it back as an attribute
-        ciphertext = Vault::Rails.encrypt(
-          path, key, plaintext,
-          context: generated_context
-        )
+        if transform
+          ciphertext = plaintext
+        else
+          # Generate the ciphertext and store it back as an attribute
+          ciphertext = Vault::Rails.encrypt(
+            path, key, plaintext,
+            context: generated_context
+          )
+        end
 
         # Write the attribute back, so that we don't have to reload the record
         # to get the ciphertext
