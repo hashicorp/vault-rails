@@ -25,7 +25,7 @@ ActiveRecord::Schema.define(version: 2015_04_28_220101) do
     t.string "context_string_encrypted"
     t.string "context_symbol_encrypted"
     t.string "context_proc_encrypted"
-    t.string "transform_ssn"
+    t.string "transform_ssn_encrypted"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

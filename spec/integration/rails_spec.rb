@@ -628,7 +628,7 @@ describe Vault::Rails do
     end
   end
 
-  context 'with transform_secret' do
+  context 'with transform_secret', ent_vault: ">= 1.4" do
     before(:all) do
       Vault::Rails.sys.mount("transform", :transform)
       Vault::Rails.client.transform.create_transformation(
@@ -639,12 +639,32 @@ describe Vault::Rails do
         allowed_roles: [Vault::Rails.application]
       )
       Vault::Rails.client.transform.create_role(Vault::Rails.application, transformations: ["social_sec"])
+      Vault::Rails.client.transform.create_role("foobar_role", transformations: ["social_sec"])
     end
 
     it "encrypts the attribute using the given transformation" do
       person = Person.create!(transform_ssn: "123-45-6789")
-      expect(person[:transform_ssn]).not_to eq("123-45-6789")
-      expect(person[:transform_ssn]).to match(/\d{3}-\d{2}-\d{4}/)
+      expect(person[:transform_ssn_encrypted]).not_to eq("123-45-6789")
+      expect(person[:transform_ssn_encrypted]).to match(/\d{3}-\d{2}-\d{4}/)
+      expect(person.transform_ssn).to eq("123-45-6789")
+    end
+
+    it "raises an error if the format is incorrect" do
+      expect{ Person.create!(transform_ssn: "1234-5678-90") }.to(
+        raise_error(Vault::HTTPClientError, /unable to find matching expression/)
+      )
+    end
+
+    it "raises an error if the transformation does not exist" do
+      expect{ Person.create!(bad_transform: "nope") }.to(
+        raise_error(Vault::HTTPClientError, /unable to find transformation/)
+      )
+    end
+
+    it "raises an error if the provided role doesn't have the ability to use the transformation" do
+      expect{ Person.create!(bad_role_transform: "123-45-6789") }.to(
+        raise_error(Vault::HTTPClientError, /is not an allowed role for the transformation/)
+      )
     end
   end
 

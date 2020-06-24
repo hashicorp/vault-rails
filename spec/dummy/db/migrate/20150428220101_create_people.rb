@@ -13,7 +13,7 @@ class CreatePeople < ActiveRecord::Migration[4.2]
       t.string :context_string_encrypted
       t.string :context_symbol_encrypted
       t.string :context_proc_encrypted
-      t.string :transform_ssn
+      t.string :transform_ssn_encrypted
 
       t.timestamps null: false
     end

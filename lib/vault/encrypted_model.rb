@@ -1,3 +1,4 @@
+require "pry"
 require "active_support/concern"
 
 module Vault
@@ -53,6 +54,7 @@ module Vault
                       else
                         parse_transit_attributes(attribute, options)
                       end
+        parsed_opts[:encrypted_column] = options[:encrypted_column] || "#{attribute}_encrypted"
 
         # Make a note of this attribute so we can use it in the future (maybe).
         __vault_attributes[attribute.to_sym] = parsed_opts
@@ -165,7 +167,6 @@ module Vault
       def parse_transform_secret_attributes(attribute, options)
         opts = {}
         opts[:transform_secret] = true
-        opts[:encrypted_column] = options[:encrypted_column] || "#{attribute}"
 
         serializer = Class.new
         serializer.define_singleton_method(:encode) do |raw|
@@ -184,7 +185,6 @@ module Vault
 
       def parse_transit_attributes(attribute, options)
         opts = {}
-        opts[:encrypted_column] = options[:encrypted_column] || "#{attribute}_encrypted"
         opts[:path] = options[:path] || "transit"
         opts[:key] = options[:key] || "#{Vault::Rails.application}_#{table_name}_#{attribute}"
         opts[:context] = options[:context]

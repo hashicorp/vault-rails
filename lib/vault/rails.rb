@@ -273,7 +273,7 @@ module Vault
       end
 
       def transform_role_name(opts)
-        opts[:role_name] || self.default_role_name || self.application
+        opts[:role] || self.default_role_name || self.application
       end
     end
   end
