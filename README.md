@@ -81,6 +81,7 @@ Quick Start
     person.save #=> true
     person.ssn_encrypted #=> "vault:v0:EE3EV8P5hyo9h..."
     ```
+- **Note** The unencrypted value will still be saved if the attribute referenced has a corresponding column. (i.e. `ssn` in the case above)
 
 
 Advanced Configuration
