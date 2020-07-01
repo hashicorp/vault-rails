@@ -133,15 +133,8 @@ module Vault
         end
         if transform_opts = options[:transform_secret]
           if !transform_opts[:transformation]
-            if !transform_opts[:type] && !transform_opts[:template]
-              raise Vault::Rails::ValidationFailedError, "Option " \
-                "`:transform_secret' must be supplied with either a " \
-                "`:transformation' option or a `:type' and `:template!"
-            elsif (transform_opts[:type] && !transform_opts[:template]) ||
-                  (!transform_opts[:type] && transform_opts[:template])
-              raise Vault::Rails::VaildationFailedError, "Transform Secrets " \
-                "requires both a `:type' and a `:template'!"
-            end
+            raise Vault::Rails::VaildationFailedError, "Transform Secrets " \
+              "requires a transformation name!"
           end
         end
       end
