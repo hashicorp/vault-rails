@@ -42,7 +42,7 @@ module Vault
       #   a proc to encode the value with
       # @option options [Proc] :decode
       #   a proc to decode the value with
-      # @option options [Hash, String] :transform_secret
+      # @option options [Hash] :transform_secret
       #   a hash providing details about a transformation to use,
       #   or a name of an existing transformation
       def vault_attribute(attribute, options = {})
@@ -265,6 +265,9 @@ module Vault
         generated_context = __vault_generate_context(context)
 
         if transform
+          # If this is a secret encrypted with FPE, we do not need to decrypt with vault
+          # This prevents a double encryption via standard vault encryption and FPE.
+          # FPE is decrypted later as part of the serializer
           plaintext = ciphertext
         else
           # Load the plaintext value
@@ -345,6 +348,9 @@ module Vault
         generated_context = __vault_generate_context(context)
 
         if transform
+          # If this is a secret encrypted with FPE, we should not encrypt it in vault
+          # This prevents a double encryption via standard vault encryption and FPE.
+          # FPE was performed earlier as part of the serialization process.
           ciphertext = plaintext
         else
           # Generate the ciphertext and store it back as an attribute
