@@ -43,8 +43,8 @@ module Vault
       # @option options [Proc] :decode
       #   a proc to decode the value with
       # @option options [Hash] :transform_secret
-      #   a hash providing details about a transformation to use,
-      #   or a name of an existing transformation
+      #   a hash providing details about the transformation to use,
+      #   this includes the name, and the role to use
       def vault_attribute(attribute, options = {})
         # Sanity check options!
         _vault_validate_options!(options)
