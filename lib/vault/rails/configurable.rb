@@ -125,6 +125,20 @@ module Vault
       def retry_max_wait=(val)
         @retry_max_wait = val
       end
+
+      # Gets the default role name.
+      #
+      # @return [String]
+      def default_role_name
+        @default_role_name
+      end
+
+      # Sets the default role to use with various plugins.
+      #
+      # @param [String] val
+      def default_role_name=(val)
+        @default_role_name = val
+      end
     end
   end
 end

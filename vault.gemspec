@@ -18,11 +18,12 @@ Gem::Specification.new do |s|
   s.test_files = Dir["spec/**/*"]
 
   s.add_dependency "rails", [">= 4.1"]
-  s.add_dependency "vault", "~> 0.5"
+  s.add_dependency "vault", "~> 0.14"
 
   s.add_development_dependency "appraisal", "~> 2.1"
   s.add_development_dependency "bundler"
   s.add_development_dependency "pry"
+  s.add_development_dependency "pry-byebug"
   s.add_development_dependency "rake",    "~> 10.0"
   s.add_development_dependency "rspec",   "~> 3.2"
   s.add_development_dependency "sqlite3"
