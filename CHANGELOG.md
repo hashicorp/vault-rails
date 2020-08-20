@@ -1,9 +1,55 @@
 # Vault Rails Changelog
 
-## v0.3.0.dev (Unreleased)
+## v0.6.0 (May 11th, 2020)
+
+IMPROVEMENTS
+
+- Added support for Rails 5.2+ (including 6.0+)
+- Added ciphertext prefixes in development/test environments to more closely resemble production environments
+- Added single-decrypt functionality to allow clients to request individual attributes rather than exposing an entire model with one call
+
+BREAKING CHANGES
+
+- Ciphertext prefixes may break development environments for some users. If this occurs, a restart may fix the issue. Feel free to let the maintainers know if this is not the case.
+
+## v0.5.0 (June 20th, 2019)
+
+IMPROVEMENTS
+
+- Added support for Vault Transit derived keys with the `:context` option. [GH-78]
+- Added a `:default` option to `vault_attribute`. [GH-83]
+
+BREAKING CHANGES
+
+- Dropped support for Ruby < 2.4, Rails < 4.2. [GH-79]
+- Null and empty types were previously deserialized to an empty JSON object (`{}`). They will now be properly deserialized as `null`, empty string (`""`), and so on. To preserve the old behavior, add `default: {}` to JSON-serialized attributes. [GH-81]
 
 BUG FIXES
 
+- Fixed uniqueness of generated key for in-memory operations. [GH-80]
+
+## v0.4.0 (November 9, 2017)
+
+- Update supported Ruby and Rails versions [GH-50]
+  - Ruby
+    - Added 2.4.2
+    - Dropped 2.1
+    - Updated 2.2.x and 2.3.x families to 2.2.8 and 2.3.5 respectively
+  - Rails
+    - Restricted supported version to < 5.1
+
+## v0.3.2 (May 8, 2017)
+
+IMPROVEMENTS
+
+- Added configuration setting for controlling appearance of warning messages about in-memory ciphers [GH-45]
+- `vault-rails` is licensed under Mozilla Public License 2.0, and has been for over 2 years. This patch release updates the gemspec to use the correct SPDX ID string for reporting this license, but **no change to the licensing of this gem has occurred**. [GH-48]
+
+## v0.3.1 (March 3, 2017)
+
+IMPROVEMENTS
+
+- Add ability to lazy decrypt attributes [GH-41]
 
 ## v0.3.0 (August 21, 2016)
 

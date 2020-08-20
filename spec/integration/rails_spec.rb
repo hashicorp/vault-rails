@@ -69,6 +69,16 @@ describe Vault::Rails do
       person.reload
 
       expect(person.ssn).to eq("")
+      expect(person.ssn_encrypted).to eq("")
+    end
+
+    it "allows attributes to be null" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to eq(nil)
+      expect(person.ssn_encrypted).to eq(nil)
     end
 
     it "reloads instance variables on reload" do
@@ -82,6 +92,224 @@ describe Vault::Rails do
 
     it "does not try to encrypt unchanged attributes" do
       person = Person.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:encrypt)
+      person.name = "Cinderella"
+      person.save!
+    end
+  end
+
+  context "lazy decrypt" do
+    before(:all) do
+      Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
+    end
+
+    it "encrypts attributes" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      expect(person.ssn_encrypted).to be
+      expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "decrypts attributes" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+      expect(person.ssn.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "does not decrypt on initialization" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      p2 = LazyPerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+    end
+
+    it "tracks dirty attributes" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+
+      expect(person.ssn_changed?).to be(false)
+      expect(person.ssn_change).to be(nil)
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
+      expect(person.ssn_was).to eq("123-45-6789")
+    end
+
+    it "allows attributes to be unset" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows saving without validations" do
+      person = LazyPerson.new(ssn: "123-456-7890")
+      expect(person.save(validate: false)).to be(true)
+      expect(person.ssn_encrypted).to match("vault:")
+    end
+
+    it "allows attributes to be unset after reload" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.reload
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: "")
+      person.reload
+
+      expect(person.ssn).to eq("")
+    end
+
+    it "reloads instance variables on reload" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+    end
+
+    it "does not try to encrypt unchanged attributes" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:encrypt)
+      person.name = "Cinderella"
+      person.save!
+    end
+  end
+
+  context "lazy single decrypt" do
+    before(:all) do
+      Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
+    end
+
+    it "encrypts attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      expect(person.ssn_encrypted.length).to eq(61)
+      expect(person.ssn_encrypted).to start_with("vault:v1:")
+      expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "decrypts attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+      expect(person.ssn.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "does not decrypt on initialization" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+    end
+
+    it "does not decrypt all attributes on single read" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmno")
+      expect(person.credit_card).to eq("abcd-efgh-hijk-lmno")
+
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+      expect(p2.instance_variable_get("@credit_card")).to eq(nil)
+      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmno")
+    end
+
+    it "does not decrypt all attributes on single write" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(credit_card: "abcd-efgh-hijk-lmno")
+      expect(person.credit_card).to eq("abcd-efgh-hijk-lmno")
+
+      person.reload
+
+      p2 = LazySinglePerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+      person.ssn = "111-11-1111"
+      expect(p2.instance_variable_get("@credit_card")).to eq(nil)
+      expect(p2.credit_card).to eq("abcd-efgh-hijk-lmno")
+    end
+
+    it "tracks dirty attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+
+      expect(person.ssn_changed?).to be(false)
+      expect(person.ssn_change).to be(nil)
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
+      expect(person.ssn_was).to eq("123-45-6789")
+    end
+
+    it "allows attributes to be unset" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows saving without validations" do
+      person = LazySinglePerson.new(ssn: "123-456-7890")
+      expect(person.save(validate: false)).to be(true)
+      expect(person.ssn_encrypted).to match("vault:")
+    end
+
+    it "allows attributes to be unset after reload" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.reload
+      person.update_attributes!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      person.update_attributes!(ssn: "")
+      person.reload
+
+      expect(person.ssn).to eq("")
+    end
+
+    it "reloads instance variables on reload" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+    end
+
+    it "does not try to encrypt unchanged attributes" do
+      person = LazySinglePerson.create!(ssn: "123-45-6789")
 
       expect(Vault::Rails).to_not receive(:encrypt)
       person.name = "Cinderella"
@@ -191,19 +419,73 @@ describe Vault::Rails do
     end
   end
 
+  context "with a default" do
+    %i[new create].each do |creation_method|
+      context "on #{creation_method}" do
+        context "without an initial attribute" do
+          it "sets the default" do
+            person = Person.public_send(creation_method)
+            expect(person.default).to eq("abc123")
+            person.save!
+            person.reload
+            expect(person.default).to eq("abc123")
+          end
+        end
+
+        context "with an initial attribute" do
+          it "does not set the default" do
+            person = Person.public_send(creation_method, default: "another")
+            expect(person.default).to eq("another")
+            person.save!
+            person.reload
+            expect(person.default).to eq("another")
+          end
+        end
+      end
+    end
+  end
+
+  context "with a default and serializer" do
+    %i[new create].each do |creation_method|
+      context "on #{creation_method}" do
+        context "without an initial attribute" do
+          it "sets the default" do
+            person = Person.public_send(creation_method)
+            expect(person.default_with_serializer).to eq({})
+            person.save!
+            person.reload
+            expect(person.default_with_serializer).to eq({})
+          end
+        end
+
+        context "with an initial attribute" do
+          it "does not set the default" do
+            person = Person.public_send(
+              creation_method,
+              default_with_serializer: { "foo" => "bar" }
+            )
+
+            expect(person.default_with_serializer).to eq({ "foo" => "bar" })
+            person.save!
+            person.reload
+            expect(person.default_with_serializer).to eq({ "foo" => "bar" })
+          end
+        end
+      end
+    end
+  end
+
   context "with the :json serializer"  do
     before(:all) do
       Vault::Rails.logical.write("transit/keys/dummy_people_details")
     end
 
-    it "has a default value for unpersisted records" do
+    it "does not default to a hash" do
       person = Person.new
-      expect(person.details).to eq({})
-    end
-
-    it "has a default value for persisted records" do
-      person = Person.create!
-      expect(person.details).to eq({})
+      expect(person.details).to eq(nil)
+      person.save!
+      person.reload
+      expect(person.details).to eq(nil)
     end
 
     it "tracks dirty attributes" do
@@ -263,11 +545,149 @@ describe Vault::Rails do
     end
   end
 
+  context "with context" do
+    it "encodes and decodes with a string context" do
+      person = Person.create!(context_string: "foobar")
+      person.reload
+
+      raw = Vault::Rails.decrypt(
+        "transit", "dummy_people_context_string",
+        person.context_string_encrypted, context: "production")
+
+      expect(raw).to eq("foobar")
+
+      expect(person.context_string).to eq("foobar")
+
+      # Decrypting without the correct context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_string",
+          person.context_string_encrypted, context: "wrongcontext")
+      }.to raise_error(Vault::HTTPClientError, /invalid ciphertext/)
+
+      # Decrypting without a context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_string",
+          person.context_string_encrypted)
+      }.to raise_error(Vault::HTTPClientError, /context/)
+    end
+
+    it "encodes and decodes with a symbol context" do
+      person = Person.create!(context_symbol: "foobar")
+      person.reload
+
+      raw = Vault::Rails.decrypt(
+        "transit", "dummy_people_context_symbol",
+        person.context_symbol_encrypted, context: person.encryption_context)
+
+      expect(raw).to eq("foobar")
+
+      expect(person.context_symbol).to eq("foobar")
+
+      # Decrypting without the correct context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_symbol",
+          person.context_symbol_encrypted, context: "wrongcontext")
+      }.to raise_error(Vault::HTTPClientError, /invalid ciphertext/)
+
+      # Decrypting without a context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_symbol",
+          person.context_symbol_encrypted)
+      }.to raise_error(Vault::HTTPClientError, /context/)
+    end
+
+    it "encodes and decodes with a proc context" do
+      person = Person.create!(context_proc: "foobar")
+      person.reload
+
+      raw = Vault::Rails.decrypt(
+        "transit", "dummy_people_context_proc",
+        person.context_proc_encrypted, context: person.encryption_context)
+
+      expect(raw).to eq("foobar")
+
+      expect(person.context_proc).to eq("foobar")
+
+      # Decrypting without the correct context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_proc",
+          person.context_proc_encrypted, context: "wrongcontext")
+      }.to raise_error(Vault::HTTPClientError, /invalid ciphertext/)
+
+      # Decrypting without a context fails
+      expect {
+        Vault::Rails.decrypt(
+          "transit", "dummy_people_context_proc",
+          person.context_proc_encrypted)
+      }.to raise_error(Vault::HTTPClientError, /context/)
+    end
+  end
+
+  context 'with transform_secret', ent_vault: ">= 1.4" do
+    before(:all) do
+      Vault::Rails.sys.mount("transform", :transform)
+      Vault::Rails.client.transform.create_transformation(
+        "social_sec",
+        template: "builtin/socialsecuritynumber",
+        tweak_source: "internal",
+        type: "fpe",
+        allowed_roles: [Vault::Rails.application]
+      )
+      Vault::Rails.client.transform.create_role(Vault::Rails.application, transformations: ["social_sec"])
+      Vault::Rails.client.transform.create_role("foobar_role", transformations: ["social_sec"])
+    end
+
+    it "encrypts the attribute using the given transformation" do
+      person = Person.create!(transform_ssn: "123-45-6789")
+      expect(person[:transform_ssn_encrypted]).not_to eq("123-45-6789")
+      expect(person[:transform_ssn_encrypted]).to match(/\d{3}-\d{2}-\d{4}/)
+      expect(person.transform_ssn).to eq("123-45-6789")
+    end
+
+    it "raises an error if the format is incorrect" do
+      expect{ Person.create!(transform_ssn: "1234-5678-90") }.to(
+        raise_error(Vault::HTTPClientError, /unable to find matching expression/)
+      )
+    end
+
+    it "raises an error if the transformation does not exist" do
+      expect{ Person.create!(bad_transform: "nope") }.to(
+        raise_error(Vault::HTTPClientError, /unable to find transformation/)
+      )
+    end
+
+    it "raises an error if the provided role doesn't have the ability to use the transformation" do
+      expect{ Person.create!(bad_role_transform: "123-45-6789") }.to(
+        raise_error(Vault::HTTPClientError, /is not an allowed role for the transformation/)
+      )
+    end
+  end
+
   context 'with errors' do
     it 'raises the appropriate exception' do
       expect {
         Vault::Rails.encrypt('/bogus/path', 'bogus', 'bogus')
       }.to raise_error(Vault::HTTPClientError)
+    end
+  end
+
+  context "without a server" do
+    it "encrypts attributes with a dev prefix" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = Person.create!(credit_card: "1234567890111213")
+      expect(person.cc_encrypted).to start_with(Vault::Rails::DEV_PREFIX)
+    end
+
+    it "decrypts attributes" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = Person.create!(credit_card: "1234567890111213")
+      person.reload
+      expect(person.credit_card).to eq("1234567890111213")
     end
   end
 end

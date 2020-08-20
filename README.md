@@ -5,8 +5,17 @@ Vault is the official Rails plugin for interacting with [Vault](https://vaultpro
 
 **The documentation in this README corresponds to the master branch of the Vault Rails plugin. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the Vault Rails plugin for the proper documentation.**
 
+## Table of Contents
+1. [Quick Start](#quick-start)
+1. [Advanced Configuration](#advanced-configuration)
+1. [Caveats](#caveats)
+1. [Development](#development)
+
+
 Quick Start
 -----------
+↥ [back to top](#table-of-contents)
+
 1. Add to your Gemfile:
 
     ```ruby
@@ -25,13 +34,13 @@ Quick Start
       # disabled, vault-rails will encrypt data in-memory using a similar
       # algorithm to Vault. The in-memory store uses a predictable encryption
       # which is great for development and test, but should _never_ be used in
-      # production.
+      # production. Default: ENV["VAULT_RAILS_ENABLED"].
       vault.enabled = Rails.env.production?
 
       # The name of the application. All encrypted keys in Vault will be
       # prefixed with this application name. If you change the name of the
       # application, you will need to migrate the encrypted data to the new
-      # key namespace.
+      # key namespace. Default: ENV["VAULT_RAILS_APPLICATION"].
       vault.application = "my_app"
 
       # The address of the Vault server. Default: ENV["VAULT_ADDR"].
@@ -60,7 +69,7 @@ Quick Start
 
     ```ruby
     class AddEncryptedSSNToPerson < ActiveRecord::Migration
-      add_column :persons, :ssn_encrypted, :string
+      add_column :people, :ssn_encrypted, :string
     end
     ```
 
@@ -72,10 +81,13 @@ Quick Start
     person.save #=> true
     person.ssn_encrypted #=> "vault:v0:EE3EV8P5hyo9h..."
     ```
+- **Note** The unencrypted value will still be saved if the attribute referenced has a corresponding column. (i.e. `ssn` in the case above)
 
 
 Advanced Configuration
 ----------------------
+↥ [back to top](#table-of-contents)
+
 The following section details some of the more advanced configuration options for vault-rails. As a general rule, you should try to use vault-rails without these options until absolutely necessary.
 
 #### Specifying the encrypted column
@@ -90,7 +102,7 @@ vault_attribute :credit_card,
 - **Note** This value **cannot** be the same name as the vault attribute!
 
 #### Specifying a custom key
-By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` coption when declaring the attribute:
+By default, the name of the key in Vault is `#{app}_#{table}_#{column}`. This is customizable by setting the `:key` option when declaring the attribute:
 
 ```ruby
 vault_attribute :credit_card,
@@ -99,7 +111,66 @@ vault_attribute :credit_card,
 
 - **Note** Changing this value for an existing application will make existing values no longer decryptable!
 
+#### Specifying a context (key derivation)
+
+Vault Transit supports key derivation, which allows the same key to be used for multiple purposes by deriving a new key based on a context value.
+
+The context can be specified as a string, symbol, or proc. Symbols (an instance method on the model) and procs are called for each encryption or decryption request, and should return a string.
+
+- **Note** Changing the context or context generator for an attribute will make existing values no longer decryptable!
+
+##### String
+
+With a string, all records will use the same context for this attribute:
+
+```ruby
+vault_attribute :credit_card,
+  context: "user-cc"
+```
+
+##### Symbol
+
+When using a symbol, a method will be called on the record to compute the context:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  context: :encryption_context
+
+def encryption_context
+  "user_#{user.id}"
+end
+```
+
+##### Proc
+
+Given a proc, it will be called each time to compute the context:
+
+```ruby
+belongs_to :user
+
+vault_attribute :credit_card,
+  context: ->(record) { "user_#{record.user.id}" }
+```
+
+The proc must take a single argument for the record.
+
+#### Specifying a default value
+
+An attribute can specify a default value, which will be set on initialization (`.new`) or after loading the value from the database. The default will be set if the value is `nil`.
+
+```ruby
+vault_attribute :access_level,
+  default: "readonly"
+
+vault_attribute :metadata,
+  serialize: :json,
+  default: {}
+```
+
 #### Specifying a different Vault path
+
 By default, the path to the transit backend in Vault is `transit/`. This is customizable by setting the `:path` option when declaring the attribute:
 
 ```ruby
@@ -109,15 +180,71 @@ vault_attribute :credit_card,
 
 - **Note** Changing this value for an existing application will make existing values no longer decryptable!
 
-#### Automatic serializing
+#### Lazy attribute decryption
+By default, `vault-rails` will decrypt a record’s encrypted attributes on that record’s initialization. You can configure an encrypted model to decrypt attributes lazily, which will prevent communication with Vault until an encrypted attribute’s getter method is called, at which point all of the record’s encrypted attributes will be decrypted. This is useful if you do not always need access to encrypted attributes. For example:
+
+
+```ruby
+class Person < ActiveRecord::Base
+  include Vault::EncryptedModel
+  vault_lazy_decrypt!
+
+  vault_attribute :ssn
+end
+
+# Without vault_lazy_decrypt:
+person = Person.find(id) # Vault communication happens here
+person.ssn
+# => "123-45-6789"
+
+# With vault_lazy_decrypt:
+person = Person.find(id)
+person.ssn # Vault communication happens here
+# => "123-45-6789"
+```
+
+#### Single, lazy attribute decryption
+By default, `vault-rails` will decrypt all encrypted attributes on that record’s initialization on a class by class basis. You can configure an encrypted model to decrypt attributes lazily and and individually. This will prevent vault from loading all vault_attributes defined on a class the moment one attribute is requested.
+
+
+```ruby
+class Person < ActiveRecord::Base
+  include Vault::EncryptedModel
+  vault_lazy_decrypt!
+  vault_single_decrypt!
+
+  vault_attribute :ssn
+  vault_attribute :email
+end
+
+# Without vault_single_decrypt:
+person = Person.find(id) # Vault communication happens here
+person.ssn # Vault communication happens here, fetches both ssn and email
+# => "123-45-6789"
+
+# With vault_single_decrypt:
+person = Person.find(id)
+person.ssn # Vault communication happens here, fetches only ssn
+# => "123-45-6789"
+person.email # Vault communication happens here, fetches only email
+# => "foobar@baz.com"
+```
+
+#### Serialization
+
 By default, all values are assumed to be "text" fields in the database. Sometimes it is beneficial for your application to work with a more flexible data structure (such as a Hash or Array). Vault-rails can automatically serialize and deserialize these structures for you:
 
 ```ruby
-vault_attribute :details
-  serialize: :json
+vault_attribute :details,
+  serialize: :json,
+  default: {}
 ```
 
+It is recommended to set a default matching type that you're serializing.
+
 - **Note** You can view the source for the exact serialization and deserialization options, but they are intentionally not customizable and cannot be used for a full object marshal/unmarshal.
+
+##### Custom Serializers
 
 For customized solutions, you can also pass a module to the `:serializer` key. This module must have the following API:
 
@@ -151,10 +278,12 @@ vault_attribute :address,
   decode: ->(raw) { raw.to_s }
 ```
 
-- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrive existing values!
+- **Note** Changing the algorithm for encoding/decoding for an existing application will probably make the application crash when attempting to retrieve existing values!
 
 Caveats
 -------
+↥ [back to top](#table-of-contents)
+
 
 ### Mounting/Creating Keys in Vault
 The Vault Rails plugin does not automatically mount a backend. It is assumed the proper backend is mounted and accessible by the given token. You can mount a transit backend like this:
@@ -217,6 +346,8 @@ the security model).
 
 Development
 -----------
+↥ [back to top](#table-of-contents)
+
 1. Clone the project on GitHub
 2. Create a feature branch
 3. Submit a Pull Request

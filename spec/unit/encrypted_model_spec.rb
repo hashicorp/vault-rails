@@ -20,6 +20,12 @@ describe Vault::EncryptedModel do
       }.to raise_error(Vault::Rails::ValidationFailedError)
     end
 
+    it "raises an exception if a proc is passed to :context without an arity of 1" do
+      expect {
+        klass.vault_attribute(:foo, context: ->() { })
+      }.to raise_error(Vault::Rails::ValidationFailedError, /1 argument/i)
+    end
+
     it "defines a getter" do
       klass.vault_attribute(:foo)
       expect(klass.instance_methods).to include(:foo)
@@ -36,10 +42,9 @@ describe Vault::EncryptedModel do
     end
 
     it "defines dirty attribute methods" do
-      klass.vault_attribute(:foo)
-      expect(klass.instance_methods).to include(:foo_change)
-      expect(klass.instance_methods).to include(:foo_changed?)
-      expect(klass.instance_methods).to include(:foo_was)
+      expect(Person.new).to respond_to(:ssn_change)
+      expect(Person.new).to respond_to(:ssn_changed?)
+      expect(Person.new).to respond_to(:ssn_was)
     end
   end
 end

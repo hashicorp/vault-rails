@@ -6,7 +6,7 @@ require "json"
 require_relative "encrypted_model"
 require_relative "rails/configurable"
 require_relative "rails/errors"
-require_relative "rails/serializer"
+require_relative "rails/json_serializer"
 require_relative "rails/version"
 
 module Vault
@@ -26,6 +26,7 @@ module Vault
     # The warning string to print when running in development mode.
     DEV_WARNING = "[vault-rails] Using in-memory cipher - this is not secure " \
       "and should never be used in production-like environments!".freeze
+    DEV_PREFIX = "vault:dev:".freeze
 
     class << self
       # API client object based off the configured options in {Configurable}.
@@ -60,12 +61,14 @@ module Vault
       end
 
       def metadata_client(client, metadata)
-        return if !self.enabled?
+        return if !enabled?
+
         return client if metadata.nil?
+
         secret = client.auth_token.create(
           display_name: client.application,
           num_uses: 1,
-          meta: metadata
+          meta: metadata,
         )
         new_client = client.dup
         new_client.token = secret.auth.client_token
@@ -85,7 +88,7 @@ module Vault
       #
       # @return [String]
       #   the encrypted cipher text
-      def encrypt(path, key, plaintext, client = self.client, metadata: nil)
+      def encrypt(path, key, plaintext, client = self.client, metadata: nil, context: nil)
         if plaintext.nil?
           return plaintext
         end
@@ -96,13 +99,14 @@ module Vault
         with_retries do
           metadata_client ||= metadata_client(client, metadata)
 
-          if self.enabled?
-            result = self.vault_encrypt(path, key, plaintext, metadata_client)
-          else
-            result = self.memory_encrypt(path, key, plaintext, metadata_client)
-          end
+          result =
+            if enabled?
+              vault_encrypt(path, key, plaintext, metadata_client, context: context)
+            else
+              memory_encrypt(path, key, plaintext, metadata_client, context: context)
+            end
 
-          return self.force_encoding(result)
+          return force_encoding(result)
         end
       end
 
@@ -119,24 +123,24 @@ module Vault
       #
       # @return [String]
       #   the decrypted plaintext text
-      def decrypt(path, key, ciphertext, client = self.client, metadata: nil)
+      def decrypt(path, key, ciphertext, client = self.client, metadata: nil, context: nil)
         if ciphertext.blank?
           return ciphertext
         end
 
-        path = path.to_s if !path.is_a?(String)
-        key  = key.to_s if !key.is_a?(String)
+        key = key.to_s if !key.is_a?(String)
 
         with_retries do
           metadata_client ||= metadata_client(client, metadata)
 
-          if self.enabled?
-            result = self.vault_decrypt(path, key, ciphertext, metadata_client)
-          else
-            result = self.memory_decrypt(path, key, ciphertext, metadata_client)
-          end
+          result =
+            if enabled?
+              vault_decrypt(path, key, ciphertext, metadata_client, context: context)
+            else
+              memory_decrypt(path, key, ciphertext, metadata_client, context: context)
+            end
 
-          return self.force_encoding(result)
+          return force_encoding(result)
         end
       end
 
@@ -157,63 +161,110 @@ module Vault
         end
       end
 
+      def transform_encode(plaintext, opts={})
+        return plaintext if plaintext&.empty?
+        request_opts = {}
+        request_opts[:value] = plaintext
+
+        if opts[:transformation]
+          request_opts[:transformation] = opts[:transformation]
+        end
+
+        role_name = transform_role_name(opts)
+        client.transform.encode(role_name: role_name, **request_opts)
+      end
+
+      def transform_decode(ciphertext, opts={})
+        return ciphertext if ciphertext&.empty?
+        request_opts = {}
+        request_opts[:value] = ciphertext
+
+        if opts[:transformation]
+          request_opts[:transformation] = opts[:transformation]
+        end
+
+        role_name = transform_role_name(opts)
+        puts request_opts
+        client.transform.decode(role_name: role_name, **request_opts)
+      end
+
+
       protected
 
       # Perform in-memory encryption. This is useful for testing and development.
-      def memory_encrypt(path, key, plaintext, client)
+      def memory_encrypt(path, key, plaintext, client:, context: nil)
         log_warning(DEV_WARNING)
 
         return nil if plaintext.nil?
 
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.encrypt
-        cipher.key = memory_key_for(path, key)
-        buffer = ''
+        cipher.key = memory_key_for(path, key, context: context)
+
+        buffer = DEV_PREFIX
+
         if !plaintext.empty?
           buffer << cipher.update(plaintext)
         end
+
         buffer << cipher.final
-        return Base64.strict_encode64(buffer)
+
+        Base64.strict_encode64(buffer)
       end
 
       # Perform in-memory decryption. This is useful for testing and development.
-      def memory_decrypt(path, key, ciphertext, client)
-        log_warning(DEV_WARNING)
+      def memory_decrypt(path, key, ciphertext, client: , context: nil)
+        log_warning(DEV_WARNING) if self.in_memory_warnings_enabled?
 
         return nil if ciphertext.nil?
 
+        raise Vault::Rails::InvalidCiphertext.new(ciphertext) if !ciphertext.start_with?(DEV_PREFIX)
+        data = ciphertext[DEV_PREFIX.length..-1]
+
         cipher = OpenSSL::Cipher::AES.new(128, :CBC)
         cipher.decrypt
-        cipher.key = memory_key_for(path, key)
-        return cipher.update(Base64.strict_decode64(ciphertext)) + cipher.final
+        cipher.key = memory_key_for(path, key, context: context)
+        return cipher.update(Base64.strict_decode64(data)) + cipher.final
+      end
+
+      # The symmetric key for the given params.
+      # @return [String]
+      def memory_key_for(path, key, context: nil)
+        md5 = OpenSSL::Digest::MD5.new
+        md5 << path
+        md5 << key
+        md5 << context if context
+        md5.digest
       end
 
       # Perform encryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_encrypt(path, key, plaintext, client)
+      def vault_encrypt(path, key, plaintext, client: , context: nil)
         return nil if plaintext.nil?
 
-        route  = File.join(path, "encrypt", key)
-        secret = client.logical.write(route,
-          plaintext: Base64.strict_encode64(plaintext),
-        )
+        route = File.join(path, "encrypt", key)
+
+        data = { plaintext: Base64.strict_encode64(plaintext) }
+        data[:context] = Base64.strict_encode64(context) if context
+
+        secret = client.logical.write(route, data)
+
         return secret.data[:ciphertext]
       end
 
       # Perform decryption using Vault. This will raise exceptions if Vault is
       # unavailable.
-      def vault_decrypt(path, key, ciphertext, client)
+      def vault_decrypt(path, key, ciphertext, client: , context: nil)
         return nil if ciphertext.nil?
 
-        route  = File.join(path, "decrypt", key)
-        secret = client.logical.write(route, ciphertext: ciphertext)
-        return Base64.strict_decode64(secret.data[:plaintext])
-      end
+        route = File.join(path, "decrypt", key)
 
-      # The symmetric key for the given params.
-      # @return [String]
-      def memory_key_for(path, key)
-        return Base64.strict_encode64("#{path}/#{key}".ljust(32, "x"))
+        data = { ciphertext: ciphertext }
+        data[:context] = Base64.strict_encode64(context) if context
+
+        secret = client.logical.write(route, data)
+
+        return Base64.strict_decode64(secret.data[:plaintext])
       end
 
       # Forces the encoding into the default Rails encoding and returns the
@@ -248,6 +299,10 @@ module Vault
         if defined?(::Rails) && ::Rails.logger != nil
           ::Rails.logger.warn { msg }
         end
+      end
+
+      def transform_role_name(opts)
+        opts[:role] || self.default_role_name || self.application
       end
     end
   end

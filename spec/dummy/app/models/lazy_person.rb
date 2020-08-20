@@ -1,7 +1,11 @@
 require "binary_serializer"
 
-class Person < ActiveRecord::Base
+class LazyPerson < ActiveRecord::Base
   include Vault::EncryptedModel
+
+  self.table_name = "people"
+
+  vault_lazy_decrypt!
 
   vault_attribute :ssn
 
@@ -37,22 +41,6 @@ class Person < ActiveRecord::Base
 
   vault_attribute :context_proc,
     context: ->(record) { record.encryption_context }
-
-  vault_attribute :transform_ssn,
-    transform_secret: {
-      transformation: "social_sec"
-    }
-
-  vault_attribute :bad_transform,
-    transform_secret: {
-      transformation: "foobar_transformation"
-    }
-
-  vault_attribute :bad_role_transform,
-    transform_secret: {
-      transformation: "social_sec",
-      role: "foobar_role"
-    }
 
   def encryption_context
     "user_#{id}"
