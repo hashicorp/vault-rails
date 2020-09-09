@@ -55,8 +55,7 @@ jobs:
             bundle exec rake app:db:schema:load
             bundle exec rake app:db:test:prepare
             gem uninstall sqlite3
-            bundle exec appraisal install
-            bundle exec appraisal rake
+            rake spec
       # Store bundle cache
       - save_cache:
           key: v1-dependencies-bundler-<< parameters.ruby-version >>-{{ checksum "vault.gemspec" }}
@@ -80,7 +79,7 @@ workflows:
           matrix:
             parameters:
               ruby-version: ["2.6", "2.5"]
-              rails-version: ["6.0", "5.2", "5.1", "5.0", "4.2"]
+              rails-version: ["6.0.0", "5.2.0", "5.1.0", "5.0.0", "4.2.0"]
               vault-version: ["1.4.2", "1.4.1", "1.4.0", "1.3.6"]
           name: test-ruby-<< matrix.ruby-version >>-rails-<< matrix.rails-version >>-vault-<< matrix.vault-version >>
       - build-release:

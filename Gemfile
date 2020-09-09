@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-RAILS_VERSION = ENV.fetch("RAILS_VERSION", "6.0")
+RAILS_VERSION = ENV.fetch("RAILS_VERSION", "6.0.0")
 
 gem "rails", "~> #{RAILS_VERSION}"
 if RAILS_VERSION.start_with?("6")
