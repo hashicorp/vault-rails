@@ -59,8 +59,9 @@ module Vault
         # Make a note of this attribute so we can use it in the future (maybe).
         __vault_attributes[attribute.to_sym] = parsed_opts
 
-        self.attribute attribute.to_s, ActiveRecord::Type::Value.new,
-          default: nil
+        if ActiveRecord.gem_version >= Gem::Version.new("5.0")
+          self.attribute attribute.to_s, ActiveRecord::Type::Value.new, default: nil
+        end
 
         # Getter
         define_method("#{attribute}") do
