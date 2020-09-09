@@ -3,7 +3,9 @@ Vault Rails [![Build Status](https://secure.travis-ci.org/hashicorp/vault-rails.
 
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.
 
-**The documentation in this README corresponds to the master branch of the Vault Rails plugin. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the Vault Rails plugin for the proper documentation.**
+**If you're viewing this README from GitHub on the `master` branch, know that it may contain unreleased features or
+different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the
+Vault Rails plugin for the proper documentation.**
 
 ## Table of Contents
 1. [Quick Start](#quick-start)
@@ -19,7 +21,7 @@ Quick Start
 1. Add to your Gemfile:
 
     ```ruby
-    gem "vault-rails", "~> 0.1", require: false
+    gem "vault-rails", require: false
     ```
 
     and then run the `bundle` command to install.
