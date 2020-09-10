@@ -48,6 +48,16 @@ describe Vault::Rails do
       expect(person.ssn).to be(nil)
     end
 
+    it "allows dirty attributes to be unset" do
+      person = Person.create!(ssn: "123-45-6789")
+      person.ssn = nil
+      expect(person.ssn).to be_nil
+
+      person2 = Person.create!(ssn: "123-45-6789")
+      person2.assign_attributes(ssn: nil)
+      expect(person2.ssn).to be_nil
+    end
+
     it "allows saving without validations" do
       person = Person.new(ssn: "123-456-7890")
       person.save(validate: false)
@@ -140,6 +150,12 @@ describe Vault::Rails do
       expect(person.ssn_changed?).to be(true)
       expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
       expect(person.ssn_was).to eq("123-45-6789")
+
+      person.assign_attributes(ssn: "222-22-2222")
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "222-22-2222"])
+      expect(person.ssn_was).to eq("123-45-6789")
     end
 
     it "allows attributes to be unset" do
@@ -149,6 +165,17 @@ describe Vault::Rails do
 
       expect(person.ssn).to be(nil)
     end
+
+    it "allows dirty attributes to be unset" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+      person.ssn = nil
+      expect(person.ssn).to be_nil
+
+      person2 = LazyPerson.create!(ssn: "123-45-6789")
+      person2.assign_attributes(ssn: nil)
+      expect(person2.ssn).to be_nil
+    end
+
 
     it "allows saving without validations" do
       person = LazyPerson.new(ssn: "123-456-7890")
