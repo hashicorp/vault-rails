@@ -46,9 +46,6 @@ jobs:
             export VAULT_VERSION=<< parameters.vault-version >>
             export RAILS_VERSION=<< parameters.rails-version >>
             ruby --version
-            # Downgrade Bundler to 1.x
-            gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
-            gem install bundler -v '< 2'
             bundle -v
             bundle install --jobs=4 --retry=3 --path=vendor/bundle
             bundle exec rake app:db:create
