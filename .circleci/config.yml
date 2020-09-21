@@ -76,6 +76,9 @@ workflows:
   run-tests:
     jobs:
       - test:
+          filters:
+            tags:
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+.*/
           matrix:
             parameters:
               ruby-version: ["2.6", "2.5"]
@@ -88,6 +91,6 @@ workflows:
           context: vault-gem-release
           filters:
             tags:
-              only: /^v.*/
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+.*/ 
             branches:
               ignore: /.*/
