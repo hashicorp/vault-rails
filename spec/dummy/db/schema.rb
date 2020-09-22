@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2015_04_28_220101) do
+ActiveRecord::Schema.define(version: 2020_09_22_185737) do
 
   create_table "people", force: :cascade do |t|
     t.string "name"
@@ -28,6 +28,8 @@ ActiveRecord::Schema.define(version: 2015_04_28_220101) do
     t.string "transform_ssn_encrypted"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "unsafe"
+    t.string "unsafe_encrypted"
   end
 
 end

@@ -112,6 +112,41 @@ describe Vault::Rails do
       expect(Person.attribute_names).to include("ssn")
       expect(Person.column_names).not_to include("ssn")
     end
+
+    describe "detecting changes to unencrypted attributes to write to the encrypted column" do
+      context "with an unencrypted attribute NOT backed by a database column" do
+        context "on creation" do
+          let(:person) { Person.new(ssn: "123-45-6789") }
+
+          it "writes only on changes to the attribute" do
+            expect(person).to receive(:update_columns)
+              .with({ "ssn_encrypted" => a_string_including("vault:v1:") })
+              .once
+
+            2.times { person.save! }
+
+            expect(person.ssn).to eq("123-45-6789")
+            expect(person.reload.ssn).to eq("123-45-6789")
+          end
+        end
+
+        context "on update" do
+          let(:person) { Person.create!(ssn: "123-45-6789") }
+
+          it "writes only on changes to the attribute" do
+            person.ssn = "changed"
+            expect(person).to receive(:update_columns)
+              .with({ "ssn_encrypted" => a_string_including("vault:v1:") })
+              .once
+
+            2.times { person.save! }
+
+            expect(person.ssn).to eq("changed")
+            expect(person.reload.ssn).to eq("changed")
+          end
+        end
+      end
+    end
   end
 
   context "lazy decrypt" do

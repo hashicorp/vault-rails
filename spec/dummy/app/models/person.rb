@@ -54,6 +54,8 @@ class Person < ActiveRecord::Base
       role: "foobar_role"
     }
 
+  vault_attribute :unsafe
+
   def encryption_context
     "user_#{id}"
   end
