@@ -237,7 +237,7 @@ module Vault
           self.__vault_load_attribute!(attribute, options)
         end
 
-        @__vault_loaded = self.class.__vault_attributes.all? { |attribute, __| instance_variable_get("@#{attribute}") }
+        @__vault_loaded = self.class.__vault_attributes.all? { |attribute, __| instance_variable_defined?("@#{attribute}") }
 
         return true
       end
