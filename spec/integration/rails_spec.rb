@@ -97,6 +97,11 @@ describe Vault::Rails do
       person.name = "Cinderella"
       person.save!
     end
+
+    it "does not register a Vault attribute as necessarily being backed by a column" do
+      expect(Person.attribute_names).to include("ssn")
+      expect(Person.column_names).not_to include("ssn")
+    end
   end
 
   context "lazy decrypt" do
