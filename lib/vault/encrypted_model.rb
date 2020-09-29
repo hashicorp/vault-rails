@@ -216,6 +216,12 @@ module Vault
       # before theirs, resulting in attributes that are not persisted.
       after_save :__vault_persist_attributes!
 
+      # Before destroying a record, ensure that all vault attributes have been
+      # decrypted. Otherwise, attempting to read a lazily decrypted attribute
+      # after a destroy will result in a "Can't modify frozen Hash" error when
+      # vault-rails attempts to set the plain-text attribute.
+      before_destroy :__vault_load_attributes!, unless: -> { @__vault_loaded }
+
       # Decrypt all the attributes from Vault.
       # @return [true]
       def __vault_initialize_attributes!

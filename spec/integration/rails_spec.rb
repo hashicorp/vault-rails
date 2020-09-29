@@ -112,6 +112,13 @@ describe Vault::Rails do
       expect(Person.attribute_names).to include("ssn")
       expect(Person.column_names).not_to include("ssn")
     end
+
+    it "does not reload encrypted attributes on destroy" do
+      person = Person.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:decrypt)
+      person.destroy
+    end
   end
 
   context "lazy decrypt" do
@@ -221,6 +228,13 @@ describe Vault::Rails do
       expect(Vault::Rails).to_not receive(:encrypt)
       person.name = "Cinderella"
       person.save!
+    end
+
+    it "allows attributes to be accessed after a destroy" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+
+      person.destroy
+      expect { person.ssn }.not_to raise_error
     end
   end
 
@@ -346,6 +360,13 @@ describe Vault::Rails do
       expect(Vault::Rails).to_not receive(:encrypt)
       person.name = "Cinderella"
       person.save!
+    end
+
+    it "allows attributes to be accessed after a destroy" do
+      person = LazyPerson.create!(ssn: "123-45-6789")
+
+      person.destroy
+      expect { person.ssn }.not_to raise_error
     end
   end
 
