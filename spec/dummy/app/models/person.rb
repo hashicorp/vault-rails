@@ -57,4 +57,6 @@ class Person < ActiveRecord::Base
   def encryption_context
     "user_#{id}"
   end
+
+  after_create :save!
 end
