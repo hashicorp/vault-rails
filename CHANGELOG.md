@@ -1,5 +1,12 @@
 # Vault Rails Changelog
 
+## 2.0.5 (October 19, 2020)
+
+- Fix compatibility with `#with_lock` / `#lock!` - on initialization the `#changes` is no longer polluted. Fixed error:
+```
+RuntimeError: Locking a record with unpersisted changes is not supported. Use `save` to persist the changes, or `reload` to discard them explicitly.
+```
+
 ## 2.0.4 (December 2, 2019)
 
 IMPROVEMENTS
