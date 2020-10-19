@@ -329,7 +329,7 @@ module Vault
           __vault_loaded_attributes << attribute
 
           # Write the virtual attribute with the plaintext value
-          write_attribute(attribute, plaintext)
+          write_attribute(attribute, plaintext).tap { clear_attribute_changes([attribute]) }
         end
 
         # Encrypt all the attributes using Vault and set the encrypted values back

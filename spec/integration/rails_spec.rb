@@ -40,6 +40,12 @@ describe Vault::Rails do
       expect(person.ssn_was).to eq("123-45-6789")
     end
 
+    it 'does not pollute changes / dirty attributes / when loading a record from the db' do
+      Person.create!(ssn: "123-45-6789")
+
+      expect(Person.last.changes).to be_blank
+    end
+
     it "allows attributes to be updated with nil values" do
       person = Person.create!(ssn: "123-45-6789")
       person.update_attributes!(ssn: nil)
@@ -173,6 +179,15 @@ describe Vault::Rails do
       expect(person.ssn_changed?).to be(true)
       expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
       expect(person.ssn_was).to eq("123-45-6789")
+    end
+
+    it 'does not pollute changes / dirty attributes / when loading a record from the db' do
+      Person.create!(ssn: "123-45-6789")
+
+      person = Person.last
+      expect(person.changes).to be_blank
+      expect(person.ssn).to eq('123-45-6789')
+      expect(person.changes).to be_blank
     end
 
     it "allows attributes to be unset" do
@@ -572,7 +587,7 @@ describe Vault::Rails do
     context 'attribute with defined serializer' do
       context 'new record with duplicated IP address' do
         it 'is invalid' do
-          person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
+          Person.create!(ip_address: IPAddr.new('127.0.0.1'))
           same_ip_address_person = Person.new(ip_address: IPAddr.new('127.0.0.1'))
 
           expect(same_ip_address_person).not_to be_valid
@@ -670,8 +685,8 @@ describe Vault::Rails do
 
     it 'finds the expected record' do
       first_person = LazyPerson.create!(passport_number: '12345678')
-      second_person = LazyPerson.create!(passport_number: '12345678')
-      third_person = LazyPerson.create!(passport_number: '87654321')
+      LazyPerson.create!(passport_number: '12345678')
+      LazyPerson.create!(passport_number: '87654321')
 
       expect(LazyPerson.encrypted_find_by(passport_number: '12345678')).to eq(first_person)
     end
@@ -679,7 +694,7 @@ describe Vault::Rails do
     context 'searching by attributes with defined serializer' do
       it 'finds the expected record' do
         first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
-        second_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+        Person.create!(ip_address: IPAddr.new('192.168.0.1'))
 
         expect(Person.encrypted_find_by(ip_address: IPAddr.new('127.0.0.1'))).to eq(first_person)
       end
@@ -707,8 +722,8 @@ describe Vault::Rails do
 
     it 'finds the expected record' do
       first_person = LazyPerson.create!(passport_number: '12345678')
-      second_person = LazyPerson.create!(passport_number: '12345678')
-      third_person = LazyPerson.create!(passport_number: '87654321')
+      LazyPerson.create!(passport_number: '12345678')
+      LazyPerson.create!(passport_number: '87654321')
 
       expect(LazyPerson.encrypted_find_by!(passport_number: '12345678')).to eq(first_person)
     end
@@ -716,7 +731,7 @@ describe Vault::Rails do
     context 'searching by attributes with defined serializer' do
       it 'finds the expected record' do
         first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
-        second_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+        Person.create!(ip_address: IPAddr.new('192.168.0.1'))
 
         expect(Person.encrypted_find_by!(ip_address: IPAddr.new('127.0.0.1'))).to eq(first_person)
       end
@@ -751,7 +766,7 @@ describe Vault::Rails do
     it 'finds the expected records' do
       first_person = LazyPerson.create!(passport_number: '12345678')
       second_person = LazyPerson.create!(passport_number: '12345678')
-      third_person = LazyPerson.create!(passport_number: '87654321')
+      LazyPerson.create!(passport_number: '87654321')
 
       expect(LazyPerson.encrypted_where(passport_number: '12345678').pluck(:id)).to match_array([first_person, second_person].map(&:id))
     end
@@ -759,7 +774,7 @@ describe Vault::Rails do
     context 'searching by attributes with defined serializer' do
       it 'finds the expected records' do
         first_person = Person.create!(ip_address: IPAddr.new('127.0.0.1'))
-        second_person = Person.create!(ip_address: IPAddr.new('192.168.0.1'))
+        Person.create!(ip_address: IPAddr.new('192.168.0.1'))
 
         expect(Person.encrypted_where(ip_address: IPAddr.new('127.0.0.1')).pluck(:id)).to match_array([first_person.id])
       end
