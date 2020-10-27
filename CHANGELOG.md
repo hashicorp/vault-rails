@@ -1,5 +1,22 @@
 # Vault Rails Changelog
 
+## v0.7.0 (October 27th, 2020)
+
+IMPROVEMENTS
+
+- Added support for the Vault Enterprise transform secrets engine, extending 'vault_attribute' with a 'transform_secret'
+  hash that allows for format-preserving encryption [GH-102]
+
+BUG FIXES
+
+- Fixed an issue in newer versions of ActiveRecord where you could not access an encrypted attribute after a 'destroy'
+  (for instance, as part of a dependant: :destroy chain). Attributes are now decrypted before a destroy, as a result.
+- Fixed a regression where attributes being assigned to nil would be not respected [GH-107]
+
+BREAKING CHANGES
+
+- Dropped support for Rails 4.2 [GH-108]
+
 ## v0.6.0 (May 11th, 2020)
 
 IMPROVEMENTS
