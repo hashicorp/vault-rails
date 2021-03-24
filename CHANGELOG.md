@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## v0.7.1 (March 24th, 2021)
+
+- Relaxed the dependency requirements for the gem to only depend on ActiveSupport, not the Rails meta gem, which
+  allows applications using vault-rails to not require all of Rails as necessary transitive
+  dependencies.
+
 ## v0.7.0 (October 27th, 2020)
 
 IMPROVEMENTS
