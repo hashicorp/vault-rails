@@ -167,7 +167,11 @@ module Vault
           attribute_type = options.fetch(:type, ActiveRecord::Type::Value.new)
 
           if attribute_type.is_a?(Symbol)
-            ActiveRecord::Type.lookup(attribute_type)
+            if ActiveRecord::Base.connection_config[:adapter]
+              ActiveRecord::Type.lookup(attribute_type, adapter: ActiveRecord::Base.connection_config[:adapter])
+            else
+              ActiveRecord::Type.lookup(attribute_type) # This call does a db connection, best find a way to configure `ActiveRecord::Base.connection_config[:adapter]`
+            end
           else
             ActiveModel::Type::Value.new
           end

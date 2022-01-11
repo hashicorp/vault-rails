@@ -4,9 +4,7 @@ aliases:
   environment: &environment
     RACK_ENV: test
     VAULT_VERSION: 0.10.4
-    BUNDLER_VERSION: 2.1.4
   command: &ruby-command |
-      gem install bundler:$BUNDLER_VERSION
       bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
       bundle exec rake app:db:create
       bundle exec rake app:db:schema:load

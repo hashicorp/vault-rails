@@ -48,7 +48,7 @@ describe Vault::Rails do
 
     it "allows attributes to be updated with nil values" do
       person = Person.create!(ssn: "123-45-6789")
-      person.update_attributes!(ssn: nil)
+      person.update!(ssn: nil)
       person.reload
 
       expect(person.ssn).to be(nil)
@@ -69,7 +69,7 @@ describe Vault::Rails do
     it "allows attributes to be unset after reload" do
       person = Person.create!(ssn: "123-45-6789")
       person.reload
-      person.update_attributes!(ssn: nil)
+      person.update!(ssn: nil)
       person.reload
 
       expect(person.ssn).to be(nil)
@@ -77,7 +77,7 @@ describe Vault::Rails do
 
     it "allows attributes to be blank" do
       person = Person.create!(ssn: "123-45-6789")
-      person.update_attributes!(ssn: "")
+      person.update!(ssn: "")
       person.reload
 
       expect(person.ssn).to eq("")
@@ -192,7 +192,7 @@ describe Vault::Rails do
 
     it "allows attributes to be unset" do
       person = LazyPerson.create!(ssn: "123-45-6789")
-      person.update_attributes!(ssn: nil)
+      person.update!(ssn: nil)
       person.reload
 
       expect(person.ssn).to be(nil)
@@ -207,7 +207,7 @@ describe Vault::Rails do
     it "allows attributes to be unset after reload" do
       person = LazyPerson.create!(ssn: "123-45-6789")
       person.reload
-      person.update_attributes!(ssn: nil)
+      person.update!(ssn: nil)
       person.reload
 
       expect(person.ssn).to be(nil)
@@ -221,7 +221,7 @@ describe Vault::Rails do
 
     it "allows attributes to be blank" do
       person = LazyPerson.create!(ssn: "123-45-6789")
-      person.update_attributes!(ssn: "")
+      person.update!(ssn: "")
       person.reload
 
       expect(person.ssn).to eq("")
@@ -287,7 +287,7 @@ describe Vault::Rails do
 
     it "allows attributes to be unset" do
       person = Person.create!(credit_card: "1234567890111213")
-      person.update_attributes!(credit_card: nil)
+      person.update!(credit_card: nil)
       person.reload
 
       expect(person.credit_card).to be(nil)
@@ -295,7 +295,7 @@ describe Vault::Rails do
 
     it "allows attributes to be blank" do
       person = Person.create!(credit_card: "1234567890111213")
-      person.update_attributes!(credit_card: "")
+      person.update!(credit_card: "")
       person.reload
 
       expect(person.credit_card).to eq("")
@@ -337,7 +337,7 @@ describe Vault::Rails do
 
     it "allows attributes to be unset" do
       person = Person.create!(non_ascii: "dás ümlaut")
-      person.update_attributes!(non_ascii: nil)
+      person.update!(non_ascii: nil)
       person.reload
 
       expect(person.non_ascii).to be(nil)
@@ -345,7 +345,7 @@ describe Vault::Rails do
 
     it "allows attributes to be blank" do
       person = Person.create!(non_ascii: "dás ümlaut")
-      person.update_attributes!(non_ascii: "")
+      person.update!(non_ascii: "")
       person.reload
 
       expect(person.non_ascii).to eq("")

@@ -1,5 +1,9 @@
 # Vault Rails Changelog
 
+## 2.1.0 (January 11, 2022)
+
+Prevent db queries on boot -> so that db:create / assets:precompile work
+
 ## 2.0.5 (October 19, 2020)
 
 - Fix compatibility with `#with_lock` / `#lock!` - on initialization the `#changes` is no longer polluted. Fixed error:
