@@ -1,5 +1,10 @@
 # Vault Rails Changelog
 
+## 2.1.1 (January 31, 2022)
+
+NEW FEATURES
+- Added `TransitJsonCodec` class which encrypt and decrypt JSON values
+
 ## 2.1.0 (January 11, 2022)
 
 Prevent db queries on boot -> so that db:create / assets:precompile work

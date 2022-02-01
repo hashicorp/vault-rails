@@ -364,5 +364,5 @@ We now have two versions of `Vault::EncryptedModel` a `Latest` version which tar
 Getting tests to run
 --------------------
 ```
-$ bundle exec db:schema:load
+$ bundle exec rake db:schema:load
 ```
