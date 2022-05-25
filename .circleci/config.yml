@@ -5,7 +5,7 @@ orbs:
 
 references:
   images:
-    ubuntu: &UBUNTU_IMAGE ubuntu-1604:202004-01
+    ubuntu: &UBUNTU_IMAGE ubuntu-2004:202201-02
 
 jobs:
   test:
