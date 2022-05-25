@@ -11,7 +11,7 @@ jobs:
   test:
     machine:
       image: *UBUNTU_IMAGE
-    shell: /usr/bin/env bash -euo pipefail -c
+    shell: /usr/bin/env bash -eo pipefail -c
     parameters:
       ruby-version:
         type: string
