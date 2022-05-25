@@ -1,5 +1,11 @@
 # Vault Rails Changelog
 
+## v0.8.0 (May 23, 2022)
+
+IMPROVEMENTS
+
+- Added `Vault::MissingRequiredStateError` to list of error types to be retried automatically in `with_retries` and updated `vault` gem minimum version requirement accordingly
+
 ## v0.7.1 (March 24th, 2021)
 
 - Relaxed the dependency requirements for the gem to only depend on ActiveSupport, not the Rails meta gem, which
