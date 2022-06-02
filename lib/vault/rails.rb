@@ -249,7 +249,7 @@ module Vault
       private
 
       def with_retries(client = self.client, &block)
-        exceptions = [Vault::HTTPConnectionError, Vault::HTTPServerError]
+        exceptions = [Vault::HTTPConnectionError, Vault::HTTPServerError, Vault::MissingRequiredStateError]
         options = {
           attempts: self.retry_attempts,
           base:     self.retry_base,
