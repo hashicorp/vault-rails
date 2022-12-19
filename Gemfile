@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 source "https://rubygems.org"
 
 RAILS_VERSION = ENV.fetch("RAILS_VERSION", "6.0.0")
