@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 require File.expand_path('../boot', __FILE__)
 
 # Pick the frameworks you want:

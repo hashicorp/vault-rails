@@ -1,5 +1,9 @@
 # Vault Rails Changelog
 
+## UNRELEASED
+
+- Added HashiCorp, Inc. copyright statements to source code files.
+
 ## v0.8.0 (May 23, 2022)
 
 IMPROVEMENTS

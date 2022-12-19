@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 # Encodes and decodes binary data.
 module BinarySerializer
   def self.encode(raw)

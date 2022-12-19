@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
