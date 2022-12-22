@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.name        = "vault-rails"
   s.version     = Vault::Rails::VERSION
   s.authors     = ["Seth Vargo"]
-  s.email       = ["sethvargo@gmail.com"]
+  s.email       = ["team-vault-devex@hashicorp.com"]
   s.homepage    = "https://github.com/hashicorp/vault-rails"
   s.summary     = "Official Vault plugin for Rails"
   s.description = s.summary
