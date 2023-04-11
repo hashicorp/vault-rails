@@ -28,8 +28,6 @@ jobs:
       - restore_cache:
           keys:
             - v2-dependencies-bundler-<< parameters.ruby-version >>-{{ checksum "vault.gemspec" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-bundler-
       - run:
           name: Install vault
           command: |
