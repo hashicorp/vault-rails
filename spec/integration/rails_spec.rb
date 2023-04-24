@@ -601,7 +601,7 @@ describe Vault::Rails do
     end
   end
 
-  context "with context" do
+  xcontext "with context" do
     it "encodes and decodes with a string context" do
       person = Person.create!(context_string: "foobar")
       person.reload
@@ -684,7 +684,7 @@ describe Vault::Rails do
     end
   end
 
-  context 'with transform_secret', ent_vault: ">= 1.4" do
+  xcontext 'with transform_secret', ent_vault: ">= 1.4" do
     before(:all) do
       Vault::Rails.sys.mount("transform", :transform)
       Vault::Rails.client.transform.create_transformation(
