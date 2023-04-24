@@ -34,7 +34,7 @@ jobs:
           bundle exec rake app:db:test:prepare
           gem uninstall sqlite3
       - name: "Run tests"
-        run: rake spec
+        run: bundle exec rake spec
 
 permissions:
   contents: read
