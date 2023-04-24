@@ -27,12 +27,14 @@ jobs:
           mkdir -p "$HOME/bin"
           mv vault "$HOME/bin"
           echo "$HOME/bin" >> "$GITHUB_PATH"
-      - run: |
+      - name: "Setup tests"
+        run: |
           bundle exec rake app:db:create
           bundle exec rake app:db:schema:load
           bundle exec rake app:db:test:prepare
           gem uninstall sqlite3
-          rake spec
+      - name: "Run tests"
+        run: rake spec
 
 permissions:
   contents: read
