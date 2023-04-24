@@ -1,0 +1,80 @@
+name: hashicorp/vault-rails/run-tests
+on:
+  push:
+    branches:
+    - main
+jobs:
+  test:
+    if: # GitHub does not currently support regular expressions inside if conditions
+#         github.ref == 'refs/tags//^v[0-9]+\.[0-9]+\.[0-9]+.*/'
+    defaults:
+#       # This item was not transformed because there is no suitable equivalent in GitHub Actions
+#       run:
+#         shell: "/usr/bin/env bash -eo pipefail -c"
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        ruby-version:
+        - '2.6'
+        - '2.5'
+        rails-version:
+        - 6.0.0
+        - 5.2.0
+        - 5.1.0
+        - 5.0.0
+        vault-version:
+        - 1.4.2
+        - 1.4.1
+        - 1.4.0
+        - 1.3.6
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - name: restore_cache
+      uses: actions/cache@v3.3.1
+      with:
+        key: v2-dependencies-bundler-${{ matrix.ruby-version }}-{{ checksum "vault.gemspec" }}
+        restore-keys: |-
+          v2-dependencies-bundler-${{ matrix.ruby-version }}-{{ checksum "vault.gemspec" }}
+          v2-dependencies-bundler-
+    - name: Install vault
+      run: |-
+        curl -sLo vault.zip https://releases.hashicorp.com/vault/${{ matrix.vault-version }}/vault_${{ matrix.vault-version }}_linux_amd64.zip
+        unzip vault.zip
+        mkdir -p ~/bin
+        mv vault ~/bin
+        export PATH="~/bin:$PATH"
+    - name: Set ruby version
+      run: |-
+        rvm install ${{ matrix.ruby-version }}
+        echo . $(rvm ${{ matrix.ruby-version }} do rvm env --path) >> $BASH_ENV
+    - name: Run tests
+      run: |-
+        export VAULT_VERSION=${{ matrix.vault-version }}
+        export RAILS_VERSION=${{ matrix.rails-version }}
+        ruby --version
+        bundle -v
+        bundle install --jobs=4 --retry=3 --path=vendor/bundle
+        bundle exec rake app:db:create
+        bundle exec rake app:db:schema:load
+        bundle exec rake app:db:test:prepare
+        gem uninstall sqlite3
+        rake spec
+    - name: save_cache
+      uses: actions/cache@v3.3.1
+      with:
+        path: vendor/bundle
+        key: v1-dependencies-bundler-${{ matrix.ruby-version }}-{{ checksum "vault.gemspec" }}
+  build-release:
+    if: # GitHub does not currently support regular expressions inside if conditions
+#         (github.ref == 'refs/tags//^v[0-9]+\.[0-9]+\.[0-9]+.*/') && (github.ref != 'refs/heads//.*/')
+    defaults:
+      run:
+        working-directory: "~/repo"
+    runs-on: ubuntu-latest
+    needs:
+    - test
+    steps:
+#     # This item has no matching transformer
+#     - zfhui_ruby_gem_build:
+#     # This item has no matching transformer
+#     - zfhui_ruby_gem_release:
