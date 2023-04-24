@@ -1,15 +1,14 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
-default: &default
+development:
   adapter: sqlite3
   pool: 5
   timeout: 5000
-
-development:
-  <<: *default
   database: db/development.sqlite3
 
 test:
-  <<: *default
+  adapter: sqlite3
+  pool: 5
+  timeout: 5000
   database: db/test.sqlite3
