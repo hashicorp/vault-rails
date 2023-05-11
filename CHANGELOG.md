@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 - Added HashiCorp, Inc. copyright statements to source code files.
+- Add vault_batch_decrypt which implements vault decrypt batch_input to reduce the number of
+    outbound calls when an encrypted model has multiple vault attributes
 
 ## v0.8.0 (May 23, 2022)
 
