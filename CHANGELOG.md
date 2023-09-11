@@ -1,5 +1,10 @@
 # Vault Rails Changelog
 
+## 2.1.2 (September 8, 2023)
+
+IMPROVEMENTS
+- Add Rails 7 Support
+
 ## 2.1.1 (January 31, 2022)
 
 NEW FEATURES
