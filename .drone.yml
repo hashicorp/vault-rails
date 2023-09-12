@@ -1,0 +1,81 @@
+---
+kind: pipeline
+type: docker
+name: build
+
+trigger:
+  event:
+    - push
+
+platform:
+  os: linux
+  arch: amd64
+
+anchors:
+  artifactory_credentials: &artifactory_credentials
+    ARTIFACTORY_USER:
+      from_secret: artifactory_user
+    ARTIFACTORY_PASSWORD:
+      from_secret: artifactory_password
+  docker_credentials: &docker_credentials
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  jfrog_credentials: &jfrog_credentials
+    BUNDLE_FUNDINGCIRCLE__JFROG__IO:
+      from_secret: bundle_fundingcircle__jfrog__io
+  test_commands: &test_commands
+    commands:
+      - wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
+      - unzip vault.zip
+      - sudo mv vault /usr/local/bin/
+      - bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
+      - bundle exec rake app:db:create
+      - bundle exec rake app:db:schema:load
+      - bundle exec rake app:db:test:prepare
+      - bundle exec rake
+
+concurrency:
+  limit: 1
+
+steps:
+  - name: build_ruby4
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
+      <<: *docker_credentials
+      <<: *jfrog_credentials
+    <<: *test_commands
+
+  - name: build_ruby5
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
+      <<: *docker_credentials
+      <<: *jfrog_credentials
+    <<: *test_commands
+
+  - name: build_ruby51
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
+      <<: *docker_credentials
+      <<: *jfrog_credentials
+    <<: *test_commands
+
+  - name: build_ruby52
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
+      <<: *docker_credentials
+      <<: *jfrog_credentials
+    <<: *test_commands
+
+  - name: build_ruby6
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
+      <<: *docker_credentials
+      <<: *jfrog_credentials
+    <<: *test_commands
