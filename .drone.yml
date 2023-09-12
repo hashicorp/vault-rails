@@ -31,7 +31,7 @@ anchors:
     commands:
       - wget -O vault.zip -q https://releases.hashicorp.com/vault/1.1.3/vault_1.1.3_linux_amd64.zip
       - unzip vault.zip
-      - sudo mv vault /usr/local/bin/
+      - mv vault /usr/local/bin/
       - bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
       - bundle exec rake app:db:create
       - bundle exec rake app:db:schema:load
