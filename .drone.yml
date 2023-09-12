@@ -49,6 +49,7 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
       <<: *docker_credentials
       <<: *jfrog_credentials
+      <<: *vault_version
     <<: *test_commands
 
   - name: build_ruby5
@@ -57,6 +58,7 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       <<: *docker_credentials
       <<: *jfrog_credentials
+      <<: *vault_version
     <<: *test_commands
 
   - name: build_ruby51
@@ -65,6 +67,7 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
       <<: *docker_credentials
       <<: *jfrog_credentials
+      <<: *vault_version
     <<: *test_commands
 
   - name: build_ruby52
@@ -73,6 +76,7 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
       <<: *docker_credentials
       <<: *jfrog_credentials
+      <<: *vault_version
     <<: *test_commands
 
   - name: build_ruby6
@@ -81,4 +85,5 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
       <<: *docker_credentials
       <<: *jfrog_credentials
+      <<: *vault_version
     <<: *test_commands
