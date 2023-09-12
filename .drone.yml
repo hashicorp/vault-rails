@@ -29,7 +29,7 @@ anchors:
     VAULT_VERSION: 1.1.3
   test_commands: &test_commands
     commands:
-      - wget -O vault.zip -q https://releases.hashicorp.com/vault/$VAULT_VERSION/vault_$VAULT_VERSION_linux_amd64.zip
+      - wget -O vault.zip -q https://releases.hashicorp.com/vault/1.1.3/vault_1.1.3_linux_amd64.zip
       - unzip vault.zip
       - sudo mv vault /usr/local/bin/
       - bundle check --path=vendor/bundle || bundle install --binstubs --jobs 4 --path=vendor/bundle --retry 3
