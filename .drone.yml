@@ -26,8 +26,7 @@ anchors:
     BUNDLE_FUNDINGCIRCLE__JFROG__IO:
       from_secret: bundle_fundingcircle__jfrog__io
   vault_version: &vault_version
-    VAULT_VERSION:
-      from_secret: vault_version
+    VAULT_VERSION: 1.1.3
   test_commands: &test_commands
     commands:
       - wget -O vault.zip -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
