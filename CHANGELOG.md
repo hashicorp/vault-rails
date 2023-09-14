@@ -4,6 +4,12 @@
 
 - Added HashiCorp, Inc. copyright statements to source code files.
 
+## v0.9.0 (September 14, 2023)
+
+IMPROVEMENTS
+
+- Updated the `vault` dependency to `v0.18.0` to support TLS v1.3.
+
 ## v0.8.0 (May 23, 2022)
 
 IMPROVEMENTS
