@@ -49,7 +49,7 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
-      RAILS_ENV: production
+      RAILS_ENV: default
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
@@ -57,7 +57,7 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
-      RAILS_ENV: production
+      RAILS_ENV: default
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
@@ -65,7 +65,7 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
-      RAILS_ENV: production
+      RAILS_ENV: default
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
@@ -73,6 +73,6 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
-      RAILS_ENV: production
+      RAILS_ENV: default
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
