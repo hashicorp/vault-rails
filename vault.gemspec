@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.test_files = Dir["spec/**/*"]
 
   s.add_dependency "activesupport", ">= 5.0"
-  s.add_dependency "vault", "~> 0.17"
+  s.add_dependency "vault", "~> 0.18"
 
   s.add_development_dependency "bundler"
   s.add_development_dependency "pry"
