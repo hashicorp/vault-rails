@@ -23,7 +23,7 @@ anchors:
   commands: &commands
     - apk add --no-cache curl
     - echo "Installing Vault" $VAULT_VERSION
-    - curl -sSL -o /usr/local/bin/vault.zip https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
+    - curl -sSL -o /usr/local/bin/vault.zip https://releases.hashicorp.com/vault/$(echo $VAULT_VERSION)/vault_$(echo $VAULT_VERSION)_linux_amd64.zip
     - unzip /usr/local/bin/vault.zip -d /usr/local/bin
     - chmod +x /usr/local/bin/vault
     - apk add --no-cache build-base sqlite-dev 
