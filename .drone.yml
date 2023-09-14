@@ -46,29 +46,33 @@ steps:
     commands: *commands
 
   - name: build_ruby5
-    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
+      RAILS_ENV: production
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
   - name: build_ruby51
-    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
+      RAILS_ENV: production
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
   - name: build_ruby52
-    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
+      RAILS_ENV: production
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
   - name: build_ruby6
-    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
+      RAILS_ENV: production
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
