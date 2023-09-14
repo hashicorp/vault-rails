@@ -28,8 +28,8 @@ anchors:
     - chmod +x /usr/local/bin/vault
     - apk add --no-cache build-base sqlite-dev 
     - bundle install --jobs=4 --retry=3
+    - export RAILS_ENV=development
     - bundle exec rake app:db:create
-    - bin/rails db:environment:set RAILS_ENV=development
     - bundle exec rake app:db:schema:load
     - bundle exec rake app:db:test:prepare
     - bundle exec rake
