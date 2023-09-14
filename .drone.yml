@@ -51,9 +51,7 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       RAILS_ENV: development
       <<: [*vault_tag, *artifactory_credentials]
-    commands: 
-      - export RAILS_ENV=development
-      - *commands
+    commands: *commands
 
   - name: build_ruby51
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
