@@ -22,14 +22,14 @@ anchors:
       from_secret: vault_version
   commands: &commands
     - apk add --no-cache curl
-    - echo "Installing Vault" $VAULT_VERSION
     - curl -sSL -o /usr/local/bin/vault.zip https://releases.hashicorp.com/vault/$(echo $VAULT_VERSION)/vault_$(echo $VAULT_VERSION)_linux_amd64.zip
     - unzip /usr/local/bin/vault.zip -d /usr/local/bin
     - chmod +x /usr/local/bin/vault
-    - apk add --no-cache build-base sqlite-dev 
+    - apk add --no-cache build-base sqlite-dev
+    - export RAILS_ENV=development 
     - bundle install --jobs=4 --retry=3
-    - export RAILS_ENV=development
     - bundle exec rake app:db:create
+    - echo $RAILS_ENV
     - bundle exec rake app:db:schema:load
     - bundle exec rake app:db:test:prepare
     - bundle exec rake
@@ -49,8 +49,8 @@ steps:
   - name: build_ruby5
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
-      BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       RAILS_ENV: development
+      BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
