@@ -27,8 +27,7 @@ anchors:
     - chmod +x /usr/local/bin/vault
     - apk add --no-cache build-base sqlite-dev
     - bundle install --jobs=4 --retry=3
-    - bundle exec rake app:db:create
-    - echo $RAILS_ENV
+    - bundle exec rake app:db:create RAILS_ENV=$RAILS_ENV
     - bundle exec rake app:db:schema:load
     - bundle exec rake app:db:test:prepare
     - bundle exec rake
