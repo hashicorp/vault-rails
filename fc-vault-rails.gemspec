@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "activerecord", ">= 4.2"
   s.add_dependency "vault", "~> 0.7"
+  s.add_dependency "tzinfo-data"
 
   s.add_development_dependency "appraisal", "~> 2.1"
   s.add_development_dependency "bundler"

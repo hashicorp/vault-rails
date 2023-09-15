@@ -38,7 +38,7 @@ concurrency:
 
 steps:
   - name: build_rails4
-    image: ruby:2.5-alpine
+    image: ruby:2.6-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
       <<: [*vault_tag, *artifactory_credentials]
@@ -50,6 +50,8 @@ steps:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
+    depends_on:
+      - build_rails4
 
   - name: build_rails51
     image: ruby:2.7-alpine
@@ -58,6 +60,9 @@ steps:
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
 
   - name: build_rails52
     image: ruby:2.7-alpine
@@ -66,6 +71,10 @@ steps:
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
 
   - name: build_rails6
     image: ruby:3.0-alpine
@@ -74,6 +83,11 @@ steps:
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
+      - build_rails52
 
   - name: publish_feature_branch_gem
     image: quay.io/fundingcircle/alpine-ruby-builder:2.7
