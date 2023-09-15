@@ -4,7 +4,6 @@ source "https://rubygems.org"
 
 gem "rails", "~> 4.2.0"
 gem "sqlite3", "~> 1.3.13"
-gem "tzinfo-data"
 gem "bundler", "~> 1.17.3"
 
-gemspec path: "../../"
+gemspec path: "../"
