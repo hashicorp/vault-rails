@@ -26,7 +26,6 @@ anchors:
     - unzip /usr/local/bin/vault.zip -d /usr/local/bin
     - chmod +x /usr/local/bin/vault
     - apk add --no-cache build-base sqlite-dev
-    - export RAILS_ENV=development 
     - bundle install --jobs=4 --retry=3
     - bundle exec rake app:db:create
     - echo $RAILS_ENV
@@ -49,7 +48,7 @@ steps:
   - name: build_ruby5
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
-      RAILS_ENV: development
+      RAILS_ENV: test
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
@@ -58,7 +57,7 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
-      RAILS_ENV: development
+      RAILS_ENV: test
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
@@ -66,7 +65,7 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:2.6
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
-      RAILS_ENV: development
+      RAILS_ENV: test
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
@@ -74,6 +73,6 @@ steps:
     image: quay.io/fundingcircle/alpine-ruby-builder:3.0
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
-      RAILS_ENV: development
+      RAILS_ENV: test
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
