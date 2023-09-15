@@ -103,7 +103,7 @@ steps:
         curl -u "$ARTIFACTORY_USER":"$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases/api/v1/api_key.yaml > ~/.gem/credentials
         chmod 600 ~/.gem/credentials
       - |
-        package=$(ls -t1 active-codas*.gem | head -1)
+        package=$(ls -t1 fc-vault-rails*.gem | head -1)
         gem push $package --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
     depends_on:
       - build_rails4
