@@ -38,7 +38,7 @@ concurrency:
 
 steps:
   - name: build_rails4
-    image: ruby:2.6-alpine
+    image: ruby:2.7-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
       <<: [*vault_tag, *artifactory_credentials]
