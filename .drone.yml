@@ -48,6 +48,7 @@ steps:
     image: ruby:2.7-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
     depends_on:
