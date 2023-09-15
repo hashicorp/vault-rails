@@ -38,14 +38,14 @@ concurrency:
 
 steps:
   - name: build_rails4
-    image: quay.io/fundingcircle/alpine-ruby-builder:2.6
+    image: ruby:2.6-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
       <<: [*vault_tag, *artifactory_credentials]
     commands: *commands
 
   - name: build_rails5
-    image: quay.io/fundingcircle/alpine-ruby-builder:2.7
+    image: ruby:2.7-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
@@ -53,7 +53,7 @@ steps:
     commands: *commands
 
   - name: build_rails51
-    image: quay.io/fundingcircle/alpine-ruby-builder:2.7
+    image: ruby:2.7-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
@@ -61,7 +61,7 @@ steps:
     commands: *commands
 
   - name: build_rails52
-    image: quay.io/fundingcircle/alpine-ruby-builder:2.7
+    image: ruby:2.7-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
@@ -69,7 +69,7 @@ steps:
     commands: *commands
 
   - name: build_rails6
-    image: quay.io/fundingcircle/alpine-ruby-builder:3.0
+    image: ruby:3.0-alpine
     environment:
       BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
       DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
