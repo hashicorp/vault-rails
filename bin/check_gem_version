@@ -1,0 +1,14 @@
+echo -n "Checking existing available versions of gem... ";
+current_version="$(ruby -e 'require "./lib/vault/rails/version.rb";puts Vault::Rails::VERSION')";
+version_info_json=$(curl -s -u "$ARTIFACTORY_USER":"$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local/api/v1/versions/active-codas.json);
+
+if echo "$version_info_json" | jq -e '[.[] | select(.number|test("'$current_version'"))]|length==0' > /dev/null; then
+  echo -e '\e[32mOK\e[0m';
+else
+  echo -e '\e[31mFAIL\e[0m';
+  echo 'Existing published versions:';
+  echo "$version_info_json" | jq 'map(.number)';
+  echo -e 'Your version: \e[31m'$current_version'\e[0m.';
+  echo 'Please bump the version in `lib/active_codas/version.rb`.'
+  exit 1;
+fi
