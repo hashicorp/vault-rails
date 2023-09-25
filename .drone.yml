@@ -1,0 +1,190 @@
+---
+kind: pipeline
+type: docker
+name: build
+
+trigger:
+  event:
+    - push
+
+platform:
+  os: linux
+  arch: amd64
+
+anchors:
+  artifactory_credentials: &artifactory_credentials
+    ARTIFACTORY_USER:
+      from_secret: artifactory_user
+    ARTIFACTORY_PASSWORD:
+      from_secret: artifactory_password
+  vault_tag: &vault_tag
+    VAULT_VERSION: 
+      from_secret: vault_version
+  commands: &commands
+    - apk add --no-cache curl
+    - curl -sSL -o /usr/local/bin/vault.zip https://releases.hashicorp.com/vault/$(echo $VAULT_VERSION)/vault_$(echo $VAULT_VERSION)_linux_amd64.zip
+    - unzip /usr/local/bin/vault.zip -d /usr/local/bin
+    - chmod +x /usr/local/bin/vault
+    - apk add --no-cache build-base sqlite-dev
+    - bundle install --jobs=4 --retry=3
+    - bundle exec rake app:db:create
+    - bundle exec rake app:db:schema:load
+    - bundle exec rake app:db:test:prepare
+    - bundle exec rake
+
+
+concurrency:
+  limit: 1
+
+steps:
+  - name: build_rails4
+    image: ruby:2.6-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_4.2.gemfile
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+
+  - name: build_rails5
+    image: ruby:2.7-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.0.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+    depends_on:
+      - build_rails4
+
+  - name: build_rails51
+    image: ruby:2.7-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.1.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+
+  - name: build_rails52
+    image: ruby:2.7-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_5.2.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
+
+  - name: build_rails6
+    image: ruby:3.0-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_6.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
+      - build_rails52
+
+  - name: publish_feature_branch_gem
+    image: quay.io/fundingcircle/alpine-ruby-builder:2.7
+    environment:
+      <<: *artifactory_credentials
+      GEM_REPOSITORY: 'rubygems-pre-releases'
+    commands:
+      - gem install gem-versioner
+      - PRE_RELEASE=$(git rev-parse --short HEAD) gem build fc-vault-rails.gemspec
+      - |
+        mkdir -p ~/.gem
+        curl -u "$ARTIFACTORY_USER":"$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases/api/v1/api_key.yaml > ~/.gem/credentials
+        chmod 600 ~/.gem/credentials
+      - |
+        package=$(ls -t1 fc-vault-rails*.gem | head -1)
+        gem push $package --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-pre-releases
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
+      - build_rails52
+      - build_rails6
+    when:
+      branch:
+        exclude:
+          - master
+
+
+---
+kind: pipeline
+type: docker
+name: deploy
+
+trigger:
+  event:
+    - promote
+  when:
+    branch:
+      - master
+
+anchors:
+  artifactory_credentials: &artifactory_credentials
+    ARTIFACTORY_USER:
+      from_secret: artifactory_user
+    ARTIFACTORY_PASSWORD:
+      from_secret: artifactory_password
+
+# Platform for job, always Linux amd64
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: check_gem_version
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      <<: *artifactory_credentials
+    commands:
+      - bin/check_gem_version
+    depends_on:
+      - clone
+
+  - name: publish_master_gem
+    image: quay.io/fundingcircle/alpine-ruby-builder:2.7
+    environment:
+      <<: *artifactory_credentials
+      GEM_REPOSITORY: 'rubygems-local'
+    commands:
+      - gem build fc-vault-rails.gemspec
+      - |
+        mkdir -p ~/.gem
+        curl -u "$ARTIFACTORY_USER":"$ARTIFACTORY_PASSWORD" https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local/api/v1/api_key.yaml > ~/.gem/credentials
+        chmod 600 ~/.gem/credentials
+      - |
+        package=$(ls -t1 fc-vault-rails*.gem | head -1)
+        gem push $package --host https://fundingcircle.jfrog.io/fundingcircle/api/gems/rubygems-local
+    depends_on:
+      - check_gem_version
+
+  - name: tag_git_repo
+    image: quay.io/fundingcircle/alpine-ruby-builder:latest
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - |
+        current_version="$(ruby -e 'require "./lib/vault/rails/version.rb";puts Vault::Rails::VERSION')";
+        git tag v$current_version -m v$current_version;
+        git push --tags;
+    depends_on:
+      - publish_master_gem
+
+  - name: status
+    image: quay.io/fundingcircle/drone-github-status:latest
+    settings:
+      env: production
+      locale: UK
+    depends_on:
+      - publish_master_gem
