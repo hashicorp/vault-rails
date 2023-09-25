@@ -1,6 +1,10 @@
 Vault Rails [![CircleCI](https://circleci.com/gh/FundingCircle/vault-rails/tree/master.svg?style=svg)](https://circleci.com/gh/FundingCircle/vault-rails/tree/master)
 ===========
 
+> [!IMPORTANT]  
+> Library has been recently updated to provide support to Rails 7, it was technically tested but if you find error integrating it, drop a message in the
+> [\#customerdata team channel](https://fundingcircle.slack.com/archives/C03PNLY44M6)
+
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.
 
 **The documentation in this README corresponds to the master branch of the Vault Rails plugin. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the Vault Rails plugin for the proper documentation.**
