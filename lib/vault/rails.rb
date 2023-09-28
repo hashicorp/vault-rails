@@ -127,6 +127,44 @@ module Vault
         end
       end
 
+      # Decrypt the given ciphertext data using the provided mount and key.
+      #
+      # @param [String] path
+      #   the mount point
+      # @param [String] key
+      #   the key to decrypt at
+      # @param [Array[Hash(ciphertext:, context:, key:)]] data
+      #   the data to decrypt, each entry should be a hash {ciphertext:, context:, key:}
+      #   :key is what the decrypted data in the resulting hash will be associated with
+      #   for each data entry
+      #
+      # @return [Hash<String, Decrypted result> ]
+      #   the decrypted plaintext results in the same order as the original data
+      def decrypt_all(path, key, data:, client: self.client)
+        path = path.to_s if !path.is_a?(String)
+        key  = key.to_s if !key.is_a?(String)
+
+        with_retries do
+          if self.enabled?
+            results = self.vault_decrypt_all(path, key, data, client: client)
+          else
+            results = data.map do |datum|
+              self.memory_decrypt(
+                path, key, datum[:ciphertext],
+                client: client,
+                context: datum[:context]
+              )
+            end
+          end
+
+          ordered_keys = data.map { |d| d[:key] }
+          decrypted_data = results.map { |result| self.force_encoding(result) }
+          zipped_results = ordered_keys.zip(decrypted_data)
+
+          return zipped_results.to_h
+        end
+      end
+
       # Get the serializer that corresponds to the given key. If the key does not
       # correspond to a known serializer, an exception will be raised.
       #
@@ -239,6 +277,32 @@ module Vault
         secret = client.logical.write(route, data)
 
         return Base64.strict_decode64(secret.data[:plaintext])
+      end
+
+      # Perform batch decryption using Vault. This will raise exceptions if Vault is
+      # unavailable.
+      # @param [Array[Hash(ciphertext:, context:)]] data
+      #   the data to decrypt, each entry should be a hash {ciphertext:, context:}
+      #
+      # @return [Array<String> ]
+      #   the decrypted plaintext results in the same order as
+      def vault_decrypt_all (path, key, data, client:)
+        route = File.join(path, "decrypt", key)
+
+        batch_input = data.map do |datum|
+          ciphertext = datum[:ciphertext]
+          context    = datum[:context]
+          input = { ciphertext: ciphertext }
+          input[:context] = Base64.strict_encode64(context) if context
+          input
+        end
+
+        body = { batch_input: batch_input }
+        secrets = client.logical.write(route, body)
+
+        return secrets.data[:batch_results].map do |secret|
+          Base64.strict_decode64(secret[:plaintext])
+        end
       end
 
       # Forces the encoding into the default Rails encoding and returns the

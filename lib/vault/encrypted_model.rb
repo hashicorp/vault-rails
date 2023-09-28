@@ -157,6 +157,14 @@ module Vault
         @vault_single_decrypt = true
       end
 
+      def vault_batch_decrypt
+        @vault_batch_decrypt ||= false
+      end
+
+      def vault_batch_decrypt!
+        @vault_batch_decrypt = true
+      end
+
       private
 
       def parse_transform_secret_attributes(attribute, options)
@@ -237,12 +245,29 @@ module Vault
       end
 
       def __vault_load_attributes!(attribute_to_read = nil)
-        self.class.__vault_attributes.each do |attribute, options|
-          # skip loading certain keys in one of two cases:
-          # 1- the attribute has already been loaded
-          # 2- the single decrypt option is set AND this is not the attribute we're requesting to decrypt
-          next if instance_variable_get("@#{attribute}") || (self.class.vault_single_decrypt && attribute_to_read != attribute)
-          self.__vault_load_attribute!(attribute, options)
+        # skip loading certain keys in one of two cases:
+        # 1- the attribute has already been loaded
+        # 2- the single decrypt option is set AND this is not the attribute we're requesting to decrypt
+        if self.class.vault_single_decrypt
+          # if single decrypt enabled we only attempt to load the specific attribute
+          self.class.__vault_attributes.each do |attribute, options|
+            # skip loading certain keys if the attribute has already been loaded
+            next if attribute_to_read != attribute || instance_variable_get("@#{attribute}")
+            self.__vault_load_attribute!(attribute, options)
+          end
+        else
+          attributes_to_load = self.class.__vault_attributes.select do |attribute, options|
+            # skip loading certain keys if the attribute has already been loaded
+            instance_variable_get("@#{attribute}").nil?
+          end
+
+          if self.class.vault_batch_decrypt
+            self.__vault_load_all_attributes!(attributes_to_load)
+          else
+            attributes_to_load.each do |attribute, options|
+              self.__vault_load_attribute!(attribute, options)
+            end
+          end
         end
 
         @__vault_loaded = self.class.__vault_attributes.all? { |attribute, __| instance_variable_defined?("@#{attribute}") }
@@ -298,6 +323,154 @@ module Vault
         # Write the virtual attribute with the plaintext value
         instance_variable_set("@#{attribute}", plaintext)
         @attributes.write_from_database attribute.to_s, plaintext
+      end
+
+      # Decrypt and load a multiple attributes from Vault utilizing batching.
+      def __vault_load_all_attributes!(attributes_to_load)
+
+        # where we store loaded data prior to any transforms that occur on the plaintext data
+        # stores {
+        #   :attribute
+        #   :options
+        #   :plaintext
+        # }
+        loaded_attributes = []
+
+        transforms, decryptions = attributes_to_load.partition do |attribute, options|
+          options[:transform_secret]
+        end
+
+        # These are a secrets encrypted with FPE, we do not need to decrypt with vault
+        # FPE is decrypted later as part of the serializer
+        transforms.each do |attribute, options|
+          # If the user provided a value for the attribute, do not try to load
+          # it from Vault
+          if attributes[attribute.to_s]
+            next
+          end
+
+          column     = options[:encrypted_column]
+          plaintext  = read_attribute(column)
+          loaded_attributes << {
+            attribute: attribute,
+            options: options,
+            plaintext: plaintext
+          }
+        end
+
+        # This are a secrets that need to be decrypted with vault
+        decryptions = decryptions.map do |attribute, options|
+          # If the user provided a value for the attribute, do not try to load
+          # it from Vault
+          if attributes[attribute.to_s]
+            next
+          end
+
+          key        = options[:key]
+          path       = options[:path]
+          column     = options[:encrypted_column]
+          context    = options[:context]
+          ciphertext = read_attribute(column)
+
+          # Generate context if needed
+          generated_context = __vault_generate_context(context)
+
+          # bundle the attribute information into a hash for grouping
+          {
+            path: path,
+            key: key,
+            attribute: attribute,
+            options: options,
+            ciphertext: ciphertext,
+            context: generated_context
+          }
+        end
+
+        decryptions.compact!
+
+        to_load, blank_ciphertexts = decryptions.partition do |d|
+          !d[:ciphertext].blank?
+        end
+
+        blank_ciphertexts.each do |bc|
+          # these have blank blank_ciphertexts so will rely later on being filled with
+          # the default value for the attribute (if it exists)
+          attribute = bc[:attribute]
+          plaintext = bc[:ciphertext]
+          options   = bc[:options]
+
+          loaded_attributes << {
+            attribute: attribute,
+            options: options,
+            plaintext: plaintext
+          }
+        end
+
+        # group batches by path and key
+        batches = to_load.group_by do |tl|
+          [
+            tl[:path],
+            tl[:key]
+          ].hash
+        end.values
+
+        batches.each do |batch|
+          next if batch.empty?
+          common_path = batch[0][:path]
+          common_key  = batch[0][:key]
+
+          # construct data needed for decrypt_all
+          decrypt_data = batch.map do |bd|
+            {
+              ciphertext: bd[:ciphertext],
+              context: bd[:context],
+              key: bd[:attribute]
+            }
+          end
+
+          plaintext_results = Vault::Rails.decrypt_all(
+            common_path,
+            common_key,
+            data: decrypt_data
+          )
+
+          batch.each do |bd|
+            attribute = bd[:attribute]
+            plaintext = plaintext_results[attribute]
+            options   = bd[:options]
+
+            loaded_attributes << {
+              attribute: attribute,
+              options: options,
+              plaintext: plaintext
+            }
+          end
+
+        end
+
+        # all attributes are loaded, now do any remaining transforms and assign
+        # values to the underlying attributes
+        loaded_attributes.each do |loaded_attribute|
+          attribute  = loaded_attribute[:attribute]
+          options    = loaded_attribute[:options]
+          plaintext  = loaded_attribute[:plaintext]
+          serializer = options[:serializer]
+          default    = options[:default]
+
+          # Deserialize the plaintext value, if a serializer exists
+          if serializer
+            plaintext = serializer.decode(plaintext)
+          end
+
+          # Set to default if needed
+          if default && plaintext == nil
+            plaintext = default
+          end
+
+          # Write the virtual attribute with the plaintext value
+          instance_variable_set("@#{attribute}", plaintext)
+          @attributes.write_from_database attribute.to_s, plaintext
+        end
       end
 
       # Encrypt all the attributes using Vault and set the encrypted values back
