@@ -1,9 +1,10 @@
 # Vault Rails Changelog
 
-## 2.1.2 (September 8, 2023)
+## 2.1.2 (November 17, 2023)
 
 IMPROVEMENTS
 - Add Rails 7 Support
+- Fix "DEPRECATION WARNING: connection_config is deprecated and will be removed from Rails 7.0"
 
 ## 2.1.1 (January 31, 2022)
 
