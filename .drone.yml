@@ -90,6 +90,20 @@ steps:
       - build_rails51
       - build_rails52
 
+  - name: build_rails7
+    image: ruby:3.0-alpine
+    environment:
+      BUNDLE_GEMFILE: gemfiles/rails_7.gemfile
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: 1
+      <<: [*vault_tag, *artifactory_credentials]
+    commands: *commands
+    depends_on:
+      - build_rails4
+      - build_rails5
+      - build_rails51
+      - build_rails52
+      - build_rails6
+
   - name: publish_feature_branch_gem
     image: quay.io/fundingcircle/alpine-ruby-builder:2.7
     environment:
@@ -111,6 +125,7 @@ steps:
       - build_rails51
       - build_rails52
       - build_rails6
+      - build_rails7
     when:
       branch:
         exclude:
