@@ -2,6 +2,9 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "vault/rails"
 require "rspec"
+require 'simplecov'
+
+SimpleCov.start
 
 module PathHelpers
   def project_root
