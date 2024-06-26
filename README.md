@@ -3,6 +3,11 @@ Vault Rails [![Build Status](https://circleci.com/gh/hashicorp/vault-rails.svg?s
 
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.
 
+HashiCorp has [announced](https://developer.hashicorp.com/vault/docs/deprecation#ruby-client-libraries)
+the deprecation and planned end of support of this resource.
+At this time we will be assessing new Ruby resources to list as community-supported libraries in our
+[documentation](https://developer.hashicorp.com/vault/api-docs/libraries).
+
 **If you're viewing this README from GitHub on the `master` branch, know that it may contain unreleased features or
 different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the
 Vault Rails plugin for the proper documentation.**
