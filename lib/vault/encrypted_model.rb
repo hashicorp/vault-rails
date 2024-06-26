@@ -212,7 +212,7 @@ module Vault
       after_initialize :__vault_initialize_attributes!
 
       # After we save the record, persist all the values to Vault and reload
-      # them attributes from Vault to ensure we have the proper attributes set.
+      # the attributes from Vault to ensure we have the proper attributes set.
       # The reason we use `after_save` here is because a `before_save` could
       # run too early in the callback process. If a user is changing Vault
       # attributes in a callback, it is possible that our callback will run
