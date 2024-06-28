@@ -1,5 +1,10 @@
 # Vault Rails Changelog
 
+## 2.2.0 (June 28, 2024)
+* Adds `TransitJsonCodec.batch_*` functions which use the Vault batch API to process
+  an array of values with one API call.
+    * like `Vault::Rails.batch_decrypt` but with `transit` and FC's standard JSON pre-encoding of values.
+
 ## 2.1.2 (November 17, 2023)
 
 IMPROVEMENTS

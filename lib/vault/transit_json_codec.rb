@@ -18,6 +18,17 @@ module Vault
       secret.data[:ciphertext]
     end
 
+    def batch_encrypt(plaintexts)
+      return [] if plaintexts.blank?
+
+      secrets = Vault.logical.write(
+        "transit/encrypt/#{key}",
+        batch_input: plaintexts.map { |plaintext| { plaintext: Base64.strict_encode64(Oj.dump(plaintext)) } }
+      )
+
+      secrets.data[:batch_results].map { |result| result[:ciphertext] }
+    end
+
     def decrypt(ciphertext)
       return if ciphertext.blank?
 
@@ -27,6 +38,17 @@ module Vault
       )
 
       Oj.load(Base64.strict_decode64(secret.data[:plaintext]))
+    end
+
+    def batch_decrypt(ciphertexts)
+      return [] if ciphertexts.blank?
+
+      secret = Vault.logical.write(
+        "transit/decrypt/#{key}",
+        batch_input: ciphertexts.map { |ciphertext| { ciphertext: ciphertext } }
+      )
+
+      secret.data[:batch_results].map { |result| Oj.load(Base64.strict_decode64(result[:plaintext])) }
     end
 
     private
