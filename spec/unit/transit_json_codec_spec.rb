@@ -85,4 +85,67 @@ RSpec.describe Vault::TransitJsonCodec do
       end
     end
   end
+
+  describe '#batch_encrypt' do
+    context 'when plaintexts array is empty' do
+      it 'returns empty array' do
+        expect(codec.batch_encrypt([])).to eq([])
+        expect(codec.batch_encrypt(nil)).to eq([])
+      end
+    end
+
+    context 'when plaintexts are present' do
+      let(:plaintexts) { ['some text', 'other text'] }
+
+      it 'returns array of encrypted values' do
+        ciphertexts = codec.batch_encrypt(plaintexts)
+        expect(ciphertexts).not_to be_blank
+        expect(ciphertexts.length).to eq(plaintexts.length)
+        ciphertexts.each { |ciphertext| expect(ciphertext).to start_with('vault:v1:') }
+        ciphertexts.each_with_index { |ciphertext, i| expect(codec.decrypt(ciphertext)).to eq(plaintexts[i]) }
+      end
+
+      context 'when encryption fails' do
+        before do
+          allow(Vault).to receive(:logical).and_raise(StandardError, 'Oh no!')
+        end
+
+        it 're-raises error' do
+          expect { codec.batch_encrypt(plaintexts) }.to raise_error(StandardError)
+        end
+      end
+    end
+  end
+
+  describe '#batch_decrypt' do
+    context 'when ciphertexts array is empty' do
+      it 'returns empty array' do
+        expect(codec.batch_decrypt([])).to eq([])
+        expect(codec.batch_decrypt(nil)).to eq([])
+      end
+    end
+
+    context 'when ciphertexts are present' do
+      let(:plaintexts) { ['some text', 'other text'] }
+      let(:ciphertexts) { codec.batch_encrypt(plaintexts) }
+
+      it 'returns array of decrypted values' do
+        decrypted = codec.batch_decrypt(ciphertexts)
+        expect(decrypted).not_to be_blank
+        expect(decrypted.length).to eq(plaintexts.length)
+        expect(decrypted).to eq(plaintexts)
+      end
+
+      context 'when decryption fails' do
+        before do
+          allow(Vault).to receive(:logical).and_raise(StandardError, 'Oh no!')
+        end
+
+        it 're-raises error' do
+          expect { codec.batch_decrypt(plaintexts) }.to raise_error(StandardError)
+        end
+      end
+    end
+  end
+
 end
