@@ -6,6 +6,7 @@ source "https://rubygems.org"
 RAILS_VERSION = ENV.fetch("RAILS_VERSION", "6.0.0")
 
 gem "rails", "~> #{RAILS_VERSION}"
+gem "concurrent-ruby", "1.3.4"
 if RAILS_VERSION.start_with?("6")
   gem "sqlite3", "~> 1.4"
 end
