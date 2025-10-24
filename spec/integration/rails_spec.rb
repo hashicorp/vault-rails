@@ -746,4 +746,41 @@ describe Vault::Rails do
       expect(person.credit_card).to eq("1234567890111213")
     end
   end
+
+  context "manual encryption" do
+    describe "#vault_encrypt_attributes!" do
+      it "encrypts vault attributes without saving" do
+        person = Person.new(ssn: "123-45-6789", favorite_color: "green")
+        expect {
+          person.vault_encrypt_attributes!
+        }.to change {
+          person.ssn_encrypted
+        }.from(nil).to(be_a(String))
+
+        expect(person.favorite_color).to eq("green")
+        expect(person.favorite_color_encrypted).to be_present
+      end
+
+      it "returns self" do
+        person = Person.new
+        result = person.vault_encrypt_attributes!
+        expect(result).to be(person)
+      end
+
+      it "encrypts attributes with a default option" do
+        person = Person.new
+        expect(person.default).to eq("abc123")
+        expect(person.default_with_serializer).to eq({})
+
+        expect {
+          person.vault_encrypt_attributes!
+        }.to change {
+          person.default_encrypted
+        }.from(nil).to(be_a(String))
+         .and change {
+          person.default_with_serializer_encrypted
+        }.from(nil).to(be_a(String))
+      end
+    end
+  end
 end
