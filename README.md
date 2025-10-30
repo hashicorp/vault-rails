@@ -332,6 +332,19 @@ So for the example above, the key would be:
 
     my_app_people_ssn
 
+### Encrypting without Saving
+Normally, vault-rails will wait until the after_save callback to encrypt changed
+values before updating them. If you'd like to encrypt changed attributes without
+saving, call `vault_encrypt_attributes!`
+
+```ruby
+p = Person.new(ssn: "123-45-6789")
+p.ssn_encrypted
+> nil
+p.vault_encrypt_attributes!
+p.ssn_encrypted
+> "vault:dev:flu/yp9oeYYFgjcZH2hVBA=="
+```
 
 ### Searching Encrypted Attributes
 Because each column is uniquely encrypted, it is not possible to search for a
@@ -344,7 +357,6 @@ Person.where(ssn: "123-45-6789")
 
 This is because the database is unaware of the plain-text data (which is part of
 the security model).
-
 
 Development
 -----------
