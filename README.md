@@ -340,10 +340,12 @@ saving, call `vault_encrypt_attributes!`
 ```ruby
 p = Person.new(ssn: "123-45-6789")
 p.ssn_encrypted
-> nil
+=> nil
 p.vault_encrypt_attributes!
 p.ssn_encrypted
-> "vault:dev:flu/yp9oeYYFgjcZH2hVBA=="
+=> "vault:dev:flu/yp9oeYYFgjcZH2hVBA=="
+p.persisted?
+=> false
 ```
 
 ### Searching Encrypted Attributes
