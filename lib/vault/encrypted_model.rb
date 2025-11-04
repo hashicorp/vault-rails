@@ -325,12 +325,7 @@ module Vault
       # Encrypt a single attribute using Vault and persist back onto the
       # encrypted attribute value.
       def __vault_persist_attribute!(attribute, options)
-        key        = options[:key]
-        path       = options[:path]
-        serializer = options[:serializer]
-        column     = options[:encrypted_column]
-        context    = options[:context]
-        transform  = options[:transform_secret]
+        column = options[:encrypted_column]
 
         # Only persist changed attributes to minimize requests - this helps
         # minimize the number of requests to Vault.
@@ -346,6 +341,19 @@ module Vault
 
         # Get the current value of the plaintext attribute
         plaintext = attributes[attribute.to_s]
+        ciphertext = __vault_write_encrypted_attribute!(plaintext, options)
+
+        # Return the updated column so we can save
+        { column => ciphertext }
+      end
+
+      def __vault_write_encrypted_attribute!(plaintext, options)
+        column     = options[:encrypted_column]
+        key        = options[:key]
+        path       = options[:path]
+        serializer = options[:serializer]
+        context    = options[:context]
+        transform  = options[:transform_secret]
 
         # Apply the serialize to the plaintext value, if one exists
         if serializer
@@ -372,8 +380,7 @@ module Vault
         # to get the ciphertext
         write_attribute(column, ciphertext)
 
-        # Return the updated column so we can save
-        { column => ciphertext }
+        ciphertext
       end
 
       # Generates an Vault Transit encryption context for use on derived keys.
@@ -404,6 +411,18 @@ module Vault
 
           self.__vault_initialize_attributes!
         end
+      end
+
+      def vault_encrypt_attributes!
+        self.class.__vault_attributes.each do |attribute, options|
+          next if !attribute_changed?(attribute) && options[:default].nil?
+
+          # Get the current value of the plaintext attribute
+          plaintext = attributes[attribute.to_s]
+
+          __vault_write_encrypted_attribute!(plaintext, options)
+        end
+        self
       end
     end
   end
