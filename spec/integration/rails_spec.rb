@@ -373,6 +373,123 @@ describe Vault::Rails do
     end
   end
 
+  context "lazy batch decrypt" do
+    before(:all) do
+      Vault::Rails.logical.write("transit/keys/dummy_people_ssn")
+    end
+
+    it "encrypts attributes" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      expect(person.ssn_encrypted).to be
+      expect(person.ssn_encrypted.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "decrypts attributes" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+      expect(person.ssn.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "does not decrypt on initialization" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.reload
+
+      p2 = LazyBatchPerson.find(person.id)
+
+      expect(p2.instance_variable_get("@ssn")).to eq(nil)
+      expect(p2.ssn).to eq("123-45-6789")
+    end
+
+    it "tracks dirty attributes" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+
+      expect(person.ssn_changed?).to be(false)
+      expect(person.ssn_change).to be(nil)
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "111-11-1111"])
+      expect(person.ssn_was).to eq("123-45-6789")
+
+      person.assign_attributes(ssn: "222-22-2222")
+
+      expect(person.ssn_changed?).to be(true)
+      expect(person.ssn_change).to eq(["123-45-6789", "222-22-2222"])
+      expect(person.ssn_was).to eq("123-45-6789")
+    end
+
+    it "allows attributes to be unset" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.update!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows dirty attributes to be unset" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.ssn = nil
+      expect(person.ssn).to be_nil
+
+      person2 = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person2.assign_attributes(ssn: nil)
+      expect(person2.ssn).to be_nil
+    end
+
+
+    it "allows saving without validations" do
+      person = LazyBatchPerson.new(ssn: "123-456-7890")
+      expect(person.save(validate: false)).to be(true)
+      expect(person.ssn_encrypted).to match("vault:")
+    end
+
+    it "allows attributes to be unset after reload" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.reload
+      person.update!(ssn: nil)
+      person.reload
+
+      expect(person.ssn).to be(nil)
+    end
+
+    it "allows attributes to be blank" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      person.update!(ssn: "")
+      person.reload
+
+      expect(person.ssn).to eq("")
+    end
+
+    it "reloads instance variables on reload" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+      expect(person.instance_variable_get(:@ssn)).to eq("123-45-6789")
+
+      person.ssn = "111-11-1111"
+      person.reload
+
+      expect(person.ssn).to eq("123-45-6789")
+    end
+
+    it "does not try to encrypt unchanged attributes" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+
+      expect(Vault::Rails).to_not receive(:encrypt)
+      person.name = "Cinderella"
+      person.save!
+    end
+
+    it "allows attributes to be accessed after a destroy" do
+      person = LazyBatchPerson.create!(ssn: "123-45-6789")
+
+      person.destroy
+      expect { person.ssn }.not_to raise_error
+    end
+  end
+
   context "with custom options" do
     before(:all) do
       Vault::Rails.sys.mount("credit-secrets", :transit)
@@ -742,6 +859,19 @@ describe Vault::Rails do
     it "decrypts attributes" do
       allow(Vault::Rails).to receive(:enabled?).and_return(false)
       person = Person.create!(credit_card: "1234567890111213")
+      person.reload
+      expect(person.credit_card).to eq("1234567890111213")
+    end
+
+    it "encrypts attributes with a dev prefix" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = LazyBatchPerson.create!(credit_card: "1234567890111213")
+      expect(person.cc_encrypted).to start_with(Vault::Rails::DEV_PREFIX)
+    end
+
+    it "decrypts attributes" do
+      allow(Vault::Rails).to receive(:enabled?).and_return(false)
+      person = LazyBatchPerson.create!(credit_card: "1234567890111213")
       person.reload
       expect(person.credit_card).to eq("1234567890111213")
     end
