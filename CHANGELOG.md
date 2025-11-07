@@ -1,8 +1,10 @@
 # Vault Rails Changelog
 
-## UNRELEASED
+## v0.10.0 (November 7, 2025)
 
-- Added HashiCorp, Inc. copyright statements to source code files.
+IMPROVEMENTS
+
+- Added `vault_encrypt_attributes!` model method which allows callers to encrypt vault attributes without saving the model
 
 ## v0.9.0 (September 14, 2023)
 
