@@ -1,5 +1,17 @@
 # Vault Rails Changelog
 
+## v0.11.0 (December 3, 2025)
+
+BREAKING CHANGES
+
+- Set minimum Ruby version to 3.1. All EOL Ruby versions are no longer supported.
+
+IMPROVEMENTS
+
+- Updated the `vault` dependency to `~> 0.19` which includes upgraded `net-http-persistent` and `connection_pool` dependencies, improved connection handling, and Ruby 3.4 compatibility.
+- Added Ruby 3.2 and 3.4 to CI matrix; removed EOL Ruby versions 2.7 and 3.0.
+- Updated Vault versions in CI matrix to 1.16, 1.19, 1.20, and 1.21.
+
 ## v0.10.0 (November 7, 2025)
 
 IMPROVEMENTS

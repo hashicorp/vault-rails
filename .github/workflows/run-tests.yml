@@ -1,4 +1,4 @@
-name: hashicorp/vault-rails/run-tests
+name: Tests
 on:
   push:
     branches:
@@ -10,13 +10,13 @@ jobs:
       fail-fast: false
       matrix:
         # https://endoflife.date/ruby
-        ruby: ["2.7", "3.0", "3.1", "3.3"]
-        vault: ["1.11.9", "1.19.5", "1.20.4", "1.21.0"]
+        ruby: ["3.1", "3.2", "3.3", "3.4"]
+        vault: ["1.16.3", "1.19.5", "1.20.4", "1.21.1"]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
-      - uses: ruby/setup-ruby@ab177d40ee5483edb974554986f56b33477e21d0 # v1.265.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ruby/setup-ruby@32110d4e311bd8996b2a82bf2a43b714ccc91777 # v1.221.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
