@@ -1,4 +1,4 @@
-Vault Rails [![Build Status](https://circleci.com/gh/hashicorp/vault-rails.svg?style=shield)](https://circleci.com/gh/hashicorp/vault-rails)
+Vault Rails [![Build Status](https://github.com/hashicorp/vault-rails/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/hashicorp/vault-rails/actions/workflows/run-tests.yml)
 ===========
 
 Vault is the official Rails plugin for interacting with [Vault](https://vaultproject.io) by HashiCorp.

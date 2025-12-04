@@ -17,8 +17,16 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["spec/**/*"]
 
+  s.required_ruby_version = ">= 3.1"
+
   s.add_dependency "activesupport", ">= 5.0"
-  s.add_dependency "vault", "~> 0.18"
+  s.add_dependency "vault", "~> 0.19"
+  # mutex_m was removed from Ruby's default gems in 3.4.0
+  # Rails 6.0 depends on it but doesn't declare it explicitly
+  s.add_dependency "mutex_m"
+  # bigdecimal was removed from Ruby's default gems in 3.4.0
+  # Rails 6.0 depends on it but doesn't declare it explicitly
+  s.add_dependency "bigdecimal"
 
   s.add_development_dependency "bundler"
   s.add_development_dependency "pry"
@@ -26,4 +34,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake",    "~> 12.3.3"
   s.add_development_dependency "rspec",   "~> 3.2"
   s.add_development_dependency "sqlite3", "~> 1.3.6"
+  # ostruct will be removed from Ruby's default gems in 3.5.0
+  # rake 12.3.3 depends on it but doesn't declare it explicitly
+  s.add_development_dependency "ostruct"
 end
