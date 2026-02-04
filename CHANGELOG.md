@@ -9,6 +9,7 @@ BREAKING CHANGES
 
 IMPROVEMENTS
 
+- Updated vault-ruby dependency from ~> 0.19 to ~> 0.20
 - Restored Rails version matrix testing in CI (was accidentally dropped during CircleCI to GitHub Actions migration)
 - Updated CI to test currently supported Rails versions: 7.2, 8.0, 8.1
 - Updated CI to test Ruby versions: 3.2, 3.3, 3.4, 4.0
