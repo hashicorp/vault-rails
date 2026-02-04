@@ -7,6 +7,12 @@ Vault is the official Rails plugin for interacting with [Vault](https://vaultpro
 different APIs than the most recently released version. Please see the Git tag that corresponds to your version of the
 Vault Rails plugin for the proper documentation.**
 
+## Requirements
+
+- Ruby 3.2+
+- Rails 7.0+
+- Vault 1.16+ (LTS and current releases supported)
+
 ## Table of Contents
 1. [Quick Start](#quick-start)
 1. [Advanced Configuration](#advanced-configuration)
