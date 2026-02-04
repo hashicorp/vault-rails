@@ -17,15 +17,13 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["spec/**/*"]
 
-  s.required_ruby_version = ">= 3.1"
+  s.required_ruby_version = ">= 3.2"
 
-  s.add_dependency "activesupport", ">= 5.0"
+  s.add_dependency "activesupport", ">= 7.0"
   s.add_dependency "vault", "~> 0.19"
   # mutex_m was removed from Ruby's default gems in 3.4.0
-  # Rails 6.0 depends on it but doesn't declare it explicitly
   s.add_dependency "mutex_m"
   # bigdecimal was removed from Ruby's default gems in 3.4.0
-  # Rails 6.0 depends on it but doesn't declare it explicitly
   s.add_dependency "bigdecimal"
 
   s.add_development_dependency "bundler"
