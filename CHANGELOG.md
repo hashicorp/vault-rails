@@ -1,20 +1,21 @@
 # Vault Rails Changelog
 
-## Unreleased
+## v0.12.0 (February 4, 2026)
 
 BREAKING CHANGES
 
 - Set minimum Ruby version to 3.2 (Ruby 3.1 reaches EOL March 31, 2025)
 - Set minimum Rails version to 7.0 (Rails 6.1 and earlier are EOL)
+- Updated vault-ruby dependency from ~> 0.19 to ~> 0.20
 
 IMPROVEMENTS
 
-- Updated vault-ruby dependency from ~> 0.19 to ~> 0.20
 - Restored Rails version matrix testing in CI (was accidentally dropped during CircleCI to GitHub Actions migration)
 - Updated CI to test currently supported Rails versions: 7.2, 8.0, 8.1
 - Updated CI to test Ruby versions: 3.2, 3.3, 3.4, 4.0
-- Updated CI to test currently supported Vault versions: 1.16.13 (LTS), 1.19.13 (LTS), 1.20.7, 1.21.2
+- Updated CI to test currently supported Vault versions: 1.16.3 (LTS), 1.19.5 (LTS), 1.20.4, 1.21.2
 - Changed default Rails version in Gemfile from 6.0.0 to 7.2.0
+- Updated sqlite3 dependency from ~> 1.3.6 to >= 1.4 for Rails 7+ compatibility
 
 ## v0.11.0 (December 3, 2025)
 
