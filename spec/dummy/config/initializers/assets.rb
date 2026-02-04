@@ -4,7 +4,11 @@
 # Be sure to restart your server when you modify this file.
 
 # Version of your assets, change this if you want to expire all your assets.
-Rails.application.config.assets.version = '1.0'
+# Rails 7+ made the asset pipeline (Sprockets) optional. The assets config
+# only exists if sprockets-rails is in the Gemfile.
+if Rails.application.config.respond_to?(:assets)
+  Rails.application.config.assets.version = '1.0'
+end
 
 # Precompile additional assets.
 # application.js, application.css, and all non-JS/CSS in app/assets folder are already added.
