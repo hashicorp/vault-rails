@@ -6,6 +6,8 @@ require "spec_helper"
 describe Vault::EncryptedModel do
   let(:klass) do
     Class.new(ActiveRecord::Base) do
+      # Rails 7.2+ requires table_name to be set explicitly for anonymous classes
+      self.table_name = "people"
       include Vault::EncryptedModel
     end
   end
