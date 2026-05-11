@@ -1,4 +1,4 @@
-# Copyright IBM Corp. 2015, 2025
+# Copyright IBM Corp. 2015, 2026
 # SPDX-License-Identifier: MPL-2.0
 
 # This file is used by Rack-based servers to start the application.
